@@ -1,0 +1,32 @@
+name: Deploy to Vercel
+
+# Lets Vercel do the full build on their infrastructure (install deps, run
+# `prisma generate`, `next build`, bundle node_modules into the Serverless
+# Function runtime). Previous attempt with `vercel pull + build --prebuilt +
+# deploy --prebuilt` generated the Prisma Client on the GitHub runner but
+# the prebuilt uploads .next/ WITHOUT node_modules → every API handler 500
+# on `import @prisma/client`. Keep this simple.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vercel-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Deploy to production
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}

@@ -1,0 +1,538 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Global roles ─────────────────────────────────────────────────────────────
+enum GlobalRole {
+  PENDING
+  MEMBER
+  SUPER_ADMIN
+}
+
+enum ClientRole {
+  ACCESS
+}
+
+// ─── Profile: extends Supabase auth.users ─────────────────────────────────
+// Keyed by the Supabase user UUID (as string). One row per auth user.
+model Profile {
+  id                String          @id // Supabase auth user UUID
+  email             String?
+  displayName       String?
+  avatarUrl         String?
+  instagramUsername String?
+  nicho             String?
+  globalRole        GlobalRole      @default(PENDING)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  clientAccess      ClientAccess[]
+}
+
+// ─── Client (tenant workspace) ────────────────────────────────────────────
+model Client {
+  id            String           @id @default(cuid())
+  name          String
+  slug          String           @unique
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  accesses      ClientAccess[]
+}
+
+// ─── ClientAccess: M:N between Profile and Client ─────────────────────────
+model ClientAccess {
+  id            String       @id @default(cuid())
+  userId        String
+  clientId      String
+  roleInClient  ClientRole   @default(ACCESS)
+  createdAt     DateTime     @default(now())
+
+  profile       Profile      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client        Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientId])
+  @@index([userId])
+  @@index([clientId])
+}
+
+// ─── Business tables ──────────────────────────────────────────────────────
+
+model Competitor {
+  id             String      @id @default(cuid())
+  clientId       String
+  createdBy      String?
+  updatedBy      String?
+  username       String
+  displayName    String?
+  profilePicUrl  String?
+  followersCount Int?
+  lastScrapedAt  DateTime?
+  createdAt      DateTime    @default(now())
+  reels          Reel[]
+  jobs           ScrapeJob[]
+
+  @@unique([clientId, username])
+  @@index([clientId])
+}
+
+model Reel {
+  id            String         @id @default(cuid())
+  clientId      String
+  createdBy     String?
+  updatedBy     String?
+  competitorId  String
+  instagramId   String         @unique
+  shortcode     String
+  url           String
+  thumbnailUrl  String?
+  videoUrl      String?
+  caption       String?
+  viewsCount    Int            @default(0)
+  likesCount    Int            @default(0)
+  commentsCount Int            @default(0)
+  sharesCount   Int            @default(0)
+  durationSec   Float?
+  postedAt      DateTime?
+  scrapedAt     DateTime       @default(now())
+  analyses      Analysis[]
+  chatMessages  ChatMessage[]
+  competitor    Competitor     @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  transcription Transcription?
+
+  @@index([clientId])
+  @@index([competitorId, viewsCount])
+  @@index([competitorId, commentsCount])
+  @@index([competitorId, likesCount])
+  @@index([competitorId, postedAt])
+}
+
+model Transcription {
+  id        String   @id @default(cuid())
+  clientId  String
+  createdBy String?
+  updatedBy String?
+  reelId    String   @unique
+  text      String
+  language  String
+  provider  String   @default("groq-whisper-v3-turbo")
+  costUsd   Float?
+  createdAt DateTime @default(now())
+  reel      Reel     @relation(fields: [reelId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+model Analysis {
+  id           String   @id @default(cuid())
+  clientId     String
+  createdBy    String?
+  updatedBy    String?
+  reelId       String
+  model        String
+  painPoints   String
+  desires      String
+  problems     String
+  insights     String
+  keywords     String
+  inputTokens  Int?
+  outputTokens Int?
+  costUsd      Float?
+  createdAt    DateTime @default(now())
+  reel         Reel     @relation(fields: [reelId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([reelId, createdAt])
+}
+
+model ChatMessage {
+  id           String   @id @default(cuid())
+  clientId     String
+  createdBy    String?
+  updatedBy    String?
+  reelId       String
+  role         String
+  content      String
+  model        String?
+  inputTokens  Int?
+  outputTokens Int?
+  costUsd      Float?
+  createdAt    DateTime @default(now())
+  reel         Reel     @relation(fields: [reelId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([reelId, createdAt])
+}
+
+model ScrapeJob {
+  id             String      @id @default(cuid())
+  clientId       String
+  createdBy      String?
+  updatedBy      String?
+  competitorId   String?
+  username       String
+  requestedCount Int
+  actualCount    Int         @default(0)
+  status         String
+  kind           String      @default("initial")
+  apifyRunId     String?
+  errorMessage   String?
+  costUsd        Float?
+  startedAt      DateTime    @default(now())
+  completedAt    DateTime?
+  competitor     Competitor? @relation(fields: [competitorId], references: [id])
+
+  @@index([clientId])
+  @@index([status, startedAt])
+}
+
+model Conversation {
+  id        String      @id @default(cuid())
+  clientId  String
+  createdBy String?
+  updatedBy String?
+  title     String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  messages  AIMessage[]
+
+  @@index([clientId])
+  @@index([updatedAt])
+}
+
+model AIMessage {
+  id             String       @id @default(cuid())
+  clientId       String
+  createdBy      String?
+  updatedBy      String?
+  conversationId String
+  role           String
+  content        String
+  model          String?
+  inputTokens    Int?
+  outputTokens   Int?
+  costUsd        Float?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([conversationId, createdAt])
+}
+
+model SocialConnection {
+  id           String    @id @default(cuid())
+  clientId     String
+  createdBy    String?
+  updatedBy    String?
+  platform     String
+  accountId    String
+  accountName  String
+  accountPic   String?
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  scopes       String    @default("")
+  connectedAt  DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([clientId, platform])
+  @@index([clientId])
+  @@index([platform])
+}
+
+model OAuthState {
+  id        String   @id @default(cuid())
+  clientId  String
+  userId    String
+  state     String   @unique
+  platform  String
+  returnTo  String   @default("/")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+  @@index([userId])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  clientId    String
+  createdBy   String?
+  updatedBy   String?
+  title       String
+  description String    @default("")
+  dueDate     DateTime?
+  labelText   String    @default("")
+  labelColor  String    @default("")
+  columnId    String    @default("por-hacer")
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([clientId])
+}
+
+// ContentPiece doubles as CalendarEvent (reels + historias calendar items)
+model ContentPiece {
+  id          String    @id @default(cuid())
+  clientId    String
+  createdBy   String?
+  updatedBy   String?
+  title       String
+  description String    @default("")
+  type        String    @default("reel")
+  status      String    @default("drafts")
+  color       String    @default("")
+  category    String    @default("")
+  date        DateTime?
+  endDate     DateTime?
+  format      String    @default("")
+  platform    String    @default("")
+  emoji       String    @default("")
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([clientId])
+}
+
+model ContentTemplate {
+  id          String   @id @default(cuid())
+  clientId    String
+  createdBy   String?
+  updatedBy   String?
+  name        String
+  type        String   @default("reel")
+  status      String   @default("drafts")
+  color       String   @default("")
+  category    String   @default("")
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+model ICPProfile {
+  id        String   @id @default(cuid())
+  clientId  String
+  createdBy String?
+  updatedBy String?
+  nombre    String   @default("")
+  edad      String   @default("")
+  ingresos  String   @default("")
+  nicho     String   @default("")
+  rol       String   @default("")
+  dolores   String   @default("[]")
+  deseos    String   @default("[]")
+  creencias String   @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+model BusinessBase {
+  id        String   @id @default(cuid())
+  clientId  String
+  createdBy String?
+  updatedBy String?
+  key       String
+  content   String   @default("")
+  items     String   @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clientId, key])
+  @@index([clientId])
+}
+
+model Idea {
+  id           String   @id @default(cuid())
+  clientId     String
+  createdBy    String?
+  updatedBy    String?
+  title        String
+  format       String   @default("")
+  notes        String   @default("")
+  referenceUrl String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+// Guion = script editor. GuionTab + GuionItem together represent "Guion".
+model GuionTab {
+  id        String      @id @default(cuid())
+  clientId  String
+  createdBy String?
+  updatedBy String?
+  name      String
+  type      String      @default("reel")
+  emoji     String      @default("")
+  order     Int         @default(0)
+  createdAt DateTime    @default(now())
+  items     GuionItem[]
+
+  @@index([clientId])
+}
+
+model GuionItem {
+  id        String   @id @default(cuid())
+  clientId  String
+  createdBy String?
+  updatedBy String?
+  tabId     String
+  title     String
+  content   String   @default("")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tab       GuionTab @relation(fields: [tabId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+// ─── Instagram analytics (client-owned reels + stories + account snapshots) ──
+
+// UserReel = a reel belonging to the client's own IG account
+// (contrast with Reel which belongs to a competitor).
+model UserReel {
+  id             String    @id @default(cuid())
+  clientId       String
+  createdBy      String?
+  updatedBy      String?
+  instagramId    String    @unique
+  shortcode      String
+  url            String
+  thumbnailUrl   String?
+  videoUrl       String?
+  caption        String?
+  durationSec    Float?
+  viewsCount     Int       @default(0)
+  viewsOrganic   Int       @default(0)
+  viewsPaid      Int       @default(0)
+  likesCount     Int       @default(0)
+  savesCount     Int       @default(0)
+  commentsCount  Int       @default(0)
+  sharesCount    Int       @default(0)
+  reachCount     Int       @default(0)
+  impressions    Int       @default(0)
+  organicPercent Float     @default(0)
+  multiplier     Float     @default(0)
+  isAd           Boolean   @default(false)
+  isTrialReel    Boolean   @default(false)
+  publishedAt    DateTime?
+  syncedAt       DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([clientId, publishedAt])
+  @@index([clientId, viewsCount])
+}
+
+model Story {
+  id             String    @id @default(cuid())
+  clientId       String
+  createdBy      String?
+  updatedBy      String?
+  instagramId    String    @unique
+  thumbnailUrl   String?
+  reach          Int       @default(0)
+  impressions    Int       @default(0)
+  replies        Int       @default(0)
+  stickerTaps    Int       @default(0)
+  exits          Int       @default(0)
+  completionRate Float     @default(0)
+  publishedAt    DateTime?
+  syncedAt       DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+
+  @@index([clientId, publishedAt])
+}
+
+// YouTubeVideo = a video belonging to the client's own YouTube channel.
+// Separated from UserReel because YT metrics differ substantially from IG
+// (watch time, average view duration, no saves/reach/organicPercent, etc.).
+model YouTubeVideo {
+  id                  String    @id @default(cuid())
+  clientId            String
+  createdBy           String?
+  updatedBy           String?
+  videoId             String    @unique // YouTube video id
+  channelId           String
+  title               String
+  description         String    @default("")
+  thumbnailUrl        String?
+  url                 String
+  durationSec         Int       @default(0)
+  durationLabel       String    @default("") // e.g. "12:34"
+  viewsCount          Int       @default(0)
+  likesCount          Int       @default(0)
+  commentsCount       Int       @default(0)
+  favoriteCount       Int       @default(0)
+  // Analytics fields (filled when YT Analytics API is queried — currently optional)
+  watchTimeMinutes    Int?
+  averageViewDuration Int? // seconds
+  averageViewPercent  Float?
+  ctr                 Float?
+  publishedAt         DateTime?
+  syncedAt            DateTime  @default(now())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([clientId, publishedAt])
+  @@index([clientId, viewsCount])
+  @@index([channelId])
+}
+
+// AccountSnapshot: daily/periodic rollup of account metrics per client, scoped
+// by platform (instagram | youtube | tiktok | ...). The `platform` discriminator
+// is what makes this table safe to use for multiple social networks: without
+// it, YT sync and IG sync would collide on the `(clientId, date)` key and
+// silently overwrite each other — the bug fixed in MC-02.
+model AccountSnapshot {
+  id             String   @id @default(cuid())
+  clientId       String
+  createdBy      String?
+  updatedBy      String?
+  platform       String   @default("instagram")
+  date           DateTime
+  followers      Int      @default(0)
+  following      Int      @default(0)
+  posts          Int      @default(0)
+  impressions    Int      @default(0)
+  reach          Int      @default(0)
+  profileVisits  Int      @default(0)
+  newFollowers   Int      @default(0)
+  engagementRate Float    @default(0)
+  createdAt      DateTime @default(now())
+
+  @@unique([clientId, platform, date])
+  @@index([clientId, platform, date])
+}
+
+// IncomeRecord: /ventas — one income entry, optionally tied to a reel.
+model IncomeRecord {
+  id          String   @id @default(cuid())
+  clientId    String
+  createdBy   String?
+  updatedBy   String?
+  amount      Float
+  currency    String   @default("USD")
+  source      String   @default("") // e.g. "trial reel", "ads", "referral"
+  description String   @default("")
+  reelId      String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([clientId, date])
+  @@index([clientId, source])
+}

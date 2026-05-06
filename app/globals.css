@@ -1,0 +1,747 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Eternity brand tokens */
+  --color-eternity-primary: #8E1F2F;
+  --color-eternity-deep: #5C1220;
+  --color-eternity-gold: #B08A4A;
+  --color-eternity-ivory: #F5EDE3;
+  --color-eternity-taupe: #8A7F7A;
+  --color-eternity-success: #8A7A4A;
+  --color-eternity-warning: #B08A4A;
+  --color-eternity-danger: #A63A4B;
+  --color-eternity-info: #6E2A35;
+}
+
+/* ── Dark mode (default) ─────────────────────────────────────────────── */
+html.dark {
+  color-scheme: dark;
+  --background: #0F0B0C;
+  --foreground: #F5EDE3;
+  --card: #161112;
+  --card-foreground: #F5EDE3;
+  --popover: #1D1517;
+  --popover-foreground: #F5EDE3;
+  --primary: #8E1F2F;
+  --primary-foreground: #F5EDE3;
+  --secondary: #1D1517;
+  --secondary-foreground: #F5EDE3;
+  --muted: #1D1517;
+  --muted-foreground: #9A8F89;
+  --accent: #8E1F2F;
+  --accent-foreground: #F5EDE3;
+  --destructive: #A63A4B;
+  --border: #2A1C1F;
+  --input: #2A1C1F;
+  --ring: #8E1F2F;
+  --chart-1: #8E1F2F;
+  --chart-2: #B08A4A;
+  --chart-3: #8A7A4A;
+  --chart-4: #A63A4B;
+  --chart-5: #6E2A35;
+  --radius: 0.625rem;
+  --sidebar: #161112;
+  --sidebar-foreground: #F5EDE3;
+  --sidebar-primary: #8E1F2F;
+  --sidebar-primary-foreground: #F5EDE3;
+  --sidebar-accent: #2A1C1F;
+  --sidebar-accent-foreground: #F5EDE3;
+  --sidebar-border: #2A1C1F;
+  --sidebar-ring: #8E1F2F;
+
+  /* Motion system */
+  --motion-quick: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-standard: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Light mode ──────────────────────────────────────────────────────── */
+html.light {
+  color-scheme: light;
+  --background: #EDE3D8;
+  --foreground: #1A0F12;
+  --card: #FAF5F0;
+  --card-foreground: #1A0F12;
+  --popover: #FAF5F0;
+  --popover-foreground: #1A0F12;
+  --primary: #8E1F2F;
+  --primary-foreground: #F5EDE3;
+  --secondary: #F5EDE3;
+  --secondary-foreground: #1A0F12;
+  --muted: #E0D0C4;
+  --muted-foreground: #5F504A;
+  --accent: #8E1F2F;
+  --accent-foreground: #F5EDE3;
+  --destructive: #A63A4B;
+  --border: #C8B3A8;
+  --input: #C8B3A8;
+  --ring: #8E1F2F;
+  --chart-1: #8E1F2F;
+  --chart-2: #B08A4A;
+  --chart-3: #8A7A4A;
+  --chart-4: #A63A4B;
+  --chart-5: #6E2A35;
+  --sidebar: #F5EDE3;
+  --sidebar-foreground: #1A0F12;
+  --sidebar-primary: #8E1F2F;
+  --sidebar-primary-foreground: #F5EDE3;
+  --sidebar-accent: #E0D0C4;
+  --sidebar-accent-foreground: #1A0F12;
+  --sidebar-border: #C8B3A8;
+  --sidebar-ring: #8E1F2F;
+  --radius: 0.625rem;
+
+  /* Motion system */
+  --motion-quick: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-standard: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root {
+  --radius: 0.625rem;
+  --z-base: 0;
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-overlay: 30;
+  --z-modal: 40;
+  --z-popover: 50;
+  --z-tooltip: 60;
+  /* Above sidebar (z-modal=40) so overlay covers chrome (TopBar + Sidebar) */
+  --z-modal-overlay: 100;
+
+  /* ── Motion easing tokens ──────────────────────────────────────────── */
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);  /* elastic: hover, pill */
+  --ease-smooth:   cubic-bezier(0.16, 1, 0.3, 1);       /* soft exit: modal, drawer */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);        /* precise: layout, collapse */
+
+  /* ── Elevation shadows ─────────────────────────────────────────────── */
+  --shadow-hover: 0 6px 20px rgba(0,0,0,0.20), 0 2px 6px rgba(0,0,0,0.10);
+  --shadow-drag:  0 20px 60px rgba(0,0,0,0.45), 0 0 0 2px var(--accent);
+
+  /* ── Glow shadows — semantic hierarchy ────────────────────────────── */
+  /* Primary: pipeline/task cards — acciones de trabajo */
+  --shadow-glow-primary: 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent),
+                         0 4px 24px color-mix(in srgb, var(--accent) 30%, transparent),
+                         0 8px 40px color-mix(in srgb, var(--accent) 12%, transparent);
+  /* Info: stat cards — widgets informativos */
+  --shadow-glow-info: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),
+                      0 4px 20px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  *:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .font-mono,
+  .tabular-nums {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ── Float animation for empty-state icons ───────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ── Slide-up-fade: stagger entrances (components, cards, grids) ─────── */
+/* NOTE: do NOT use this on a wrapper that contains position:fixed children.
+   transform: translateY(0) in the final keyframe creates a stacking context
+   that makes fixed descendants position relative to this element, not viewport. */
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up-fade {
+  animation: slide-up-fade 0.35s var(--ease-smooth) both;
+}
+
+/* ── Page fade: route transitions (opacity only — no transform) ──────── */
+/* Safe for wrappers that contain position:fixed modals/overlays.
+   opacity:1 final state does NOT create a stacking context. */
+@keyframes page-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-page-fade {
+  animation: page-fade 180ms ease both;
+}
+
+/* ── Glow pulse: PRO badge, active elements ─────────────────────────── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 35%, transparent); }
+  50%       { box-shadow: 0 0 0 6px transparent; }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease infinite;
+}
+
+/* ── Shimmer: skeleton loaders ──────────────────────────────────────── */
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    color-mix(in srgb, var(--foreground) 8%, var(--muted)) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% auto;
+  animation: shimmer 1.8s linear infinite;
+}
+
+/* ── Interactive card — unified hover system ─────────────────────────── */
+/* Single source of truth for all interactive cards. Two intensity levels:
+   - default (.interactive-card): pipeline/task cards — primary actions
+   - info (.interactive-card--info): stat cards — informational widgets     */
+.interactive-card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  transition:
+    transform        220ms var(--ease-spring),
+    box-shadow       220ms ease,
+    border-color     200ms ease,
+    background-color 200ms ease;
+  will-change: transform;
+}
+.interactive-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-glow-primary);
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--border));
+  background-color: color-mix(in srgb, var(--card) 82%, var(--accent) 18%);
+}
+.interactive-card.interactive-card--info:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-glow-info);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background-color: color-mix(in srgb, var(--card) 88%, var(--accent) 12%);
+}
+/* No hover when a dnd drag is in progress */
+.interactive-card[data-dnd-dragging="true"]:hover {
+  transform: none;
+  box-shadow: none;
+  background-color: var(--card);
+  border-color: var(--border);
+}
+
+/* ── Theme switch: premium crossfade ─────────────────────────────────── */
+/* Two-tier strategy:
+   1. View Transitions API → buttery circular reveal from the toggle button
+      (Chrome/Edge 111+, Safari 18+). Used by Vercel, Linear, GitHub.
+   2. Fallback (.theme-transitioning) → global property crossfade for browsers
+      without VT support (older Firefox). Applied for ~500ms via JS.            */
+
+/* ── Fallback: brief global transition on every element ─────────────── */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition:
+    background-color 500ms cubic-bezier(0.65, 0, 0.35, 1),
+    color            500ms cubic-bezier(0.65, 0, 0.35, 1),
+    border-color     500ms cubic-bezier(0.65, 0, 0.35, 1),
+    fill             500ms cubic-bezier(0.65, 0, 0.35, 1),
+    stroke           500ms cubic-bezier(0.65, 0, 0.35, 1) !important;
+  /* Don't fight per-element transform/box-shadow — those would feel laggy */
+}
+
+/* ── Premium: View Transitions API circular reveal ──────────────────── */
+@supports (view-transition-name: root) {
+  /* Disable the default crossfade so we can drive our own clip-path reveal */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+  /* Old theme stays underneath, new theme grows on top */
+  ::view-transition-old(root) {
+    z-index: 1;
+  }
+  ::view-transition-new(root) {
+    z-index: 2;
+    animation: theme-reveal 600ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  }
+  @keyframes theme-reveal {
+    from { clip-path: circle(0%   at var(--theme-x, 50%) var(--theme-y, 50%)); }
+    to   { clip-path: circle(150% at var(--theme-x, 50%) var(--theme-y, 50%)); }
+  }
+}
+
+/* ── Glass surfaces — premium liquid-glass aesthetic ─────────────────── */
+/* Use on modal overlays / floating panels for that backdrop-blur depth.
+   `supports` guard prevents jank on browsers without backdrop-filter.    */
+.glass-overlay {
+  background-color: color-mix(in srgb, #000 55%, transparent);
+}
+@supports (backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px)) {
+  .glass-overlay {
+    background-color: color-mix(in srgb, #000 38%, transparent);
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  }
+}
+.glass-surface {
+  background-color: color-mix(in srgb, var(--card) 85%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, var(--accent) 12%);
+}
+@supports (backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px)) {
+  .glass-surface {
+    background-color: color-mix(in srgb, var(--card) 72%, transparent);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  }
+}
+
+/* ── Competidores: muted hover utility (used in ReelDetailDrawer) ─────── */
+.competidores-hover-muted:hover {
+  background-color: var(--muted);
+}
+
+/* ── Sidebar active pill — subtle inner highlight for depth ──────────── */
+/* Adds a top-edge sheen + soft outer glow so the pill reads as 3D, not flat. */
+.sidebar-active-pill {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 100%, white 12%) 0%,
+    var(--accent) 55%,
+    color-mix(in srgb, var(--accent) 92%, black 8%) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, white 22%, transparent),
+    inset 0 -1px 0 0 color-mix(in srgb, black 15%, transparent),
+    0 4px 16px -4px color-mix(in srgb, var(--accent) 60%, transparent),
+    0 2px 6px -1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* ── Gradient text — accent-tinted headings/numbers ───────────────────── */
+.gradient-text {
+  background: linear-gradient(
+    135deg,
+    var(--foreground) 0%,
+    color-mix(in srgb, var(--foreground) 72%, var(--accent) 28%) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Today-glow: one-shot entrance for the current-day calendar cell ─── */
+@keyframes today-enter {
+  0%   { box-shadow: 0 0 0 0   color-mix(in srgb, var(--accent) 50%, transparent); }
+  60%  { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 22%, transparent); }
+  100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent); }
+}
+.today-glow {
+  animation: today-enter 800ms var(--ease-smooth) forwards;
+}
+
+/* ── Button press micro-interaction (global) ─────────────────────────── */
+/* Excludes drag handles so dnd-kit stays conflict-free.
+   Base transition preserves all common properties so Tailwind's
+   transition-colors / transition-opacity classes still work. */
+button:not([data-dnd-handle]),
+[role="button"]:not([data-dnd-handle]) {
+  transition:
+    transform       150ms var(--ease-spring),
+    opacity         150ms ease,
+    background-color 150ms ease,
+    color           150ms ease,
+    border-color    150ms ease,
+    box-shadow      150ms ease;
+}
+button:not([data-dnd-handle]):active:not(:disabled),
+[role="button"]:not([data-dnd-handle]):active {
+  transform: scale(0.97) !important;
+  transition: transform 80ms var(--ease-spring) !important;
+}
+
+/* ── Accessibility: respect reduced motion ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@layer utilities {
+  .z-base { z-index: var(--z-base); }
+  .z-dropdown { z-index: var(--z-dropdown); }
+  .z-sticky { z-index: var(--z-sticky); }
+  .z-overlay { z-index: var(--z-overlay); }
+  .z-modal { z-index: var(--z-modal); }
+  .z-popover { z-index: var(--z-popover); }
+  .z-tooltip { z-index: var(--z-tooltip); }
+  .z-modal-overlay { z-index: var(--z-modal-overlay); }
+}
+
+/* ── Scrollbar — thin, elegant, brand-aligned ───────────────────────── */
+* {
+  scrollbar-width: thin;                    /* Firefox */
+  scrollbar-color: transparent transparent; /* Firefox — hidden by default */
+}
+*:hover {
+  scrollbar-color: var(--border) transparent; /* Firefox — show on hover */
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 99px;
+  transition: background 200ms;
+}
+/* Show thumb only when the container is hovered */
+*:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--border) 80%, transparent);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary) !important;
+  opacity: 0.6;
+}
+
+/* ── Calendar navigation buttons: compact on desktop, 44px on touch ──── */
+.cal-nav-btn {
+  min-height: 36px;
+  min-width: 36px;
+}
+.cal-add-btn {
+  min-height: 36px;
+}
+@media (pointer: coarse) {
+  .cal-nav-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .cal-add-btn {
+    min-height: 44px;
+  }
+}
+
+/* ── Block selection highlight (NodeSelection via ⠿ handle) ─────────── */
+.prose-editor .ProseMirror-selectednode {
+  outline: none !important;
+  background-color: rgba(35, 131, 226, 0.10);
+  border-radius: 4px;
+}
+/* Don't apply to table cells (they have .selectedCell) */
+.prose-editor td.ProseMirror-selectednode,
+.prose-editor th.ProseMirror-selectednode {
+  background-color: transparent;
+}
+
+/* ── Tiptap editor prose styles ─────────────────────────────────────── */
+.prose-editor {
+  color: var(--foreground);
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+.prose-editor h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 1.25rem 0 0.5rem;
+}
+.prose-editor h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 1rem 0 0.4rem;
+}
+.prose-editor p {
+  margin: 0.4rem 0;
+}
+.prose-editor ul:not([data-type="taskList"]) {
+  list-style-type: disc !important;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+.prose-editor ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+.prose-editor li {
+  margin: 0.2rem 0;
+}
+.prose-editor blockquote {
+  border-left: 3px solid #8E1F2F;
+  padding-left: 1rem;
+  color: var(--muted-foreground);
+  margin: 0.75rem 0;
+  font-style: italic;
+}
+.prose-editor strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+.prose-editor em {
+  color: var(--muted-foreground);
+}
+.tiptap.prose-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted-foreground);
+  opacity: 0.5;
+  pointer-events: none;
+  height: 0;
+}
+
+/* ── Rich Editor: Task List ─────────────────────────────────────────── */
+.prose-editor ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0;
+}
+.prose-editor ul[data-type="taskList"] li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 1px 0;
+  min-height: 22px;
+}
+.prose-editor ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-top: 0;
+}
+/* ── Custom checkbox (Tiptap TaskItem renders label > input + span) ─── */
+/* The label wraps both the native input and a visual span.
+   We hide the native input and style the span instead. */
+.prose-editor ul[data-type="taskList"] label {
+  position: relative;
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  cursor: pointer;
+  align-self: center;
+}
+/* Hide native checkbox — keep it overlapping so clicks still register */
+.prose-editor ul[data-type="taskList"] label input[type="checkbox"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* intentional: stacks invisible input above the visual span sibling */
+}
+/* Visual checkbox box (the span Tiptap creates alongside the input) */
+.prose-editor ul[data-type="taskList"] label span {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--muted-foreground);
+  border-radius: 3px;
+  background: transparent;
+  transition: border-color 120ms ease, background-color 120ms ease;
+  position: relative;
+  flex-shrink: 0;
+}
+/* Hover */
+.prose-editor ul[data-type="taskList"] label:hover span {
+  border-color: var(--foreground);
+}
+/* Checked state */
+.prose-editor ul[data-type="taskList"] label input[type="checkbox"]:checked + span {
+  background-color: #8E1F2F;
+  border-color: #8E1F2F;
+}
+/* Checkmark */
+.prose-editor ul[data-type="taskList"] label input[type="checkbox"]:checked + span::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 5px;
+  height: 8px;
+  border: 1.5px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+.prose-editor ul[data-type="taskList"] li > div {
+  flex: 1;
+  line-height: 1.5;
+}
+.prose-editor ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  opacity: 0.45;
+}
+
+/* ── Rich Editor: Table ─────────────────────────────────────────────── */
+.prose-editor .tableWrapper {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+.prose-editor table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  font-size: 0.875rem;
+}
+.prose-editor th,
+.prose-editor td {
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  vertical-align: top;
+  position: relative;
+  min-width: 80px;
+  height: 44px;
+  box-sizing: border-box;
+  /* Cells slightly lighter than the editor background — helps in light mode */
+  background-color: var(--card);
+}
+/* Header row — Notion-style: slightly muted background + smaller uppercase-ish label */
+.prose-editor th {
+  background-color: var(--muted);
+  font-weight: 600;
+  text-align: left;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+/* Cell hover — very subtle lift */
+.prose-editor td:hover {
+  background-color: color-mix(in srgb, var(--card) 85%, var(--muted));
+}
+/* Selected cell — Notion blue tint */
+.prose-editor .selectedCell {
+  background-color: rgba(35, 131, 226, 0.08) !important;
+  border-color: #2383E2 !important;
+  caret-color: var(--foreground);
+}
+.prose-editor .selectedCell::after { display: none; }
+
+/* Column resize handle — thin blue line on right edge of cell */
+.prose-editor .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #2383E2;
+  pointer-events: none;
+  z-index: var(--z-sticky); /* 20 — same level as sticky headers */
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 150ms;
+}
+/* Show resize handle on cell hover */
+.prose-editor td:hover .column-resize-handle,
+.prose-editor th:hover .column-resize-handle {
+  opacity: 1;
+}
+.prose-editor.resize-cursor,
+.prose-editor.resize-cursor * {
+  cursor: col-resize !important;
+}
+
+/* ── Rich Editor: Horizontal Rule ──────────────────────────────────── */
+.prose-editor hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+/* ── Rich Editor: Collapsible (Details/Summary) ─────────────────────── */
+.prose-editor details {
+  border-left: 2px solid var(--border);
+  padding-left: 12px;
+  margin: 6px 0;
+}
+.prose-editor details > summary {
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+  -webkit-appearance: none;
+  outline: none;
+}
+.prose-editor details > summary::-webkit-details-marker {
+  display: none;
+}
+.prose-editor details > summary::before {
+  content: '▶';
+  font-size: 9px;
+  transition: transform 120ms ease;
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.prose-editor details[open] > summary::before {
+  transform: rotate(90deg);
+}

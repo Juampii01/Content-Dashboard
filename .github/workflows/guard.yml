@@ -1,0 +1,65 @@
+name: Guard
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  no-secrets:
+    name: No hardcoded secrets in diff
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute diff
+        id: diff
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="${{ github.base_ref }}"
+            git fetch --no-tags --depth=200 origin "$BASE_REF"
+            BASE_SHA=$(git merge-base HEAD "origin/$BASE_REF")
+          else
+            BASE_SHA=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
+          fi
+          echo "base=$BASE_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Grep diff for secret patterns
+        run: |
+          BASE="${{ steps.diff.outputs.base }}"
+          # Scan only ADDED lines (+) in the diff. Narrow patterns that
+          # should never legitimately appear in source: long opaque JWTs,
+          # Anthropic/OpenAI/Groq live key prefixes, and service-role keys
+          # assigned to an env var inline. Test fixtures and env vars
+          # (e.g. `process.env.X`) are allowed.
+          DIFF=$(git diff "$BASE"...HEAD -- \
+            ':(exclude).github/workflows/guard.yml' \
+            ':(exclude)audit/**' \
+            ':(exclude)docs/**' \
+            ':(exclude)*.md' \
+            ':(exclude).env.example' \
+            ':(exclude)__tests__/**' \
+            ':(exclude)e2e/**' \
+            | grep -E '^\+[^+]' || true)
+          if [ -z "$DIFF" ]; then
+            echo "✓ No added non-doc lines in diff."
+            exit 0
+          fi
+          PATTERN='eyJ[A-Za-z0-9_-]{80,}|sk-ant-[A-Za-z0-9_-]{30,}|sk-proj-[A-Za-z0-9_-]{30,}|gsk_[A-Za-z0-9]{30,}'
+          if echo "$DIFF" | grep -E "$PATTERN"; then
+            echo "::error::Potential live secret or JWT in added lines. Use process.env.* + Vercel dashboard, placeholder in .env.example."
+            exit 1
+          fi
+          # Service role key assigned to a literal (not process.env)
+          if echo "$DIFF" | grep -E 'SUPABASE_SERVICE_ROLE_KEY\s*=\s*["'"'"'][A-Za-z0-9._-]{30,}'; then
+            echo "::error::Hardcoded SUPABASE_SERVICE_ROLE_KEY detected. Read from process.env instead."
+            exit 1
+          fi
+          echo "✓ No secret patterns in added lines."
