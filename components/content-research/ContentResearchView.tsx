@@ -18,6 +18,8 @@ import {
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Section } from '@/components/ui/Section'
+import { formatK } from '@/lib/utils/formatters'
+import { formatDate } from '@/lib/utils/formatDate'
 
 interface ResearchVideo {
   videoId: string
@@ -44,19 +46,9 @@ interface ResearchRow {
   createdAt: string
 }
 
-function fmt(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
-  return String(n)
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
+// `formatK` (lib/utils/formatters) handles 1.5K / 1.5M compaction.
+// `formatDate` (lib/utils/formatDate) handles locale + Intl options.
+const dateOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }
 
 function PlatformIcon({ platform }: { platform: 'youtube' | 'instagram' }) {
   const Icon = platform === 'youtube' ? Play : Camera
@@ -83,7 +75,7 @@ function VideoCard({ video, platform }: { video: ResearchVideo; platform: 'youtu
         <div className="flex items-center gap-2 mb-2 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
           <PlatformIcon platform={platform} />
           <span className="tabular-nums">{video.duration}</span>
-          {video.publishedAt && <span>· {formatDate(video.publishedAt)}</span>}
+          {video.publishedAt && <span>· {formatDate(video.publishedAt, dateOpts)}</span>}
         </div>
         <h3
           className="text-sm font-semibold leading-snug mb-3 line-clamp-2"
@@ -94,13 +86,13 @@ function VideoCard({ video, platform }: { video: ResearchVideo; platform: 'youtu
 
         <div className="flex items-center gap-3 text-xs mb-3" style={{ color: 'var(--muted-foreground)' }}>
           <span className="inline-flex items-center gap-1 tabular-nums">
-            <Eye size={11} /> {fmt(video.views)}
+            <Eye size={11} /> {formatK(video.views)}
           </span>
           <span className="inline-flex items-center gap-1 tabular-nums">
-            <ThumbsUp size={11} /> {fmt(video.likes)}
+            <ThumbsUp size={11} /> {formatK(video.likes)}
           </span>
           <span className="inline-flex items-center gap-1 tabular-nums">
-            <MessageCircle size={11} /> {fmt(video.comments)}
+            <MessageCircle size={11} /> {formatK(video.comments)}
           </span>
         </div>
 
@@ -150,7 +142,7 @@ function ResearchPanel({ row }: { row: ResearchRow }) {
             {row.channelName ?? row.channelUrl}
           </h3>
           <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-            Top 5 de los últimos {row.timeframeDays} días · {formatDate(row.createdAt)}
+            Top 5 de los últimos {row.timeframeDays} días · {formatDate(row.createdAt, dateOpts)}
           </p>
         </div>
         <a

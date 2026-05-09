@@ -19,6 +19,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Section } from '@/components/ui/Section'
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
+import { formatDate } from '@/lib/utils/formatDate'
 
 interface HistoryItem {
   id: string
@@ -45,14 +46,10 @@ interface CurrentResult {
   summary: string
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+// Local opts: long form with year + time-of-day, used for the history list.
+const historyDateOpts: Intl.DateTimeFormatOptions = {
+  day: 'numeric', month: 'short', year: 'numeric',
+  hour: '2-digit', minute: '2-digit',
 }
 
 function inferPlatformFromUrl(url: string): 'youtube' | 'instagram' | null {
@@ -477,7 +474,7 @@ export function TranscriptView() {
                         {item.title ?? item.url}
                       </p>
                       <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-                        {[item.creator, item.duration, formatDate(item.createdAt)]
+                        {[item.creator, item.duration, formatDate(item.createdAt, historyDateOpts)]
                           .filter(Boolean)
                           .join(' · ')}
                       </p>

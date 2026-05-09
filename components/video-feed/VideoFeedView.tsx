@@ -17,6 +17,8 @@ import {
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { formatK } from '@/lib/utils/formatters'
+import { formatDate } from '@/lib/utils/formatDate'
 
 interface FeedPost {
   postId: string
@@ -43,19 +45,9 @@ interface FeedAccount {
   updatedAt: string
 }
 
-function fmt(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
-  return String(n)
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'short',
-  })
-}
-
+// `formatK` (lib/utils/formatters) handles 1.5K / 1.5M compaction.
+// `formatDate` (lib/utils/formatDate) formats with es-ES + Intl options.
+// Default opts (`{ day, month: 'short' }`) match the previous local helper exactly.
 function PostCard({ post, rank }: { post: FeedPost; rank: number }) {
   return (
     <div
@@ -102,9 +94,9 @@ function PostCard({ post, rank }: { post: FeedPost; rank: number }) {
           {post.title}
         </p>
         <div className="flex items-center gap-2 text-[11px] mb-2" style={{ color: 'var(--muted-foreground)' }}>
-          <span className="inline-flex items-center gap-0.5 tabular-nums"><Eye size={10} /> {fmt(post.views)}</span>
-          <span className="inline-flex items-center gap-0.5 tabular-nums"><ThumbsUp size={10} /> {fmt(post.likes)}</span>
-          <span className="inline-flex items-center gap-0.5 tabular-nums"><MessageCircle size={10} /> {fmt(post.comments)}</span>
+          <span className="inline-flex items-center gap-0.5 tabular-nums"><Eye size={10} /> {formatK(post.views)}</span>
+          <span className="inline-flex items-center gap-0.5 tabular-nums"><ThumbsUp size={10} /> {formatK(post.likes)}</span>
+          <span className="inline-flex items-center gap-0.5 tabular-nums"><MessageCircle size={10} /> {formatK(post.comments)}</span>
         </div>
         {post.analysis && (
           <div
