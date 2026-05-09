@@ -245,9 +245,9 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
                     <span
                       className="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
                       style={{
-                        color: '#B08A4A',
-                        border: '1px solid #B08A4A55',
-                        backgroundColor: '#B08A4A11',
+                        color: 'var(--color-eternity-gold)',
+                        border: '1px solid color-mix(in srgb, var(--color-eternity-gold) 33%, transparent)',
+                        backgroundColor: 'color-mix(in srgb, var(--color-eternity-gold) 7%, transparent)',
                         letterSpacing: '0.02em',
                       }}
                     >

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import Image from 'next/image'
 import { Check, Camera, Trash2 } from 'lucide-react'
 import { resizeToDataUrl, MAX_AVATAR_FILE_BYTES } from './avatarUtils'
 
@@ -108,8 +109,16 @@ export function ProfileView({
           }}
         >
           {avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatar} alt="Avatar" className="h-full w-full object-cover" />
+            <Image
+              src={avatar}
+              alt={`Avatar de ${name || email || 'tu cuenta'}`}
+              fill
+              sizes="64px"
+              className="object-cover"
+              // data: URLs (just-uploaded preview) can't go through the
+              // optimizer — bypass it for those, optimize remote URLs.
+              unoptimized={avatar.startsWith('data:')}
+            />
           ) : (
             initial
           )}

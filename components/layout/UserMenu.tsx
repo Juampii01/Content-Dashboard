@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Settings, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SettingsModal } from './SettingsModal'
@@ -43,8 +44,13 @@ export function UserMenu({
       }}
     >
       {avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+        <Image
+          src={avatarUrl}
+          alt={`Avatar de ${primaryLabel}`}
+          fill
+          sizes="36px"
+          className="object-cover"
+        />
       ) : (
         initial
       )}
