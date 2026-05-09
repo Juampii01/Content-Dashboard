@@ -67,8 +67,9 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 **UI que lee mocks** (`grep "lib/mock-data"`):
 - `/instagram` — los 5 tabs
 - `/youtube` UI — demografía + dashboards (aunque `/api/youtube/*` sí es real)
-- `components/home/HomeContent`
-- `components/layout/TopBar` (stats globales)
+- `components/home/HomeContent` (lee `lib/mock-data/dashboard.ts`)
+
+**TopBar** ya NO usa mocks: lee `/api/me/global-stats` (real, suma de `AccountSnapshot` por plataforma). Sin data → muestra `—`.
 
 **Placeholders (`ComingSoonBanner`)**: `/ads`, `/tiktok` (antes leían `lib/mock-data/{ads,tiktok}.ts`; ambos archivos + sus 13 componentes tab fueron eliminados).
 
