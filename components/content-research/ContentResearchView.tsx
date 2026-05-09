@@ -273,26 +273,36 @@ export function ContentResearchView() {
       >
         <div className="flex flex-col sm:flex-row gap-3">
           <div
-            className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5"
+            className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-[var(--accent)]"
             style={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)' }}
           >
-            <Search size={16} style={{ color: 'var(--muted-foreground)' }} />
+            <Search size={16} style={{ color: 'var(--muted-foreground)' }} aria-hidden="true" />
+            <label htmlFor="research-channel" className="sr-only">
+              URL del canal de YouTube o perfil de Instagram
+            </label>
             <input
+              id="research-channel"
               type="url"
               value={channelUrl}
               onChange={(e) => setChannelUrl(e.target.value)}
               placeholder="https://www.youtube.com/@canal  ó  https://instagram.com/usuario"
               required
               disabled={loading}
+              aria-describedby={error ? 'research-error' : undefined}
+              aria-invalid={error ? true : undefined}
               className="flex-1 bg-transparent outline-none text-sm placeholder:opacity-50"
               style={{ color: 'var(--foreground)' }}
             />
           </div>
+          <label htmlFor="research-timeframe" className="sr-only">
+            Periodo de búsqueda
+          </label>
           <select
+            id="research-timeframe"
             value={timeframe}
             onChange={(e) => setTimeframe(Number(e.target.value))}
             disabled={loading}
-            className="rounded-xl px-3 py-2.5 text-sm cursor-pointer"
+            className="rounded-xl px-3 py-2.5 text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             style={{
               backgroundColor: 'var(--background)',
               border: '1px solid var(--border)',
@@ -318,7 +328,11 @@ export function ContentResearchView() {
             {loading ? 'Buscando…' : 'Investigar'}
           </button>
         </div>
-        {error && <p className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>{error}</p>}
+        {error && (
+          <p id="research-error" role="alert" className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>
+            {error}
+          </p>
+        )}
       </form>
 
       {current && (

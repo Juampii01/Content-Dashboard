@@ -289,16 +289,22 @@ export function VideoFeedView() {
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <div
-              className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5"
+              className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-[var(--accent)]"
               style={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)' }}
             >
+              <label htmlFor="video-feed-url" className="sr-only">
+                URL de tu perfil de Instagram
+              </label>
               <input
+                id="video-feed-url"
                 type="url"
                 value={channelUrl}
                 onChange={(e) => setChannelUrl(e.target.value)}
                 placeholder="https://www.instagram.com/tu_usuario/"
                 required
                 disabled={submitting}
+                aria-describedby={error ? 'video-feed-error' : undefined}
+                aria-invalid={error ? true : undefined}
                 className="flex-1 bg-transparent outline-none text-sm placeholder:opacity-50"
                 style={{ color: 'var(--foreground)' }}
               />
@@ -317,7 +323,11 @@ export function VideoFeedView() {
               {submitting ? 'Conectando…' : 'Conectar'}
             </button>
           </div>
-          {error && <p className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>{error}</p>}
+          {error && (
+            <p id="video-feed-error" role="alert" className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>
+              {error}
+            </p>
+          )}
         </form>
       ) : (
         <>
