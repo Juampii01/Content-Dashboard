@@ -1,31 +1,15 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-import { Settings, Megaphone } from 'lucide-react'
-import { AdsTabNav, useAdsTab } from '@/components/ads/AdsTabNav'
-import { TimeFilter } from '@/components/layout/TimeFilter'
+import { Megaphone } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { ComingSoonBanner } from '@/components/shared/ComingSoonBanner'
 
-const AdsResumenTab = dynamic(
-  () => import('@/components/ads/AdsResumenTab').then(m => m.AdsResumenTab),
-  { ssr: false }
-)
-const AdsMetaTab = dynamic(
-  () => import('@/components/ads/AdsMetaTab').then(m => m.AdsMetaTab),
-  { ssr: false }
-)
-const AdsTikTokTab = dynamic(
-  () => import('@/components/ads/AdsTikTokTab').then(m => m.AdsTikTokTab),
-  { ssr: false }
-)
-const AdsCreativosTab = dynamic(
-  () => import('@/components/ads/AdsCreativosTab').then(m => m.AdsCreativosTab),
-  { ssr: false }
-)
-
+/**
+ * /ads — placeholder hasta que las integraciones reales (Meta Marketing API
+ * + TikTok Ads Manager API) estén wireadas. Antes mostraba 4 tabs alimentados
+ * por `lib/mock-data/ads.ts` que parecía data real → engañoso para el cliente.
+ */
 export function AdsContent() {
-  const [tab] = useAdsTab()
-
   return (
     <div className="page-shell">
       <PageHeader
@@ -33,27 +17,14 @@ export function AdsContent() {
         title="Ads Dashboard"
         description="Rendimiento centralizado de Meta Ads y TikTok Ads."
         icon={Megaphone}
-        actions={
-          <>
-            <TimeFilter />
-            <button className="btn btn-secondary">
-              <Settings size={14} />
-              Gestionar cuentas
-            </button>
-          </>
-        }
       />
 
-      {/* Tabs */}
-      <div className="mb-6">
-        <AdsTabNav />
-      </div>
-
-      {/* Content */}
-      {tab === 'resumen'     && <AdsResumenTab />}
-      {tab === 'meta-ads'    && <AdsMetaTab />}
-      {tab === 'tiktok-ads'  && <AdsTikTokTab />}
-      {tab === 'creativos'   && <AdsCreativosTab />}
+      <ComingSoonBanner
+        title="Ads Dashboard"
+        description="Vista unificada de tus campañas de Meta Ads y TikTok Ads, con métricas de spend, ROAS y rendimiento por creativo."
+        features={['Meta Ads', 'TikTok Ads', 'ROAS por campaña', 'Análisis de creativos']}
+        prerequisite="Requiere conectar las cuentas publicitarias (Meta Business + TikTok Ads Manager)."
+      />
     </div>
   )
 }

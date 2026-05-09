@@ -1,33 +1,17 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-import { Suspense } from 'react'
 import { Music } from 'lucide-react'
-import { TimeFilter } from '@/components/layout/TimeFilter'
-import { TikTokTabNav, useTikTokTab } from '@/components/tiktok/TikTokTabNav'
-import { ConnectButton } from '@/components/shared/ConnectButton'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { ComingSoonBanner } from '@/components/shared/ComingSoonBanner'
 
-const TikTokDashboardTab = dynamic(
-  () => import('@/components/tiktok/TikTokDashboardTab').then(m => m.TikTokDashboardTab),
-  { ssr: false }
-)
-const TikTokVideosTab = dynamic(
-  () => import('@/components/tiktok/TikTokVideosTab').then(m => m.TikTokVideosTab),
-  { ssr: false }
-)
-const TikTokTendenciasTab = dynamic(
-  () => import('@/components/tiktok/TikTokTendenciasTab').then(m => m.TikTokTendenciasTab),
-  { ssr: false }
-)
-const TikTokAudienciaTab = dynamic(
-  () => import('@/components/tiktok/TikTokAudienciaTab').then(m => m.TikTokAudienciaTab),
-  { ssr: false }
-)
-
+/**
+ * /tiktok — placeholder hasta que la TikTok Display API esté wireada.
+ * Antes mostraba 4 tabs (Dashboard / Videos / Tendencias / Audiencia)
+ * alimentados por `lib/mock-data/tiktok.ts` que parecía data real → no
+ * shippeable a un cliente. ConnectButton para TikTok queda desactivado
+ * hasta que el flujo OAuth + sync esté implementado.
+ */
 export function TikTokContent() {
-  const [tab] = useTikTokTab()
-
   return (
     <div className="page-shell">
       <PageHeader
@@ -35,26 +19,14 @@ export function TikTokContent() {
         title="TikTok Analytics"
         description="Análisis de rendimiento y crecimiento en TikTok."
         icon={Music}
-        actions={
-          <>
-            <TimeFilter />
-            <Suspense fallback={null}>
-              <ConnectButton platform="tiktok" labels={{ connected: 'TikTok conectado' }} />
-            </Suspense>
-          </>
-        }
       />
 
-      {/* Tabs */}
-      <div className="mb-6">
-        <TikTokTabNav />
-      </div>
-
-      {/* Content */}
-      {tab === 'dashboard'  && <TikTokDashboardTab />}
-      {tab === 'videos'     && <TikTokVideosTab />}
-      {tab === 'tendencias' && <TikTokTendenciasTab />}
-      {tab === 'audiencia'  && <TikTokAudienciaTab />}
+      <ComingSoonBanner
+        title="TikTok Analytics"
+        description="Métricas detalladas de tu cuenta de TikTok: videos top, tendencias, demografía y crecimiento."
+        features={['Videos top', 'Tendencias', 'Demografía', 'Crecimiento']}
+        prerequisite="Conectá tu cuenta de TikTok desde la sección de integraciones."
+      />
     </div>
   )
 }

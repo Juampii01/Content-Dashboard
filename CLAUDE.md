@@ -64,15 +64,13 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 - `/api/competitors/[id]` y `/api/reels/[id]/{analyze,transcribe,chat,refresh-video-url}`
 - `/api/ai/{chat, conversations, conversations/[id]}` (Eternity AI — Anthropic SDK streaming, rate-limited 20/min)
 
-**UI que lee mocks** (`grep "lib/mock-data"` da 16+ archivos):
+**UI que lee mocks** (`grep "lib/mock-data"`):
 - `/instagram` — los 5 tabs
-- `/ads` — KPIs, campaigns, creatives
-- `/tiktok` — KPIs, videos, demografía
 - `/youtube` UI — demografía + dashboards (aunque `/api/youtube/*` sí es real)
 - `components/home/HomeContent`
 - `components/layout/TopBar` (stats globales)
 
-**Placeholders (`ComingSoonBanner`)**: — (ninguno actualmente).
+**Placeholders (`ComingSoonBanner`)**: `/ads`, `/tiktok` (antes leían `lib/mock-data/{ads,tiktok}.ts`; ambos archivos + sus 13 componentes tab fueron eliminados).
 
 **`/competidores` NO usa mocks** — lee de DB real (corrección de versiones anteriores de este archivo).
 
