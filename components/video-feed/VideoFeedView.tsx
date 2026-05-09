@@ -17,6 +17,8 @@ import {
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
+import { toast } from 'sonner'
 
 interface FeedPost {
   postId: string
@@ -140,6 +142,8 @@ export function VideoFeedView() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [refreshHint, setRefreshHint] = useState<string | null>(null)
+  const [confirmingDisconnect, setConfirmingDisconnect] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
 
   const loadAccount = useCallback(async () => {
     setAccountLoading(true)
@@ -209,14 +213,22 @@ export function VideoFeedView() {
     }
   }
 
-  const handleDisconnect = async () => {
-    setSubmitting(true)
+  const handleDisconnectConfirm = async () => {
+    setDisconnecting(true)
     try {
-      await fetch('/api/video-feed', { method: 'DELETE' })
+      const r = await fetch('/api/video-feed', { method: 'DELETE' })
+      if (!r.ok) {
+        toast.error('No se pudo desconectar la cuenta.')
+        return
+      }
       setAccount(null)
       setRefreshHint(null)
+      toast.success('Cuenta desconectada.')
+    } catch {
+      toast.error('Error de red al desconectar.')
     } finally {
-      setSubmitting(false)
+      setDisconnecting(false)
+      setConfirmingDisconnect(false)
     }
   }
 
@@ -246,9 +258,9 @@ export function VideoFeedView() {
               </button>
               <button
                 type="button"
-                onClick={handleDisconnect}
+                onClick={() => setConfirmingDisconnect(true)}
                 disabled={submitting}
-                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium disabled:opacity-50 cursor-pointer hover:bg-[color-mix(in_srgb,var(--foreground)_4%,transparent)]"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium disabled:opacity-50 cursor-pointer hover:bg-[color-mix(in_srgb,var(--foreground)_4%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
                 style={{
                   border: '1px solid var(--border)',
                   backgroundColor: 'var(--card)',
@@ -349,6 +361,25 @@ export function VideoFeedView() {
             </div>
           )}
         </>
+      )}
+
+      {confirmingDisconnect && account && (
+        <ConfirmDeleteModal
+          title="Desconectar cuenta"
+          description={
+            <>
+              Vas a desconectar <strong>@{account.channelName ?? 'la cuenta'}</strong>{' '}
+              y a borrar los <strong>{account.posts.length} posts</strong> con sus análisis IA.
+              Esta acción no se puede deshacer — vas a tener que reconectar y re-analizar
+              desde cero si querés volver.
+            </>
+          }
+          confirmLabel={disconnecting ? 'Desconectando…' : 'Desconectar'}
+          busy={disconnecting}
+          icon={<Unplug size={12} />}
+          onCancel={() => setConfirmingDisconnect(false)}
+          onConfirm={handleDisconnectConfirm}
+        />
       )}
     </div>
   )
