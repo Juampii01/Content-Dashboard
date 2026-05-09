@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { BookOpen } from 'lucide-react'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { BASES_SECTIONS } from './BasesTabNav'
 import { ICPSection } from './sections/ICPSection'
 import { ChipListSection } from './sections/ChipListSection'
@@ -58,14 +60,13 @@ export function BasesContent() {
   const [activeId, setActiveId] = useState(BASES_SECTIONS[0].id)
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Bases de negocio</h1>
-        <p className="text-sm mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-          Define los pilares estratégicos de tu contenido
-        </p>
-      </div>
+    <div className="page-shell flex flex-col gap-6">
+      <PageHeader
+        eyebrow="Estrategia"
+        title="Bases de negocio"
+        description="Definí los pilares estratégicos de tu contenido — ICP, ofertas, insights, competencia."
+        icon={BookOpen}
+      />
 
       {/* Horizontal tab nav — same style as Instagram */}
       <div

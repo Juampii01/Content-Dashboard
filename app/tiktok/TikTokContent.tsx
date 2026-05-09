@@ -2,9 +2,11 @@
 
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
+import { Music } from 'lucide-react'
 import { TimeFilter } from '@/components/layout/TimeFilter'
 import { TikTokTabNav, useTikTokTab } from '@/components/tiktok/TikTokTabNav'
 import { ConnectButton } from '@/components/shared/ConnectButton'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 const TikTokDashboardTab = dynamic(
   () => import('@/components/tiktok/TikTokDashboardTab').then(m => m.TikTokDashboardTab),
@@ -27,24 +29,21 @@ export function TikTokContent() {
   const [tab] = useTikTokTab()
 
   return (
-    <div className="px-8 py-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
-            TikTok Analytics
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
-            Análisis de rendimiento y crecimiento en TikTok.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <TimeFilter />
-          <Suspense fallback={null}>
-            <ConnectButton platform="tiktok" labels={{ connected: 'TikTok conectado' }} />
-          </Suspense>
-        </div>
-      </div>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Redes sociales"
+        title="TikTok Analytics"
+        description="Análisis de rendimiento y crecimiento en TikTok."
+        icon={Music}
+        actions={
+          <>
+            <TimeFilter />
+            <Suspense fallback={null}>
+              <ConnectButton platform="tiktok" labels={{ connected: 'TikTok conectado' }} />
+            </Suspense>
+          </>
+        }
+      />
 
       {/* Tabs */}
       <div className="mb-6">

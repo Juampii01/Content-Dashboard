@@ -53,9 +53,9 @@ function AnimatedStatCard({ label, rawValue, change, icon: Icon, color }: Animat
       <div className="flex items-center gap-1">
         <TrendingUp
           size={11}
-          style={{ color: positive ? '#4ade80' : '#f87171', transform: positive ? 'none' : 'scaleY(-1)' }}
+          style={{ color: positive ? 'var(--success)' : 'var(--destructive)', transform: positive ? 'none' : 'scaleY(-1)' }}
         />
-        <span className="text-xs font-medium" style={{ color: positive ? '#4ade80' : '#f87171' }}>
+        <span className="text-xs font-medium" style={{ color: positive ? 'var(--success)' : 'var(--destructive)' }}>
           {positive ? '+' : ''}{change}%
         </span>
         <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>vs período anterior</span>
@@ -71,9 +71,9 @@ interface StatGridProps {
 export function StatGrid({ stats: s }: StatGridProps) {
   const cards = [
     { label: 'Vistas Totales', rawValue: s.impressions, change: s.impressionsChange,                      icon: Eye,           color: 'var(--accent)' },
-    { label: 'Guardados',      rawValue: s.saves,        change: Math.round(s.impressionsChange * 0.85),   icon: Bookmark,      color: '#B08A4A' },
-    { label: 'Me Gusta',       rawValue: s.likes,        change: Math.round(s.impressionsChange * 0.72),   icon: Heart,         color: '#C49A6C' },
-    { label: 'Comentarios',    rawValue: s.comments,     change: Math.round(s.impressionsChange * 0.6),    icon: MessageCircle, color: '#9B7DB0' },
+    { label: 'Guardados',      rawValue: s.saves,        change: Math.round(s.impressionsChange * 0.85),   icon: Bookmark,      color: 'var(--stat-icon)' },
+    { label: 'Me Gusta',       rawValue: s.likes,        change: Math.round(s.impressionsChange * 0.72),   icon: Heart,         color: 'var(--stat-icon-secondary)' },
+    { label: 'Comentarios',    rawValue: s.comments,     change: Math.round(s.impressionsChange * 0.6),    icon: MessageCircle, color: 'var(--secondary)' },
   ]
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

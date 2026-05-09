@@ -33,15 +33,15 @@ export function CalendarioFilters({
           onClick={() => onCategoryChange(null)}
           className="text-[11px] px-2.5 py-1 rounded-full font-semibold transition-all cursor-pointer"
           style={{
-            backgroundColor: !filterCategory ? '#8E1F2F33' : 'var(--muted)',
+            backgroundColor: !filterCategory ? 'color-mix(in srgb, var(--accent) 20%, transparent)' : 'var(--muted)',
             color: !filterCategory ? 'var(--accent)' : 'var(--muted-foreground)',
-            border: !filterCategory ? '1px solid #8E1F2F55' : '1px solid var(--border)',
+            border: !filterCategory ? '1px solid color-mix(in srgb, var(--accent) 33%, transparent)' : '1px solid var(--border)',
             transition: 'transform 160ms cubic-bezier(0.16,1,0.3,1), box-shadow 160ms cubic-bezier(0.16,1,0.3,1), background-color 150ms ease',
           }}
           onMouseEnter={(e) => {
             const el = e.currentTarget as HTMLElement
             el.style.transform = 'translateY(-1px)'
-            el.style.boxShadow = '0 2px 8px #8E1F2F44'
+            el.style.boxShadow = '0 2px 8px color-mix(in srgb, var(--accent) 27%, transparent)'
           }}
           onMouseLeave={(e) => {
             const el = e.currentTarget as HTMLElement

@@ -23,8 +23,10 @@ export function ReelCard({ reel, onOpenDrawer }: ReelCardProps) {
   return (
     <div
       onClick={handleCardClick}
-      className="cursor-pointer rounded-xl overflow-hidden transition-all duration-150 hover:scale-[1.01] hover:opacity-95"
-      style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleCardClick() }}
+      className="cursor-pointer surface card-lift rounded-xl overflow-hidden"
     >
       {/* Thumbnail — 9:16 aspect ratio */}
       <div

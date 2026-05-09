@@ -8,6 +8,7 @@ import {
   CheckSquare, BookOpen, Search, Kanban,
   ChevronLeft, ChevronRight, Users,
   Music, Megaphone, LogOut, Shield, UserCog, Building2,
+  FileText, Telescope, Rss,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -50,6 +51,9 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Bases de negocio', href: '/bases', icon: BookOpen },
       { label: 'Analizador', href: '/analizador', icon: Search },
       { label: 'Competidores', href: '/competidores', icon: Users },
+      { label: 'Transcript', href: '/transcript', icon: FileText },
+      { label: 'Content Research', href: '/content-research', icon: Telescope },
+      { label: 'Video Feed', href: '/video-feed', icon: Rss },
     ],
   },
   {
@@ -78,7 +82,8 @@ const NAV_GROUPS: NavGroup[] = [
 export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname()
   const supabase = createClient()
-  const { profile, sessionError, setProfileFields } = useAuth()
+  const { profile, clients, sessionError, setProfileFields } = useAuth()
+  const activeClientName = clients.find((c) => c.id === profile?.activeClientId)?.name ?? null
 
   const globalRole = profile?.globalRole ?? null
   const userEmail = profile?.email ?? null
@@ -133,7 +138,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
           'md:translate-x-0'
         )}
         style={{
-          width: collapsed ? '72px' : '224px',
+          width: collapsed ? '80px' : '240px',
           transition: 'width 300ms cubic-bezier(0.4,0,0.2,1), transform 300ms cubic-bezier(0.4,0,0.2,1)',
         }}
       >
@@ -182,7 +187,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
                     Content Dashboard
                   </p>
                   <p className="text-[10px] leading-tight" style={{ color: 'var(--muted-foreground)' }}>
-                    by eternity
+                    {activeClientName ? `by ${activeClientName}` : 'by eternity'}
                   </p>
                 </div>
               </div>
@@ -271,7 +276,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
                           : 'gap-3 px-3 py-2.5 rounded-xl',
                         !active && 'hover:opacity-80 transition-opacity'
                       )}
-                      style={{ color: active ? 'var(--accent-foreground)' : 'var(--muted-foreground)' }}
+                      style={{ color: active ? 'var(--sidebar-active-fg, var(--accent-foreground))' : 'var(--muted-foreground)' }}
                     >
                       {/* Animated background pill — slides between items via layoutId */}
                       {active && (
@@ -283,7 +288,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
                       )}
                       <Icon
                         size={collapsed ? 18 : 16}
-                        style={{ color: active ? 'var(--accent-foreground)' : 'inherit', flexShrink: 0, position: 'relative' }}
+                        style={{ color: active ? 'var(--sidebar-active-fg, var(--accent-foreground))' : 'inherit', flexShrink: 0, position: 'relative' }}
                       />
                       {/* Label fades rather than mount/unmounts so there's no layout jump */}
                       {!collapsed && (

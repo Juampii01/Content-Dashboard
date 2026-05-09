@@ -31,7 +31,7 @@ export function ReferenciasTab() {
                   style={{ backgroundColor: `${CAT_COLORS[ref.category]}20`, color: CAT_COLORS[ref.category], border: `1px solid ${CAT_COLORS[ref.category]}40` }}>
                   {ref.category}
                 </span>
-                <span className="text-[11px] font-semibold" style={{ color: '#B08A4A' }}>{ref.views}</span>
+                <span className="text-[11px] font-semibold" style={{ color: 'var(--stat-icon)' }}>{ref.views}</span>
               </div>
               <p className="text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>{ref.title}</p>
               <div className="flex flex-wrap gap-1">

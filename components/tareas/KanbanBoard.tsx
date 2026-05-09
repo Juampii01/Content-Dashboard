@@ -15,11 +15,12 @@ import {
 } from '@dnd-kit/core'
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { AnimatePresence } from 'motion/react'
-import { Plus } from 'lucide-react'
+import { Plus, CheckSquare } from 'lucide-react'
 import { Task, TaskColumnId } from '@/lib/types'
 import { KanbanColumn } from './KanbanColumn'
 import { TaskCard } from './TaskCard'
 import { TaskModal } from './TaskModal'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { toast } from 'sonner'
 
 // ─── Column config ─────────────────────────────────────────────────────────
@@ -309,23 +310,22 @@ export function KanbanBoard() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Tareas</h1>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-            Organiza tu flujo de trabajo de contenido
-          </p>
-        </div>
-        <button
-          onClick={() => openCreateModal()}
-          className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium transition-all hover:opacity-90"
-          style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
-        >
-          <Plus size={15} />
-          Nueva tarea
-        </button>
-      </div>
+    <div className="page-shell flex flex-col h-full">
+      <PageHeader
+        eyebrow="Workflow"
+        title="Tareas"
+        description="Organizá tu flujo de trabajo de contenido."
+        icon={CheckSquare}
+        actions={
+          <button
+            onClick={() => openCreateModal()}
+            className="btn btn-primary"
+          >
+            <Plus size={15} />
+            Nueva tarea
+          </button>
+        }
+      />
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">

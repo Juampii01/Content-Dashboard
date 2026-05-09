@@ -6,6 +6,8 @@ import { toast } from 'sonner'
 import { CompetitorCard } from '@/components/competidores/CompetitorCard'
 import { AddCompetitorDialog } from '@/components/competidores/AddCompetitorDialog'
 import { ScrapeProgressDialog } from '@/components/competidores/ScrapeProgressDialog'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { SkeletonCardGrid } from '@/components/ui/LoadingSkeletons'
 import type { CompetitorDTO, ListCompetitorsResponse } from '@/lib/types/competidores'
 import { readActive, type ActiveJob } from '@/lib/competidores/active-jobs'
 
@@ -64,40 +66,24 @@ export function CompetitorList() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Header */}
-      <header className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>
-            Competidores
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
-            Baúl de competidores. Extrae reels, transcribe y analiza con IA.
-          </p>
-        </div>
-
-        <button
-          onClick={() => setAddOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 flex-shrink-0"
-          style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
-        >
-          <Plus size={15} />
-          Añadir competidor
-        </button>
-      </header>
-
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Inteligencia"
+        title="Competidores"
+        description="Baúl de competidores. Extraé reels, transcribí y analizá con IA."
+        icon={Users}
+        actions={
+          <button
+            onClick={() => setAddOpen(true)}
+            className="btn btn-primary"
+          >
+            <Plus size={15} />
+            Agregar competidor
+          </button>
+        }
+      />
       {/* Loading skeleton */}
-      {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="animate-pulse rounded-2xl"
-              style={{ background: 'var(--muted)', height: '120px', border: '1px solid var(--border)' }}
-            />
-          ))}
-        </div>
-      )}
+      {loading && <SkeletonCardGrid count={6} cardHeight={120} />}
 
       {/* Persistent error panel */}
       {!loading && loadError && (

@@ -31,14 +31,21 @@ export function ConfirmDeleteModal({
 
   return createPortal(
     <motion.div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
       className="fixed inset-0 z-modal-overlay flex items-center justify-center p-4 glass-overlay"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
       onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}
     >
       <motion.div
-        className="w-full max-w-md rounded-xl shadow-2xl"
-        style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+        className="w-full max-w-md rounded-xl"
+        style={{
+          backgroundColor: 'var(--card)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-modal)',
+        }}
         initial={{ opacity: 0, scale: 0.94, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 6 }}
@@ -51,7 +58,10 @@ export function ConfirmDeleteModal({
           <div className="flex items-center gap-2">
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center"
-              style={{ backgroundColor: '#E0525222', color: '#E05252' }}
+              style={{
+                backgroundColor: 'color-mix(in srgb, var(--destructive) 15%, transparent)',
+                color: 'var(--destructive)',
+              }}
             >
               <AlertTriangle size={14} />
             </div>
@@ -59,7 +69,7 @@ export function ConfirmDeleteModal({
               {title}
             </h2>
           </div>
-          <button onClick={onCancel} className="p-1 rounded hover:opacity-70 transition-opacity">
+          <button onClick={onCancel} aria-label="Cerrar" className="p-1 rounded hover:opacity-70 transition-opacity">
             <X size={16} style={{ color: 'var(--muted-foreground)' }} />
           </button>
         </div>
@@ -75,18 +85,23 @@ export function ConfirmDeleteModal({
           style={{ borderTop: '1px solid var(--border)' }}
         >
           <button
+            type="button"
             onClick={onCancel}
             disabled={busy}
-            className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
-            style={{ color: 'var(--muted-foreground)' }}
+            className="btn btn-ghost btn-sm"
           >
             Cancelar
           </button>
           <button
+            type="button"
             onClick={() => onConfirm()}
             disabled={busy}
-            className="text-xs px-4 py-1.5 rounded-lg font-medium transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center gap-1.5"
-            style={{ backgroundColor: '#E05252', color: '#fff' }}
+            className="btn btn-sm"
+            style={{
+              backgroundColor: 'var(--destructive)',
+              color: 'var(--destructive-foreground)',
+              border: '1px solid color-mix(in srgb, var(--destructive) 60%, transparent)',
+            }}
           >
             {icon}
             {confirmLabel}

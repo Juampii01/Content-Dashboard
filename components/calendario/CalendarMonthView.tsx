@@ -256,7 +256,7 @@ export function CalendarMonthView({
             fontSize: 11,
             fontWeight: 500,
             lineHeight: 1.1,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.12)',
+            boxShadow: 'var(--shadow-card-md)',
             opacity: 0.95,
             cursor: overIsCurrent ? 'grabbing' : 'not-allowed',
             whiteSpace: 'nowrap',

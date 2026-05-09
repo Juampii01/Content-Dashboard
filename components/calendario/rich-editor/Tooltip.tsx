@@ -26,11 +26,12 @@ export function Tooltip({ tooltip }: TooltipProps) {
       }}
     >
       <div
-        className="rounded-lg px-3 py-2 text-xs shadow-xl"
+        className="rounded-lg px-3 py-2 text-xs"
         style={{
-          backgroundColor: '#1A1A1A',
-          color: '#FFFFFF',
-          border: '1px solid rgba(255,255,255,0.08)',
+          backgroundColor: 'var(--popover)',
+          color: 'var(--popover-foreground)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-card-md)',
           minWidth: 200,
           maxWidth: 280,
           lineHeight: 1.6,
@@ -38,8 +39,8 @@ export function Tooltip({ tooltip }: TooltipProps) {
       >
         {tooltip.lines.map((line, i) => (
           <div key={i}>
-            <strong style={{ color: '#FFFFFF', fontWeight: 600 }}>{line.bold}</strong>
-            <span style={{ color: 'rgba(255,255,255,0.7)' }}>{line.rest}</span>
+            <strong style={{ color: 'var(--popover-foreground)', fontWeight: 600 }}>{line.bold}</strong>
+            <span style={{ color: 'var(--muted-foreground)' }}>{line.rest}</span>
           </div>
         ))}
       </div>

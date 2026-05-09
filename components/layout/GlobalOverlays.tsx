@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { usePathname } from 'next/navigation'
 
 const IdeasButton = dynamic(() => import('@/components/ideas/IdeasButton').then((m) => m.IdeasButton), { ssr: false })
+const CommandPalette = dynamic(() => import('@/components/layout/CommandPalette').then((m) => m.CommandPalette), { ssr: false })
 const Toaster = dynamic(() => import('sonner').then((m) => m.Toaster), { ssr: false })
 
 export function GlobalOverlays() {
@@ -13,6 +14,7 @@ export function GlobalOverlays() {
   return (
     <>
       {!isAuthPage && <IdeasButton />}
+      {!isAuthPage && <CommandPalette />}
       <Toaster position="bottom-right" richColors />
     </>
   )

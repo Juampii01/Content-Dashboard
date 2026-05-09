@@ -22,7 +22,7 @@ export function IdeasButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed z-overlay flex items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
+        className="fixed z-overlay flex items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 brand-glow"
         style={{ bottom: '5rem', right: '1.5rem', backgroundColor: 'var(--accent)' }}
         title="Baúl de ideas"
       >
@@ -30,7 +30,7 @@ export function IdeasButton() {
         {count > 0 && (
           <span
             className="absolute -top-1 -right-1 text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: '#B08A4A', color: '#0F0B0C' }}
+            style={{ backgroundColor: 'var(--stat-icon)', color: '#ffffff' }}
           >
             {count > 9 ? '9+' : count}
           </span>

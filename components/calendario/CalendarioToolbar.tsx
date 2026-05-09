@@ -128,7 +128,7 @@ export function CalendarioToolbar({
             left: `calc(${viewIdx * 50}% + 2px)`,
             width: 'calc(50% - 4px)',
             backgroundColor: 'var(--accent)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
+            boxShadow: 'var(--shadow-card-sm)',
             transition: 'left 200ms cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         />
@@ -229,18 +229,18 @@ export function CalendarioToolbar({
         className="text-xs px-3.5 rounded-lg font-semibold transition-all cursor-pointer cal-add-btn"
         style={{
           backgroundColor: 'var(--accent)',
-          color: '#fff',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.08)',
+          color: 'var(--accent-foreground)',
+          boxShadow: 'var(--shadow-card-sm)',
         }}
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLElement
           el.style.transform = 'translateY(-1px)'
-          el.style.boxShadow = '0 4px 12px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 1px 0 rgba(255,255,255,0.12)'
+          el.style.boxShadow = '0 4px 12px color-mix(in srgb, var(--accent) 45%, transparent)'
         }}
         onMouseLeave={(e) => {
           const el = e.currentTarget as HTMLElement
           el.style.transform = 'translateY(0)'
-          el.style.boxShadow = '0 1px 2px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.08)'
+          el.style.boxShadow = 'var(--shadow-card-sm)'
         }}
       >
         + Añadir

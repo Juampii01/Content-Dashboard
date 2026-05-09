@@ -17,6 +17,9 @@
 | `/instagram`   | `app/instagram/page.tsx` → `InstagramContent`   | Instagram analytics view                                         |
 | `/login`       | `app/login/page.tsx`                            | Supabase Auth — email/password. Redirects to `/` on success      |
 | `/tareas`      | `app/tareas/page.tsx` → `KanbanBoard`           | Task kanban board                                                |
+| `/transcript`  | `app/transcript/page.tsx` → `TranscriptView`    | Paste a YouTube/Instagram URL → transcript + AI summary (Apify + Groq + Claude). History scoped to active client. |
+| `/content-research` | `app/content-research/page.tsx` → `ContentResearchView` | Channel-level research — top 5 videos in a timeframe with AI analysis (YouTube via Data API, Instagram via Apify). |
+| `/video-feed`  | `app/video-feed/page.tsx` → `VideoFeedView`     | Connect own Instagram → last 30 days ranked by engagement, AI analysis per post. Singleton per (client, platform). |
 | `/tiktok`      | `app/tiktok/page.tsx` → `TikTokContent`         | TikTok analytics — 4 tabs (Dashboard, Videos, Tendencias, Audiencia) |
 | `/youtube`     | `app/youtube/page.tsx` → `YouTubeContent`       | YouTube analytics — 3 tabs (Dashboard, Videos, Audiencia) + ConnectButton |
 | `/pending-approval` | `app/pending-approval/page.tsx`            | Landing for PENDING users — shown until a SUPER_ADMIN approves them |
@@ -39,6 +42,21 @@ API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `yo
 - `POST /api/ai/conversations` — create an empty conversation (title optional)
 - `GET /api/ai/conversations/[id]` — return conversation + messages (tenant-scoped)
 - `DELETE /api/ai/conversations/[id]` — delete conversation + its messages (tenant-scoped)
+
+### Transcript APIs
+
+- `POST /api/transcript` — body `{ url }` (YouTube or Instagram). Resolves video, transcribes (Apify + Groq Whisper for IG, Apify + watch-page scrape for YT), summarizes via Claude, persists to `TranscriptHistory`. Rate-limited 5/min.
+- `GET /api/transcript` — list the active client's last 50 transcripts (most recent first)
+- `DELETE /api/transcript` — body `{ id }` removes one row (must belong to active client)
+
+### Content Research + Video Feed APIs
+
+- `POST /api/content-research` — body `{ channelUrl, timeframeDays? }`. Resolves a YouTube channel (via Data API) or Instagram profile (Apify), returns top 5 videos in window with batched Claude Haiku analysis. Saves to `ContentResearchHistory`. Rate-limited 5/min.
+- `GET /api/content-research` — list the active client's last 50 research runs.
+- `DELETE /api/content-research` — body `{ id }` removes one row.
+- `GET /api/video-feed` — return the active client's connected Instagram feed (or `{ account: null }`).
+- `POST /api/video-feed` — body `{ channelUrl }`. Connect or refresh: scrapes profile, only re-analyzes new posts, merges with existing analyses, persists. Rate-limited 5/min.
+- `DELETE /api/video-feed` — disconnect (removes the row).
 
 ### Admin + auth APIs
 
@@ -71,6 +89,9 @@ Visual verification — all routes
 - [ ] /instagram   loads, filters render (incl. ReelFilters, TimeFilter), ConnectButton visible
 - [ ] /login       form renders; successful login redirects to /
 - [ ] /tareas      kanban renders, drag works
+- [ ] /transcript  URL form renders; paste YouTube link returns transcript + summary; history list shows past items
+- [ ] /content-research  channel input + timeframe; results grid renders with AI analysis chips; history works
+- [ ] /video-feed  empty state shows connect form; after connect, posts grid renders ranked with AI summaries
 - [ ] /tiktok      loads, tabs (Dashboard, Videos, Tendencias, Audiencia) renderizan
 - [ ] /youtube     loads, tabs (Dashboard, Videos, Audiencia) renderizan
 - [ ] /pending-approval  PENDING user lands here, sign-out works

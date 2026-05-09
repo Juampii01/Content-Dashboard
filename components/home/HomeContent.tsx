@@ -71,7 +71,7 @@ export function HomeContent() {
   }, [])
 
   return (
-    <div className="p-6 flex flex-col gap-6" style={{ minHeight: '100%' }}>
+    <div className="page-shell flex flex-col gap-7" style={{ minHeight: '100%' }}>
       <motion.div {...fadeUp(0)}>
         <GreetingBlock
           pipelineProduccion={clientData.produccion}
@@ -83,9 +83,7 @@ export function HomeContent() {
       </motion.div>
 
       <motion.div {...fadeUp(1)} className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
-          Rendimiento Instagram
-        </p>
+        <p className="text-eyebrow">Rendimiento Instagram</p>
         <div className="relative flex items-center gap-1 p-1 rounded-xl"
           style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}>
           {PERIODS.map(({ label, value }) => (

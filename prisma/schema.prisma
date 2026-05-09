@@ -40,6 +40,7 @@ model Client {
   id            String           @id @default(cuid())
   name          String
   slug          String           @unique
+  themeKey      String           @default("eternity")
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   accesses      ClientAccess[]
@@ -516,6 +517,65 @@ model AccountSnapshot {
 
   @@unique([clientId, platform, date])
   @@index([clientId, platform, date])
+}
+
+// ContentResearchHistory: /content-research — saved channel-level research runs.
+// Each row stores the channel info + a JSON array of top videos with their AI
+// analysis. Ported from Smart-Scale's `content_research_history` table.
+model ContentResearchHistory {
+  id             String   @id @default(cuid())
+  clientId       String
+  createdBy      String?
+  platform       String   // 'youtube' | 'instagram'
+  channelUrl     String
+  channelName    String?
+  channelAvatar  String?
+  timeframeDays  Int      @default(30)
+  videos         Json     @default("[]")  // VideoResult[] (see view types)
+  createdAt      DateTime @default(now())
+
+  @@index([clientId, createdAt])
+}
+
+// VideoFeedAccount: /video-feed — singleton per (client, platform) tracking the
+// user's own connected feed (last 30 days, AI-ranked). Ported from Smart-Scale.
+// Posts persisted as JSON so we don't bloat the schema with per-post rows for
+// every refresh — engagement score + analysis are recomputed in-memory.
+model VideoFeedAccount {
+  id             String   @id @default(cuid())
+  clientId       String
+  createdBy      String?
+  platform       String   // 'instagram'
+  channelUrl     String
+  channelName    String?
+  channelAvatar  String?
+  posts          Json     @default("[]")  // FeedPost[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([clientId, platform])
+  @@index([clientId])
+}
+
+// TranscriptHistory: /transcript — saved transcriptions of YouTube/IG URLs.
+// Ported from Smart-Scale's `transcript_history` table. Stores the URL,
+// resolved metadata, full transcript and AI-generated summary so users can
+// revisit past analyses without re-running the (paid) transcription pipeline.
+model TranscriptHistory {
+  id         String   @id @default(cuid())
+  clientId   String
+  createdBy  String?
+  url        String
+  platform   String   // 'youtube' | 'instagram'
+  title      String?
+  creator    String?
+  duration   String?
+  thumbnail  String?
+  transcript String?
+  summary    String?
+  createdAt  DateTime @default(now())
+
+  @@index([clientId, createdAt])
 }
 
 // IncomeRecord: /ventas — one income entry, optionally tied to a reel.

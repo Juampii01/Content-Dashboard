@@ -3,7 +3,6 @@
 import { RefreshCw } from 'lucide-react'
 import { usePeriod } from '@/hooks/usePeriod'
 import type { Period } from '@/lib/types'
-import { cn } from '@/lib/utils'
 
 const PERIODS: Period[] = [7, 14, 30, 90]
 
@@ -12,24 +11,31 @@ export function TimeFilter() {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1 p-1 rounded-lg"
-        style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
-        {PERIODS.map(p => (
-          <button key={p} onClick={() => setPeriod(p)}
-            className={cn(
-              'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150',
-              period === p ? '' : 'hover:opacity-80'
-            )}
-            style={{
-              backgroundColor: period === p ? 'var(--accent)' : 'transparent',
-              color: period === p ? 'var(--accent-foreground)' : 'var(--muted-foreground)',
-            }}>
-            {p}d
-          </button>
-        ))}
+      <div
+        className="flex items-center gap-0.5 p-1 rounded-xl"
+        style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+      >
+        {PERIODS.map((p) => {
+          const active = period === p
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPeriod(p)}
+              className="relative px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              style={{
+                color: active ? 'var(--accent-foreground)' : 'var(--muted-foreground)',
+                backgroundColor: active ? 'var(--accent)' : 'transparent',
+                boxShadow: active ? 'var(--shadow-card-sm)' : 'none',
+              }}
+              aria-pressed={active}
+            >
+              {p}d
+            </button>
+          )
+        })}
       </div>
-      <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all hover:opacity-80"
-        style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', color: 'var(--muted-foreground)' }}>
+      <button type="button" className="btn btn-secondary btn-sm">
         <RefreshCw size={13} />
         Sincronizar
       </button>

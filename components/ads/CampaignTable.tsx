@@ -4,9 +4,9 @@ import type { Campaign, CampaignStatus } from '@/lib/mock-data/ads'
 import { formatK, formatPercent } from '@/lib/utils/formatters'
 
 const STATUS_STYLES: Record<CampaignStatus, { bg: string; color: string; label: string }> = {
-  activa:    { bg: 'rgba(16,185,129,0.12)', color: '#10b981', label: 'Activa' },
-  pausada:   { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b', label: 'Pausada' },
-  terminada: { bg: 'var(--muted)',          color: 'var(--muted-foreground)', label: 'Terminada' },
+  activa:    { bg: 'color-mix(in srgb, var(--success) 15%, transparent)', color: 'var(--success)',  label: 'Activa' },
+  pausada:   { bg: 'color-mix(in srgb, var(--warning) 15%, transparent)', color: 'var(--warning)',  label: 'Pausada' },
+  terminada: { bg: 'var(--muted)',                                         color: 'var(--muted-foreground)', label: 'Terminada' },
 }
 
 function StatusBadge({ status }: { status: CampaignStatus }) {
@@ -89,7 +89,7 @@ export function CampaignTable({ campaigns }: Props) {
           </span>
           <span
             className="text-right tabular-nums font-bold"
-            style={{ color: c.roas >= 4 ? '#10b981' : c.roas >= 2 ? '#B08A4A' : 'var(--accent)' }}
+            style={{ color: c.roas >= 4 ? 'var(--success)' : c.roas >= 2 ? 'var(--stat-icon)' : 'var(--accent)' }}
           >
             ×{c.roas.toFixed(1)}
           </span>

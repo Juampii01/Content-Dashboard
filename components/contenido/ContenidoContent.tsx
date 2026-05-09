@@ -4,6 +4,7 @@ import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Kanban, CalendarDays, CalendarClock, FileText, Wand2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 const PipelineBoard   = dynamic(() => import('@/components/pipeline/PipelineBoard').then((m) => m.PipelineBoard),   { ssr: false })
 const CalendarioTab   = dynamic(() => import('@/components/calendario/CalendarioTab').then((m) => m.CalendarioTab), { ssr: false })
@@ -42,18 +43,14 @@ export function ContenidoContent() {
   const [active, setActive] = useState<SectionId>('pipeline')
 
   return (
-    <div className="px-8 py-6">
-      {/* Page header — matches Instagram section layout */}
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Contenido"
+        title="Contenido"
+        description="Pipeline, calendarios, guiones y generación con IA."
+        icon={Kanban}
+      />
       <div>
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
-            Contenido
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
-            Pipeline, calendarios, guiones y generación con IA.
-          </p>
-        </div>
-
         {/* Tab navigation — same visual pattern as Instagram TabNav */}
         <div
           className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto"

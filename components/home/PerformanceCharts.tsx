@@ -37,7 +37,7 @@ interface PerformanceChartsProps {
 export function PerformanceCharts({ stats: s }: PerformanceChartsProps) {
   return (
     <div className="flex-1 min-w-0 flex flex-col gap-5">
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+      <div className="rounded-2xl p-5 card-lift" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
             Alcance &amp; Visibilidad
@@ -78,7 +78,7 @@ export function PerformanceCharts({ stats: s }: PerformanceChartsProps) {
         </ResponsiveContainer>
       </div>
 
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+      <div className="rounded-2xl p-5 card-lift" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Interacciones</p>
           <div className="flex items-center gap-4">

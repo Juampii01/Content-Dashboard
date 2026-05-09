@@ -1,9 +1,10 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { Settings } from 'lucide-react'
+import { Settings, Megaphone } from 'lucide-react'
 import { AdsTabNav, useAdsTab } from '@/components/ads/AdsTabNav'
 import { TimeFilter } from '@/components/layout/TimeFilter'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 const AdsResumenTab = dynamic(
   () => import('@/components/ads/AdsResumenTab').then(m => m.AdsResumenTab),
@@ -26,35 +27,22 @@ export function AdsContent() {
   const [tab] = useAdsTab()
 
   return (
-    <div className="px-8 py-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1
-            className="text-3xl font-bold tracking-tight"
-            style={{ color: 'var(--foreground)' }}
-          >
-            Ads Dashboard
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
-            Rendimiento centralizado de Meta Ads y TikTok Ads.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <TimeFilter />
-          <button
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
-            style={{
-              backgroundColor: 'var(--card)',
-              border: '1px solid var(--border)',
-              color: 'var(--muted-foreground)',
-            }}
-          >
-            <Settings size={14} />
-            Gestionar cuentas
-          </button>
-        </div>
-      </div>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Performance"
+        title="Ads Dashboard"
+        description="Rendimiento centralizado de Meta Ads y TikTok Ads."
+        icon={Megaphone}
+        actions={
+          <>
+            <TimeFilter />
+            <button className="btn btn-secondary">
+              <Settings size={14} />
+              Gestionar cuentas
+            </button>
+          </>
+        }
+      />
 
       {/* Tabs */}
       <div className="mb-6">

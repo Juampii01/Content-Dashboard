@@ -83,10 +83,13 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCou
     return (
       <div
         className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 mb-4"
-        style={{ backgroundColor: '#b4540910', border: '1px solid #b45309' }}
+        style={{
+          backgroundColor: 'color-mix(in srgb, var(--warning) 12%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--warning) 50%, var(--border))',
+        }}
       >
         <div className="flex items-center gap-3">
-          <AlertTriangle size={16} style={{ color: '#b45309' }} />
+          <AlertTriangle size={16} style={{ color: 'var(--warning)' }} />
           <div>
             <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
               Tu conexión con Instagram expiró
@@ -117,7 +120,7 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCou
         style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
       >
         <div className="flex items-center gap-3">
-          <CheckCircle2 size={16} style={{ color: '#16a34a' }} />
+          <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />
           <div>
             <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
               Instagram conectado {summary.accountName ? `como @${summary.accountName}` : ''}
@@ -148,7 +151,7 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCou
       style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}
     >
       <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--muted-foreground)' }}>
-        <CheckCircle2 size={14} style={{ color: '#16a34a' }} />
+        <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />
         <span>
           {reelCount} reels sincronizados
           {summary.latestSnapshot ? ` · ${summary.latestSnapshot.followers.toLocaleString('es-ES')} seguidores` : ''}

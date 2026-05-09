@@ -1,37 +1,27 @@
+import { Skeleton } from '@/components/ui/skeleton'
+
 export default function Loading() {
   return (
-    <div className="flex-1 p-6 min-h-screen">
-      {/* Page heading */}
-      <div
-        className="animate-pulse rounded-md mb-6"
-        style={{ background: 'var(--muted)', height: '28px', width: '140px' }}
-      />
-
-      {/* Tabs row — 5 tabs */}
+    <div className="page-shell flex-1 min-h-screen">
+      <Skeleton className="mb-6" style={{ height: 28, width: 140 }} />
       <div className="flex gap-2 mb-6">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div
+          <Skeleton
             key={i}
-            className="animate-pulse rounded-lg"
+            className="rounded-lg"
             style={{
-              background: 'var(--muted)',
-              height: '34px',
-              width: i === 0 ? '80px' : '70px',
+              height: 34,
+              width: i === 0 ? 80 : 70,
+              animationDelay: `${i * 50}ms`,
             }}
           />
         ))}
       </div>
-
-      {/* Content block — multi-line text skeleton */}
-      <div
-        className="animate-pulse rounded-xl p-5 space-y-3"
-        style={{ background: 'var(--muted)', border: '1px solid var(--border)', minHeight: '220px' }}
-      >
+      <div className="surface rounded-xl p-5 space-y-3" style={{ minHeight: 220 }}>
         {[85, 95, 70, 90, 60, 80, 50].map((w, i) => (
-          <div
+          <Skeleton
             key={i}
-            className="rounded"
-            style={{ background: 'var(--muted-foreground)', opacity: 0.15, height: '13px', width: `${w}%` }}
+            style={{ height: 13, width: `${w}%`, animationDelay: `${i * 40}ms` }}
           />
         ))}
       </div>

@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { Search, Loader2, SortAsc, SortDesc, Clapperboard } from 'lucide-react'
 import { ReelAnalyzerCard } from './ReelAnalyzerCard'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 type SortField = 'views' | 'likes' | 'comments' | 'shares'
 type SortDir = 'desc' | 'asc'
@@ -150,14 +151,13 @@ export function AnalizadorContent() {
   })
 
   return (
-    <div>
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Analizador</h1>
-        <p className="text-sm mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-          Analiza los reels de cualquier cuenta de Instagram y extrae la estructura de sus guiones
-        </p>
-      </div>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Análisis"
+        title="Analizador"
+        description="Analizá los reels de cualquier cuenta de Instagram y extraé la estructura de sus guiones."
+        icon={Search}
+      />
 
       {/* Search bar */}
       <div
@@ -238,12 +238,23 @@ export function AnalizadorContent() {
 
       {/* Error */}
       {error && (
-        <div className="rounded-xl p-4 mb-4 flex items-center justify-between gap-4 text-sm" style={{ backgroundColor: '#E0525218', border: '1px solid #E0525244', color: '#E05252' }}>
+        <div
+          className="rounded-xl p-4 mb-4 flex items-center justify-between gap-4 text-sm"
+          style={{
+            backgroundColor: 'color-mix(in srgb, var(--destructive) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--destructive) 30%, var(--border))',
+            color: 'var(--destructive)',
+          }}
+        >
           <span>{error}</span>
           <button
             onClick={handleSearch}
             className="flex-shrink-0 text-xs px-3 py-1.5 rounded-lg font-medium transition-all hover:opacity-80"
-            style={{ backgroundColor: '#E0525233', color: '#E05252', border: '1px solid #E0525266' }}
+            style={{
+              backgroundColor: 'color-mix(in srgb, var(--destructive) 20%, transparent)',
+              color: 'var(--destructive)',
+              border: '1px solid color-mix(in srgb, var(--destructive) 40%, var(--border))',
+            }}
           >
             Reintentar
           </button>

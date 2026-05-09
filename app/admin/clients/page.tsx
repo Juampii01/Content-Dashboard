@@ -1,18 +1,18 @@
+import { Building2 } from 'lucide-react'
 import { ClientsAdminClient } from '@/components/admin/ClientsAdminClient'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 export const dynamic = 'force-dynamic'
 
 export default function AdminClientsPage() {
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>
-          Clientes
-        </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
-          Crear, editar y eliminar espacios de trabajo (tenants).
-        </p>
-      </div>
+    <div className="page-shell" style={{ maxWidth: '64rem' }}>
+      <PageHeader
+        eyebrow="Admin"
+        title="Clientes"
+        description="Creá, editá y eliminá espacios de trabajo (tenants)."
+        icon={Building2}
+      />
       <ClientsAdminClient />
     </div>
   )

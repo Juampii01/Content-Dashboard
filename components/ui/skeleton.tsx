@@ -3,11 +3,10 @@ import { cn } from "@/lib/utils"
 /**
  * Skeleton — low-level loading placeholder.
  *
- * Matches the shadcn API shape (div with `animate-pulse` + muted background) so
- * existing code that imports `@/components/ui/skeleton` keeps working. Uses the
- * `bg-muted/40` token from the theme — no hardcoded hex. Brand rule: colors
- * flow through CSS vars (`var(--muted)` surfaces via the `bg-muted` utility in
- * Tailwind v4).
+ * Uses the global `.animate-shimmer` keyframe (defined in `app/globals.css`)
+ * which gives a theme-aware moving highlight instead of the static pulse.
+ * Drop-in compatible with the previous shadcn-style API — existing code
+ * importing `@/components/ui/skeleton` keeps working without changes.
  */
 function Skeleton({
   className,
@@ -15,7 +14,7 @@ function Skeleton({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-muted/40", className)}
+      className={cn("animate-shimmer rounded-md", className)}
       {...props}
     />
   )

@@ -1,18 +1,18 @@
+import { UserCog } from 'lucide-react'
 import { UsersAdminClient } from '@/components/admin/UsersAdminClient'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 export const dynamic = 'force-dynamic'
 
 export default function AdminUsersPage() {
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>
-          Usuarios
-        </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
-          Aprobar, promover y gestionar acceso a clientes.
-        </p>
-      </div>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Admin"
+        title="Usuarios"
+        description="Aprobá, promové y gestioná acceso a clientes."
+        icon={UserCog}
+      />
       <UsersAdminClient />
     </div>
   )

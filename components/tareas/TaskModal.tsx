@@ -61,6 +61,9 @@ export function TaskModal({ task, defaultColumnId = 'por-hacer', onSave, onDelet
   // motion wrappers, etc.) so the overlay reliably covers TopBar + Sidebar.
   return createPortal(
     <motion.div
+      role="dialog"
+      aria-modal="true"
+      aria-label={task ? 'Editar tarea' : 'Nueva tarea'}
       className="fixed inset-0 z-modal-overlay flex items-center justify-center p-4 glass-overlay"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -177,26 +180,27 @@ export function TaskModal({ task, defaultColumnId = 'por-hacer', onSave, onDelet
         <div className="flex items-center justify-between px-5 py-4 border-t" style={{ borderColor: 'var(--border)' }}>
           {task && onDelete ? (
             <button
+              type="button"
               onClick={() => { onDelete(task.id); onClose() }}
-              className="text-xs px-3 py-1.5 rounded-lg transition-all hover:opacity-80"
-              style={{ color: '#E05252', backgroundColor: '#E0525218' }}
+              className="btn btn-sm"
+              style={{
+                color: 'var(--destructive)',
+                backgroundColor: 'color-mix(in srgb, var(--destructive) 12%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--destructive) 25%, var(--border))',
+              }}
             >
               Eliminar
             </button>
           ) : <span />}
           <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="text-xs px-3 py-1.5 rounded-lg transition-all hover:opacity-70"
-              style={{ color: 'var(--muted-foreground)' }}
-            >
+            <button type="button" onClick={onClose} className="btn btn-ghost btn-sm">
               Cancelar
             </button>
             <button
+              type="button"
               onClick={handleSubmit}
               disabled={!title.trim()}
-              className="text-xs px-4 py-1.5 rounded-lg font-medium transition-all disabled:opacity-40"
-              style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
+              className="btn btn-primary btn-sm"
             >
               {task ? 'Guardar' : 'Crear tarea'}
             </button>

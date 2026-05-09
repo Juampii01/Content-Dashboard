@@ -31,11 +31,11 @@ export function CompetenciaTab() {
                 </td>
                 <td className="px-5 py-4 font-semibold" style={{ color: 'var(--foreground)' }}>{formatK(c.followers)}</td>
                 <td className="px-5 py-4">
-                  <span className="flex items-center gap-1 text-xs font-medium" style={{ color: '#8A7A4A' }}>
+                  <span className="flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--stat-icon-secondary)' }}>
                     <TrendingUp size={12} />+{c.followersChange}%
                   </span>
                 </td>
-                <td className="px-5 py-4 font-semibold" style={{ color: '#B08A4A' }}>{formatPercent(c.engagementRate)}</td>
+                <td className="px-5 py-4 font-semibold" style={{ color: 'var(--stat-icon)' }}>{formatPercent(c.engagementRate)}</td>
                 <td className="px-5 py-4" style={{ color: 'var(--foreground)' }}>{c.postsPerWeek}</td>
                 <td className="px-5 py-4" style={{ color: 'var(--foreground)' }}>{formatK(c.avgViews)}</td>
                 <td className="px-5 py-4" style={{ color: 'var(--foreground)' }}>{formatK(c.avgLikes)}</td>

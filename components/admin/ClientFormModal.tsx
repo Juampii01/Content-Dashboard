@@ -61,14 +61,21 @@ export function ClientFormModal({ editing, onClose, onSaved }: Props) {
 
   return createPortal(
     <motion.div
+      role="dialog"
+      aria-modal="true"
+      aria-label={editing ? 'Editar cliente' : 'Nuevo cliente'}
       className="fixed inset-0 z-modal-overlay flex items-center justify-center p-4 glass-overlay"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <motion.div
-        className="w-full max-w-md rounded-xl shadow-2xl flex flex-col"
-        style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+        className="w-full max-w-md rounded-xl flex flex-col"
+        style={{
+          backgroundColor: 'var(--card)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-modal)',
+        }}
         initial={{ opacity: 0, scale: 0.94, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 6 }}
@@ -129,18 +136,14 @@ export function ClientFormModal({ editing, onClose, onSaved }: Props) {
           className="flex justify-end gap-2 px-5 py-3"
           style={{ borderTop: '1px solid var(--border)' }}
         >
-          <button
-            onClick={onClose}
-            className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
-            style={{ color: 'var(--muted-foreground)' }}
-          >
+          <button type="button" onClick={onClose} className="btn btn-ghost btn-sm">
             Cancelar
           </button>
           <button
+            type="button"
             onClick={submit}
             disabled={busy || !name.trim()}
-            className="text-xs px-4 py-1.5 rounded-lg font-medium transition-opacity hover:opacity-90 disabled:opacity-40 flex items-center gap-1.5"
-            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+            className="btn btn-primary btn-sm"
           >
             {busy && <Loader2 size={11} className="animate-spin" />}
             {editing ? 'Guardar' : 'Crear'}

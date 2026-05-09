@@ -85,7 +85,7 @@ export function QuickSummarySidebar({ stats: s }: QuickSummarySidebarProps) {
         <div className="flex justify-around">
           {[
             { label: 'Vistas',     pct: s.viewsGoalPct,     color: 'var(--accent)' },
-            { label: 'Seguidores', pct: s.followersGoalPct, color: '#B08A4A' },
+            { label: 'Seguidores', pct: s.followersGoalPct, color: 'var(--stat-icon)' },
           ].map(({ label, pct, color }) => (
             <div key={label} className="flex flex-col items-center gap-2">
               <div className="relative flex items-center justify-center">
@@ -103,11 +103,11 @@ export function QuickSummarySidebar({ stats: s }: QuickSummarySidebarProps) {
         <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--muted-foreground)' }}>
           Engagement Rate
         </p>
-        <p className="text-3xl font-bold tabular-nums mb-1" style={{ color: '#B08A4A' }}>{animatedEng}%</p>
+        <p className="text-3xl font-bold tabular-nums mb-1" style={{ color: 'var(--stat-icon)' }}>{animatedEng}%</p>
         <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Promedio del período seleccionado</p>
         <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
           <div className="h-full rounded-full"
-            style={{ width: `${Math.min(s.engagementRate * 10, 100)}%`, backgroundColor: '#B08A4A' }} />
+            style={{ width: `${Math.min(s.engagementRate * 10, 100)}%`, backgroundColor: 'var(--stat-icon)' }} />
         </div>
       </div>
 
@@ -119,7 +119,7 @@ export function QuickSummarySidebar({ stats: s }: QuickSummarySidebarProps) {
         <div className="flex flex-col gap-2.5">
           {[
             { label: 'Orgánico', pct: s.trafficOrganic, color: 'var(--accent)' },
-            { label: 'Pago',     pct: s.trafficPaid,    color: '#B08A4A' },
+            { label: 'Pago',     pct: s.trafficPaid,    color: 'var(--stat-icon)' },
           ].map(({ label, pct, color }) => (
             <div key={label}>
               <div className="flex items-center justify-between mb-1">

@@ -29,7 +29,7 @@ const CITIES_DATA = [
   { city: 'Otras', pct: 23 },
 ]
 
-const COLORS = ['var(--accent)', '#B08A4A', '#9A8F89']
+const COLORS = ['var(--accent)', 'var(--stat-icon)', '#9A8F89']
 
 export function DemografiaTab() {
   return (
@@ -89,10 +89,10 @@ export function DemografiaTab() {
               <div key={c.city}>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span style={{ color: 'var(--foreground)' }}>{i + 1}. {c.city}</span>
-                  <span className="font-semibold" style={{ color: '#B08A4A' }}>{c.pct}%</span>
+                  <span className="font-semibold" style={{ color: 'var(--stat-icon)' }}>{c.pct}%</span>
                 </div>
                 <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--accent)' }}>
-                  <div className="h-full rounded-full" style={{ width: `${c.pct}%`, backgroundColor: i === 0 ? 'var(--accent)' : '#B08A4A' }} />
+                  <div className="h-full rounded-full" style={{ width: `${c.pct}%`, backgroundColor: i === 0 ? 'var(--accent)' : 'var(--stat-icon)' }} />
                 </div>
               </div>
             ))}

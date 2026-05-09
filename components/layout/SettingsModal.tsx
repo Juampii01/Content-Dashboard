@@ -55,16 +55,19 @@ export function SettingsModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-modal flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Ajustes"
+      className="fixed inset-0 z-modal flex items-center justify-center p-4 glass-overlay"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+        className="w-full max-w-sm rounded-2xl p-6"
         style={{
           backgroundColor: 'var(--card)',
           border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-modal)',
         }}
       >
         <div className="mb-4 flex items-center justify-between">

@@ -40,8 +40,10 @@ export function CompetitorCard({ competitor }: CompetitorCardProps) {
   return (
     <div
       onClick={handleClick}
-      className="cursor-pointer rounded-xl p-4 flex items-center gap-4 transition-all duration-150 hover:scale-[1.01] hover:opacity-90"
-      style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
+      className="cursor-pointer surface card-lift rounded-xl p-4 flex items-center gap-4"
     >
       {/* Avatar — plain <img>: IG CDN URLs rotate frequently, not worth adding to next.config remotePatterns */}
       {competitor.profilePicUrl ? (

@@ -89,7 +89,7 @@ export function DashboardTab() {
         <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--muted-foreground)' }}>MEJOR REEL</p>
-            <Trophy className="h-5 w-5" style={{ color: '#B08A4A' }} />
+            <Trophy className="h-5 w-5" style={{ color: 'var(--stat-icon)' }} />
           </div>
           <p className="text-xs mb-2" style={{ color: 'var(--muted-foreground)' }}>1° de {reelSource.length} reels</p>
           <div className="flex items-center gap-3">

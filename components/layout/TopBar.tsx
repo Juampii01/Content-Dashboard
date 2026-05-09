@@ -14,55 +14,102 @@ export function TopBar() {
   const stats = getGlobalStats(period)
   const { open: openMobileSidebar } = useContext(MobileSidebarContext)
 
+  const metrics = [
+    { Icon: Eye,        label: 'VIEWS',    value: formatM(stats.views),               color: 'var(--stat-icon)',           delay: '0ms'   },
+    { Icon: Users,      label: 'FOLLOWERS', value: formatM(stats.followers),           color: 'var(--stat-icon)',           delay: '60ms'  },
+    { Icon: TrendingUp, label: 'ENG. RATE', value: formatPercent(stats.engagementRate), color: 'var(--stat-icon-secondary)', delay: '120ms' },
+  ]
+
   return (
     <header
-      className="sticky top-0 z-sticky h-14 flex items-center justify-between px-6"
+      className="sticky top-0 z-sticky h-16 flex items-center justify-between gap-4 px-4 md:px-6 backdrop-blur-xl"
       style={{
-        backgroundColor: 'var(--background)',
+        backgroundColor:
+          'color-mix(in srgb, var(--background) 80%, transparent)',
         borderBottom: '1px solid var(--border)',
       }}
     >
-      {/* Profile */}
-      <div className="flex items-center gap-3">
+      {/* Mobile menu + identity block */}
+      <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
           onClick={openMobileSidebar}
-          aria-label="Open menu"
-          className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:opacity-70 transition-opacity cursor-pointer"
+          aria-label="Abrir menú"
+          className="md:hidden flex items-center justify-center h-9 w-9 rounded-xl transition-colors cursor-pointer hover:bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)]"
           style={{ color: 'var(--muted-foreground)' }}
         >
           <Menu size={18} />
         </button>
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold transition-shadow duration-200 hover:shadow-[0_0_0_2px_var(--accent),0_0_0_4px_color-mix(in_srgb,var(--accent)_25%,transparent)]"
-          style={{ backgroundColor: 'var(--accent)' }}>TU</div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>Tu Cuenta</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide animate-glow-pulse"
-            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}>PRO</span>
+        <div
+          className="flex items-center gap-2.5 rounded-xl px-2 py-1 transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_4%,transparent)]"
+        >
+          <span
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold ring-2 transition-shadow duration-200"
+            style={{
+              background: 'var(--gradient-accent)',
+              color: 'var(--accent-foreground)',
+              boxShadow:
+                '0 4px 14px -4px color-mix(in srgb, var(--accent) 50%, transparent)',
+              ['--tw-ring-color' as string]:
+                'color-mix(in srgb, var(--background) 100%, transparent)',
+            }}
+          >
+            TU
+          </span>
+          <div className="hidden sm:flex items-center gap-2">
+            <span
+              className="text-sm font-semibold leading-none"
+              style={{ color: 'var(--foreground)' }}
+            >
+              Tu Cuenta
+            </span>
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-[0.12em] animate-glow-pulse"
+              style={{
+                background: 'var(--gradient-accent)',
+                color: 'var(--accent-foreground)',
+              }}
+            >
+              PRO
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Global metrics — stagger slide-up on load */}
-      <div className="hidden md:flex items-center gap-6">
-        {[
-          { Icon: Eye,        label: 'VIEWS',    value: formatM(stats.views),              color: '#B08A4A', delay: '0ms'   },
-          { Icon: Users,      label: 'FOLLOWERS', value: formatM(stats.followers),          color: '#B08A4A', delay: '60ms'  },
-          { Icon: TrendingUp, label: 'ENG. RATE', value: formatPercent(stats.engagementRate), color: '#8A7A4A', delay: '120ms' },
-        ].map(({ Icon, label, value, color, delay }) => (
+      {/* Center metric pills */}
+      <div
+        className="hidden lg:flex items-center gap-1 rounded-xl border px-1 py-1"
+        style={{
+          backgroundColor:
+            'color-mix(in srgb, var(--card) 60%, transparent)',
+          borderColor: 'var(--border)',
+        }}
+      >
+        {metrics.map(({ Icon, label, value, color, delay }) => (
           <div
             key={label}
-            className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-1 duration-300"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg animate-in fade-in slide-in-from-bottom-1 duration-300"
             style={{ animationDelay: delay, animationFillMode: 'both' }}
           >
-            <Icon size={14} style={{ color }} />
-            <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{label}</span>
-            <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--foreground)' }}>{value}</span>
+            <Icon size={13} style={{ color }} />
+            <span
+              className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+              style={{ color: 'var(--muted-foreground)' }}
+            >
+              {label}
+            </span>
+            <span
+              className="text-sm font-bold tabular-nums"
+              style={{ color: 'var(--foreground)' }}
+            >
+              {value}
+            </span>
           </div>
         ))}
       </div>
 
       {/* Right actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <ClientSwitcher />
         <ThemeToggle />
       </div>

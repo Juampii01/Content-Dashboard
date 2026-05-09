@@ -37,14 +37,16 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       />
       <div
         suppressHydrationWarning
-        className="ls-shell min-h-screen flex flex-col md:transition-[margin-left] md:duration-300 md:ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="ls-shell ambient-bg min-h-screen flex flex-col md:transition-[margin-left] md:duration-300 md:ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{
-          ['--shell-ml-md' as string]: collapsed ? '72px' : '224px',
+          ['--shell-ml-md' as string]: collapsed ? '80px' : '240px',
           marginLeft: 'var(--shell-ml, 0px)',
         }}
       >
         <style>{`.ls-shell{--shell-ml:0px}@media(min-width:768px){.ls-shell{--shell-ml:var(--shell-ml-md)}}`}</style>
-        {children}
+        <div key={pathname} className="page-enter contents">
+          {children}
+        </div>
       </div>
     </MobileSidebarContext.Provider>
   )

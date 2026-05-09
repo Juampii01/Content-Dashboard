@@ -1,28 +1,37 @@
-// Skeleton for /ai — mimics EternityAIContent layout: conversation sidebar
-// on the right + chat area on the left. Prevents blank screen on first nav
-// while /api/ai/conversations is fetched.
+import { Skeleton } from '@/components/ui/skeleton'
+
+// Skeleton for /ai — mimics EternityAIContent layout: chat area + conversation
+// sidebar. Prevents a blank screen on first navigation while
+// `/api/ai/conversations` is being fetched.
 export default function Loading() {
   return (
     <div className="flex h-screen w-full">
-      {/* Chat area skeleton */}
       <div className="flex flex-1 flex-col p-6">
         <div className="mb-6 flex items-center gap-3">
-          <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
-          <div className="h-6 w-40 animate-pulse rounded-md bg-muted" />
+          <Skeleton className="rounded-full" style={{ height: 40, width: 40 }} />
+          <Skeleton style={{ height: 24, width: 160 }} />
         </div>
         <div className="flex-1 space-y-4">
-          <div className="h-16 w-3/4 animate-pulse rounded-2xl bg-muted" />
-          <div className="ml-auto h-20 w-2/3 animate-pulse rounded-2xl bg-muted" />
-          <div className="h-14 w-4/5 animate-pulse rounded-2xl bg-muted" />
+          <Skeleton className="rounded-2xl" style={{ height: 64, width: '75%' }} />
+          <div className="ml-auto" style={{ width: '66%' }}>
+            <Skeleton className="rounded-2xl" style={{ height: 80, animationDelay: '80ms' }} />
+          </div>
+          <Skeleton className="rounded-2xl" style={{ height: 56, width: '80%', animationDelay: '160ms' }} />
         </div>
-        <div className="mt-4 h-14 w-full animate-pulse rounded-xl bg-muted" />
+        <Skeleton className="mt-4 rounded-xl" style={{ height: 56 }} />
       </div>
-      {/* Conversation list skeleton */}
-      <aside className="hidden w-72 flex-shrink-0 flex-col gap-2 border-l border-[var(--border)] p-3 md:flex">
-        <div className="h-10 w-full animate-pulse rounded-xl bg-muted" />
+      <aside
+        className="hidden w-72 flex-shrink-0 flex-col gap-2 p-3 md:flex"
+        style={{ borderLeft: '1px solid var(--border)' }}
+      >
+        <Skeleton className="rounded-xl" style={{ height: 40 }} />
         <div className="mt-4 space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-12 w-full animate-pulse rounded-lg bg-muted" />
+            <Skeleton
+              key={i}
+              className="rounded-lg"
+              style={{ height: 48, animationDelay: `${i * 60}ms` }}
+            />
           ))}
         </div>
       </aside>

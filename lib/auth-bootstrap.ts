@@ -64,8 +64,8 @@ export async function bootstrapAuth(): Promise<void> {
   const activeClientId = cookieStore.get(ACTIVE_CLIENT_COOKIE)?.value
   if (activeClientId) return
 
+  let firstClientId: string | null = null
   try {
-    let firstClientId: string | null = null
     if (profile.globalRole === 'SUPER_ADMIN') {
       const client = await prisma.client.findFirst({ orderBy: { createdAt: 'asc' } })
       firstClientId = client?.id ?? null
@@ -76,16 +76,16 @@ export async function bootstrapAuth(): Promise<void> {
       })
       firstClientId = access?.clientId ?? null
     }
-    if (firstClientId) {
-      cookieStore.set(ACTIVE_CLIENT_COOKIE, firstClientId, {
-        path: '/',
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 30,
-      })
-    }
   } catch (err) {
     console.error('[bootstrapAuth] client lookup failed:', err)
+    return
+  }
+
+  // Cookies can only be set from a Route Handler / Server Action in Next 15+,
+  // not a Server Component. Bounce through a tiny GET handler that sets the
+  // cookie and redirects back to the original path.
+  if (firstClientId) {
+    const next = encodeURIComponent(pathname || '/')
+    redirect(`/api/me/active-client/auto?id=${firstClientId}&next=${next}`)
   }
 }

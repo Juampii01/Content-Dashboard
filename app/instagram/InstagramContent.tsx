@@ -2,12 +2,14 @@
 
 import dynamic from 'next/dynamic'
 import { useMemo } from 'react'
+import { Camera } from 'lucide-react'
 import { useTab } from '@/hooks/useTab'
 import { TabNav } from '@/components/layout/TabNav'
 import { TimeFilter } from '@/components/layout/TimeFilter'
 import { useInstagramData } from '@/hooks/useInstagramData'
 import { InstagramSyncBanner } from '@/components/instagram/InstagramSyncBanner'
 import { InstagramDataProvider, type InstagramDataContextValue } from '@/components/instagram/InstagramDataContext'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 const DashboardTab     = dynamic(() => import('@/components/tabs/DashboardTab').then((m) => m.DashboardTab),         { ssr: false })
 const ReelsTab         = dynamic(() => import('@/components/tabs/ReelsTab').then((m) => m.ReelsTab),                 { ssr: false })
@@ -33,21 +35,14 @@ export function InstagramContent() {
   )
 
   return (
-    <div className="px-8 py-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
-            IG Intelligence
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
-            Análisis profundo de tu cuenta de Instagram.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <TimeFilter />
-        </div>
-      </div>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Redes sociales"
+        title="IG Intelligence"
+        description="Análisis profundo de tu cuenta de Instagram."
+        icon={Camera}
+        actions={<TimeFilter />}
+      />
 
       {/* Connection / sync banner */}
       <InstagramSyncBanner

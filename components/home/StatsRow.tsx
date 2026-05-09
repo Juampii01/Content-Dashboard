@@ -39,9 +39,9 @@ export function StatsRow() {
   const published = items.filter((i) => i.status === 'publicado').length
 
   const stats: Stat[] = [
-    { label: 'Contenido esta semana', value: contentThisWeek, color: '#B08A4A', description: 'programado' },
+    { label: 'Contenido esta semana', value: contentThisWeek, color: 'var(--stat-icon)', description: 'programado' },
     { label: 'En pipeline', value: pending, color: 'var(--accent)', description: 'piezas activas' },
-    { label: 'Publicados', value: published, color: '#C49A6C', description: 'totales' },
+    { label: 'Publicados', value: published, color: 'var(--stat-icon-secondary)', description: 'totales' },
   ]
 
   return (
@@ -49,7 +49,7 @@ export function StatsRow() {
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className="rounded-xl p-4"
+          className="rounded-xl p-4 card-lift"
           style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
         >
           <p className="text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>{stat.label}</p>

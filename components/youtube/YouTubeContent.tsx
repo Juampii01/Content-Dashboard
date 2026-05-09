@@ -7,6 +7,7 @@ import { TimeFilter } from '@/components/layout/TimeFilter'
 import { YouTubeTabNav, useYouTubeTab } from './YouTubeTabNav'
 import { ConnectButton } from '@/components/shared/ConnectButton'
 import { useYouTubeChannelSummary, triggerYouTubeSync } from '@/hooks/useYouTubeData'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 const YouTubeDashboardTab = dynamic(
   () => import('./YouTubeDashboardTab').then((m) => m.YouTubeDashboardTab),
@@ -39,37 +40,32 @@ export function YouTubeContent() {
   }
 
   return (
-    <div className="px-8 py-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
-            YouTube Analytics
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
-            Análisis de rendimiento y crecimiento en YouTube.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <TimeFilter />
-          {connected && (
-            <button
-              type="button"
-              onClick={handleSync}
-              disabled={syncing}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
-            >
-              {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-              {syncing ? 'Sincronizando...' : hasData ? 'Sincronizar' : 'Sincronizar ahora'}
-            </button>
-          )}
-          <Suspense fallback={null}>
-            <ConnectButton platform="youtube" labels={{ connected: 'YouTube conectado' }} />
-          </Suspense>
-        </div>
-      </div>
-
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Redes sociales"
+        title="YouTube Analytics"
+        description="Análisis de rendimiento y crecimiento en YouTube."
+        icon={Play}
+        actions={
+          <>
+            <TimeFilter />
+            {connected && (
+              <button
+                type="button"
+                onClick={handleSync}
+                disabled={syncing}
+                className="btn btn-secondary"
+              >
+                {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                {syncing ? 'Sincronizando...' : hasData ? 'Sincronizar' : 'Sincronizar ahora'}
+              </button>
+            )}
+            <Suspense fallback={null}>
+              <ConnectButton platform="youtube" labels={{ connected: 'YouTube conectado' }} />
+            </Suspense>
+          </>
+        }
+      />
       {/* Tabs */}
       <div className="mb-6">
         <YouTubeTabNav />

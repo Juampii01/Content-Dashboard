@@ -5,9 +5,9 @@ import { AD_CREATIVES, type AdCreative, type AdsPlatform, type CampaignStatus } 
 import { formatK, formatPercent } from '@/lib/utils/formatters'
 
 const STATUS_STYLES: Record<CampaignStatus, { bg: string; color: string }> = {
-  activa:    { bg: 'rgba(16,185,129,0.12)', color: '#10b981' },
-  pausada:   { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' },
-  terminada: { bg: 'var(--muted)',          color: 'var(--muted-foreground)' },
+  activa:    { bg: 'color-mix(in srgb, var(--success) 15%, transparent)', color: 'var(--success)' },
+  pausada:   { bg: 'color-mix(in srgb, var(--warning) 15%, transparent)', color: 'var(--warning)' },
+  terminada: { bg: 'var(--muted)',                                         color: 'var(--muted-foreground)' },
 }
 
 const PLATFORM_STYLES: Record<AdsPlatform, { icon: React.ElementType; label: string; color: string }> = {
@@ -90,7 +90,7 @@ function CreativeCard({ creative }: { creative: AdCreative }) {
         <span
           className="text-sm font-bold tabular-nums"
           style={{
-            color: creative.roas >= 5 ? '#10b981' : creative.roas >= 3 ? '#B08A4A' : 'var(--accent)',
+            color: creative.roas >= 5 ? 'var(--success)' : creative.roas >= 3 ? 'var(--stat-icon)' : 'var(--accent)',
           }}
         >
           ×{creative.roas.toFixed(1)}

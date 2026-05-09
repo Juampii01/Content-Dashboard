@@ -21,8 +21,11 @@ interface DeleteConfirmProps {
 function DeleteConfirm({ title, onConfirm, onCancel }: DeleteConfirmProps) {
   return createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center"
-      style={{ zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Confirmar eliminación"
+      className="fixed inset-0 flex items-center justify-center glass-overlay"
+      style={{ zIndex: 9999 }}
       onClick={onCancel}
     >
       <div
@@ -30,7 +33,7 @@ function DeleteConfirm({ title, onConfirm, onCancel }: DeleteConfirmProps) {
         style={{
           backgroundColor: 'var(--card)',
           border: '1px solid var(--border)',
-          boxShadow: '0 24px 48px rgba(0,0,0,0.35), 0 8px 16px rgba(0,0,0,0.2)',
+          boxShadow: 'var(--shadow-modal)',
           width: 320,
           maxWidth: 'calc(100vw - 32px)',
         }}
@@ -43,11 +46,11 @@ function DeleteConfirm({ title, onConfirm, onCancel }: DeleteConfirmProps) {
             style={{
               width: 44,
               height: 44,
-              backgroundColor: '#ef444420',
-              border: '1px solid #ef444435',
+              backgroundColor: 'color-mix(in srgb, var(--destructive) 15%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--destructive) 30%, var(--border))',
             }}
           >
-            <AlertTriangle size={20} style={{ color: '#ef4444' }} strokeWidth={2} />
+            <AlertTriangle size={20} style={{ color: 'var(--destructive)' }} strokeWidth={2} />
           </div>
           <div>
             <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--foreground)' }}>
@@ -80,22 +83,22 @@ function DeleteConfirm({ title, onConfirm, onCancel }: DeleteConfirmProps) {
             onClick={onConfirm}
             className="flex-1 text-sm font-semibold py-2 rounded-xl transition-all cursor-pointer"
             style={{
-              backgroundColor: '#ef4444',
-              color: '#fff',
-              border: '1px solid #ef444488',
-              boxShadow: '0 2px 8px #ef444440',
+              backgroundColor: 'var(--destructive)',
+              color: 'var(--destructive-foreground)',
+              border: '1px solid color-mix(in srgb, var(--destructive) 70%, transparent)',
+              boxShadow: '0 2px 8px color-mix(in srgb, var(--destructive) 25%, transparent)',
             }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLElement
-              el.style.backgroundColor = '#dc2626'
+              el.style.filter = 'brightness(1.08)'
               el.style.transform = 'translateY(-1px)'
-              el.style.boxShadow = '0 4px 12px #ef444455'
+              el.style.boxShadow = '0 4px 12px color-mix(in srgb, var(--destructive) 35%, transparent)'
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLElement
-              el.style.backgroundColor = '#ef4444'
+              el.style.filter = 'none'
               el.style.transform = 'translateY(0)'
-              el.style.boxShadow = '0 2px 8px #ef444440'
+              el.style.boxShadow = '0 2px 8px color-mix(in srgb, var(--destructive) 25%, transparent)'
             }}
           >
             Eliminar
