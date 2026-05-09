@@ -417,14 +417,15 @@ export function TranscriptView() {
           <button
             type="submit"
             disabled={loading || url.trim().length === 0}
-            className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 cursor-pointer hover:brightness-110 active:brightness-95"
+            aria-busy={loading || undefined}
+            className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 cursor-pointer hover:brightness-110 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
             style={{
               background: 'var(--gradient-accent)',
               color: 'var(--accent-foreground)',
               boxShadow: 'var(--shadow-card)',
             }}
           >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            {loading ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Sparkles size={14} aria-hidden="true" />}
             {loading ? 'Procesando…' : 'Transcribir'}
           </button>
         </div>
@@ -434,7 +435,7 @@ export function TranscriptView() {
           </p>
         )}
         {loading && (
-          <p className="mt-3 text-xs" style={{ color: 'var(--muted-foreground)' }}>
+          <p role="status" aria-live="polite" className="mt-3 text-xs" style={{ color: 'var(--muted-foreground)' }}>
             Esto puede tardar 30-90 segundos. Apify resuelve el video, Groq Whisper transcribe, Claude resume.
           </p>
         )}
@@ -450,8 +451,8 @@ export function TranscriptView() {
       {/* History */}
       <Section eyebrow="Historial" flush>
         {historyLoading ? (
-          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            <Loader2 size={14} className="animate-spin" /> Cargando…
+          <div role="status" aria-live="polite" aria-label="Cargando historial" className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
+            <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Cargando…
           </div>
         ) : history.length === 0 ? (
           <EmptyState
@@ -472,7 +473,9 @@ export function TranscriptView() {
                   <button
                     type="button"
                     onClick={() => setExpandedId(expanded ? null : item.id)}
-                    className="w-full text-left p-4 flex items-start gap-3 cursor-pointer"
+                    aria-expanded={expanded}
+                    aria-controls={`transcript-detail-${item.id}`}
+                    className="w-full text-left p-4 flex items-start gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] rounded-xl"
                   >
                     <PlatformPill platform={item.platform} />
                     <div className="flex-1 min-w-0">
@@ -502,7 +505,7 @@ export function TranscriptView() {
                     </button>
                   </button>
                   {expanded && (
-                    <div className="px-4 pb-4">
+                    <div id={`transcript-detail-${item.id}`} className="px-4 pb-4">
                       <ResultPanel
                         result={{
                           id: item.id,

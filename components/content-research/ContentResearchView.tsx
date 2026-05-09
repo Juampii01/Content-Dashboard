@@ -320,14 +320,15 @@ export function ContentResearchView() {
           <button
             type="submit"
             disabled={loading || channelUrl.trim().length === 0}
-            className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 cursor-pointer hover:brightness-110 active:brightness-95"
+            aria-busy={loading || undefined}
+            className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 cursor-pointer hover:brightness-110 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
             style={{
               background: 'var(--gradient-accent)',
               color: 'var(--accent-foreground)',
               boxShadow: 'var(--shadow-card)',
             }}
           >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            {loading ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Sparkles size={14} aria-hidden="true" />}
             {loading ? 'Buscando…' : 'Investigar'}
           </button>
         </div>
@@ -346,8 +347,8 @@ export function ContentResearchView() {
 
       <Section eyebrow="Historial" flush>
         {historyLoading ? (
-          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            <Loader2 size={14} className="animate-spin" /> Cargando…
+          <div role="status" aria-live="polite" aria-label="Cargando historial" className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
+            <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Cargando…
           </div>
         ) : history.length === 0 ? (
           <EmptyState
