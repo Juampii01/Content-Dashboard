@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import {
-  Copy,
-  Check,
   Loader2,
   FileText,
   Sparkles,
@@ -18,6 +16,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Section } from '@/components/ui/Section'
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
 import { PlatformBadge, type Platform } from '@/components/ui/PlatformBadge'
+import { CopyButton } from '@/components/ui/CopyButton'
 import { formatDate } from '@/lib/utils/formatDate'
 
 interface HistoryItem {
@@ -99,33 +98,6 @@ function splitSummary(text: string): SummarySection[] {
       return { header: null, body: block.trim() }
     })
     .filter((s) => s.body.length > 0)
-}
-
-// ─── Copy button ──────────────────────────────────────────────────────────────
-
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = useState(false)
-  const handle = useCallback(() => {
-    void navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 1400)
-    })
-  }, [text])
-  return (
-    <button
-      type="button"
-      onClick={handle}
-      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium hover:opacity-80 transition-opacity cursor-pointer"
-      style={{
-        border: '1px solid var(--border)',
-        backgroundColor: 'var(--card)',
-        color: 'var(--muted-foreground)',
-      }}
-    >
-      {copied ? <Check size={12} /> : <Copy size={12} />}
-      {copied ? 'Copiado' : label}
-    </button>
-  )
 }
 
 // ─── Summary renderer ────────────────────────────────────────────────────────
