@@ -234,14 +234,15 @@ export function VideoFeedView() {
                 type="button"
                 onClick={handleRefresh}
                 disabled={submitting}
-                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold disabled:opacity-50 cursor-pointer transition-all hover:opacity-90"
+                aria-busy={submitting || undefined}
+                className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold disabled:opacity-50 cursor-pointer transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
                 style={{
                   background: 'var(--gradient-accent)',
                   color: 'var(--accent-foreground)',
                   boxShadow: 'var(--shadow-card)',
                 }}
               >
-                {submitting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                {submitting ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <RefreshCw size={14} aria-hidden="true" />}
                 Actualizar
               </button>
               <button
@@ -264,8 +265,8 @@ export function VideoFeedView() {
       />
 
       {accountLoading ? (
-        <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-          <Loader2 size={14} className="animate-spin" /> Cargando…
+        <div role="status" aria-live="polite" aria-label="Cargando cuenta" className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
+          <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Cargando…
         </div>
       ) : !account ? (
         <form onSubmit={handleConnect} className="surface-elevated p-6">
@@ -294,18 +295,23 @@ export function VideoFeedView() {
             <button
               type="submit"
               disabled={submitting || channelUrl.trim().length === 0}
-              className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 cursor-pointer hover:brightness-110 active:brightness-95"
+              aria-busy={submitting || undefined}
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 cursor-pointer hover:brightness-110 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
               style={{
                 background: 'var(--gradient-accent)',
                 color: 'var(--accent-foreground)',
                 boxShadow: 'var(--shadow-card)',
               }}
             >
-              {submitting ? <Loader2 size={14} className="animate-spin" /> : <Plug size={14} />}
+              {submitting ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Plug size={14} aria-hidden="true" />}
               {submitting ? 'Conectando…' : 'Conectar'}
             </button>
           </div>
-          {error && <p className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>{error}</p>}
+          {error && (
+            <p id="video-feed-error" role="alert" className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>
+              {error}
+            </p>
+          )}
         </form>
       ) : (
         <>
