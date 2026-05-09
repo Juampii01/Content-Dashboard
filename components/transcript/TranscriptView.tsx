@@ -8,8 +8,6 @@ import {
   FileText,
   Sparkles,
   Trash2,
-  Play,
-  Camera,
   Link2,
   ExternalLink,
   Inbox,
@@ -19,12 +17,13 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Section } from '@/components/ui/Section'
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
+import { PlatformBadge, type Platform } from '@/components/ui/PlatformBadge'
 import { formatDate } from '@/lib/utils/formatDate'
 
 interface HistoryItem {
   id: string
   url: string
-  platform: 'youtube' | 'instagram'
+  platform: Platform
   title: string | null
   creator: string | null
   duration: string | null
@@ -37,7 +36,7 @@ interface HistoryItem {
 interface CurrentResult {
   id?: string
   url: string
-  platform: 'youtube' | 'instagram'
+  platform: Platform
   title: string | null
   creator: string | null
   duration: string | null
@@ -52,7 +51,7 @@ const historyDateOpts: Intl.DateTimeFormatOptions = {
   hour: '2-digit', minute: '2-digit',
 }
 
-function inferPlatformFromUrl(url: string): 'youtube' | 'instagram' | null {
+function inferPlatformFromUrl(url: string): Platform | null {
   if (/youtube\.com|youtu\.be/i.test(url)) return 'youtube'
   if (/instagram\.com\/(p|reel|reels|tv)\//i.test(url)) return 'instagram'
   return null
@@ -129,25 +128,6 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   )
 }
 
-// ─── Platform pill ────────────────────────────────────────────────────────────
-
-function PlatformPill({ platform }: { platform: 'youtube' | 'instagram' }) {
-  const Icon = platform === 'youtube' ? Play : Camera
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
-      style={{
-        border: '1px solid var(--border)',
-        color: 'var(--accent)',
-        backgroundColor: 'color-mix(in srgb, var(--accent) 8%, transparent)',
-      }}
-    >
-      <Icon size={11} />
-      {platform === 'youtube' ? 'YouTube' : 'Instagram'}
-    </span>
-  )
-}
-
 // ─── Summary renderer ────────────────────────────────────────────────────────
 
 function SummaryBlock({ text }: { text: string }) {
@@ -201,7 +181,7 @@ function ResultPanel({ result }: { result: CurrentResult }) {
       style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
     >
       <div className="flex items-start gap-3 mb-4">
-        <PlatformPill platform={result.platform} />
+        <PlatformBadge platform={result.platform} />
         {result.duration && (
           <span className="text-xs font-medium tabular-nums" style={{ color: 'var(--muted-foreground)' }}>
             {result.duration}
@@ -465,7 +445,7 @@ export function TranscriptView() {
                     onClick={() => setExpandedId(expanded ? null : item.id)}
                     className="w-full text-left p-4 flex items-start gap-3 cursor-pointer"
                   >
-                    <PlatformPill platform={item.platform} />
+                    <PlatformBadge platform={item.platform} />
                     <div className="flex-1 min-w-0">
                       <p
                         className="text-sm font-semibold leading-tight truncate"

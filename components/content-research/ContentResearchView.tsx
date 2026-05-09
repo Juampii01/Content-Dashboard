@@ -10,14 +10,13 @@ import {
   ThumbsUp,
   Eye,
   MessageCircle,
-  Play,
-  Camera,
   Telescope,
   Inbox,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Section } from '@/components/ui/Section'
+import { PlatformBadge, type Platform } from '@/components/ui/PlatformBadge'
 import { formatK } from '@/lib/utils/formatters'
 import { formatDate } from '@/lib/utils/formatDate'
 
@@ -37,7 +36,7 @@ interface ResearchVideo {
 
 interface ResearchRow {
   id: string
-  platform: 'youtube' | 'instagram'
+  platform: Platform
   channelUrl: string
   channelName: string | null
   channelAvatar: string | null
@@ -50,12 +49,7 @@ interface ResearchRow {
 // `formatDate` (lib/utils/formatDate) handles locale + Intl options.
 const dateOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }
 
-function PlatformIcon({ platform }: { platform: 'youtube' | 'instagram' }) {
-  const Icon = platform === 'youtube' ? Play : Camera
-  return <Icon size={14} style={{ color: 'var(--accent)' }} />
-}
-
-function VideoCard({ video, platform }: { video: ResearchVideo; platform: 'youtube' | 'instagram' }) {
+function VideoCard({ video, platform }: { video: ResearchVideo; platform: Platform }) {
   return (
     <div
       className="rounded-xl overflow-hidden card-lift"
@@ -73,7 +67,7 @@ function VideoCard({ video, platform }: { video: ResearchVideo; platform: 'youtu
       )}
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
-          <PlatformIcon platform={platform} />
+          <PlatformBadge platform={platform} variant="icon" size={14} />
           <span className="tabular-nums">{video.duration}</span>
           {video.publishedAt && <span>· {formatDate(video.publishedAt, dateOpts)}</span>}
         </div>
@@ -136,7 +130,7 @@ function ResearchPanel({ row }: { row: ResearchRow }) {
       style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
     >
       <div className="flex items-center gap-3 mb-4">
-        <PlatformIcon platform={row.platform} />
+        <PlatformBadge platform={row.platform} variant="icon" size={14} />
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-semibold leading-tight" style={{ color: 'var(--foreground)' }}>
             {row.channelName ?? row.channelUrl}
