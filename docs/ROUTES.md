@@ -63,6 +63,7 @@ API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `yo
 - `GET /api/me` — current user's profile summary (id, email, role, activeClientId)
 - `GET /api/me/clients` — clients the current user can switch to
 - `POST /api/me/active-client` — set the `activeClientId` cookie (validates access)
+- `GET /api/me/global-stats` — TopBar metrics: aggregated `{ followers, views, engagementRate }` from latest `AccountSnapshot` per platform. Returns `null` when no data exists for the active client.
 - `GET /api/admin/users` — list all users with their client access (SUPER_ADMIN)
 - `PATCH /api/admin/users/[id]` — update globalRole / displayName (SUPER_ADMIN)
 - `POST /api/admin/users/[id]/client-access` — grant access (SUPER_ADMIN)

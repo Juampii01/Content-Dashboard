@@ -1,23 +1,49 @@
 'use client'
 
-import { useContext } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { Eye, Users, TrendingUp, Menu } from 'lucide-react'
 import { formatM, formatPercent } from '@/lib/utils/formatters'
-import { usePeriod } from '@/hooks/usePeriod'
-import { getGlobalStats } from '@/lib/mock-data/global'
 import { ThemeToggle } from './ThemeToggle'
 import { MobileSidebarContext } from './LayoutShell'
 import { ClientSwitcher } from './ClientSwitcher'
 
-export function TopBar() {
-  const [period] = usePeriod()
-  const stats = getGlobalStats(period)
-  const { open: openMobileSidebar } = useContext(MobileSidebarContext)
+interface GlobalStats {
+  followers: number
+  views: number
+  engagementRate: number
+}
 
+const EMPTY = '—'
+
+export function TopBar() {
+  const { open: openMobileSidebar } = useContext(MobileSidebarContext)
+  const [stats, setStats] = useState<GlobalStats | null>(null)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/me/global-stats')
+      .then((r) => (r.ok ? (r.json() as Promise<GlobalStats | null>) : null))
+      .then((data) => {
+        if (cancelled) return
+        setStats(data)
+        setLoaded(true)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setLoaded(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Until the fetch resolves we show the same dash placeholders so the
+  // pills don't flash mock numbers during hydration.
   const metrics = [
-    { Icon: Eye,        label: 'VIEWS',    value: formatM(stats.views),               color: 'var(--stat-icon)',           delay: '0ms'   },
-    { Icon: Users,      label: 'FOLLOWERS', value: formatM(stats.followers),           color: 'var(--stat-icon)',           delay: '60ms'  },
-    { Icon: TrendingUp, label: 'ENG. RATE', value: formatPercent(stats.engagementRate), color: 'var(--stat-icon-secondary)', delay: '120ms' },
+    { Icon: Eye,        label: 'VIEWS',     value: stats ? formatM(stats.views)               : EMPTY, color: 'var(--stat-icon)',           delay: '0ms'   },
+    { Icon: Users,      label: 'FOLLOWERS', value: stats ? formatM(stats.followers)           : EMPTY, color: 'var(--stat-icon)',           delay: '60ms'  },
+    { Icon: TrendingUp, label: 'ENG. RATE', value: stats ? formatPercent(stats.engagementRate) : EMPTY, color: 'var(--stat-icon-secondary)', delay: '120ms' },
   ]
 
   return (
@@ -84,6 +110,8 @@ export function TopBar() {
             'color-mix(in srgb, var(--card) 60%, transparent)',
           borderColor: 'var(--border)',
         }}
+        aria-busy={!loaded || undefined}
+        aria-label="Métricas globales"
       >
         {metrics.map(({ Icon, label, value, color, delay }) => (
           <div
