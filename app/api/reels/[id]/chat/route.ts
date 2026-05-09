@@ -24,7 +24,7 @@ export const maxDuration = 120
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-// Validate a raw model string against known ClaudeModelId literals (B4b — resolves TODO(OLA3))
+// Validate a raw model string against known ClaudeModelId literals (B4b — closes ticket OLA3)
 // Typed as Set<string> so .has() accepts arbitrary strings safely
 const VALID_MODEL_IDS: Set<string> = new Set(CLAUDE_MODELS.map((m) => m.id))
 function validateModel(raw: string | null): ClaudeModelId | null {

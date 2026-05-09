@@ -34,9 +34,9 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 
 ## Dónde vive cada responsabilidad (verificado leyendo el código)
 
-- **`middleware.ts`** — SOLO refresca la sesión de Supabase y redirige a `/login` si no hay user. Nada más.
+- **`proxy.ts`** (Next 16, ex-`middleware.ts`) — SOLO refresca la sesión de Supabase y redirige a `/login` si no hay user. Nada más.
 - **`app/layout.tsx` + `lib/auth-bootstrap.ts`** — upsert de `Profile` con `globalRole: 'PENDING'`, redirect a `/pending-approval`, auto-set del cookie `activeClientId` al primer cliente accesible.
-- **`next.config.ts`** — CSP y headers de seguridad (no están en middleware).
+- **`next.config.ts`** — CSP y headers de seguridad (no están en `proxy.ts`).
 - **`lib/auth-user.ts`** — helpers: `requireUserId()`, `requireProfile()`, `requireSuperAdmin()`, `requireActiveClient()` (devuelve `{ userId, clientId }`). Constante `ACTIVE_CLIENT_COOKIE = 'activeClientId'`.
 - **`lib/supabase/{client,server,admin}.ts`** — browser / server-with-cookies / service-role (bypasa RLS, cached con `let` local).
 - **`lib/db.ts`** — Prisma singleton vía `globalThis`. Export `{ db }`.
@@ -106,7 +106,7 @@ lib/
   utils/ratelimit.ts  ·  useLocalStorage.ts  ·  schemas/{analizador,copy,competidores}/
   mock-data/                                  # Instagram/Ads/TikTok/YouTube UI (a eliminar)
   competidores/{active-jobs,resolve-competitor}.ts
-middleware.ts  ·  next.config.ts  ·  prisma/{schema.prisma,migrations/}
+proxy.ts  ·  next.config.ts  ·  prisma/{schema.prisma,migrations/}
 scripts/{check-brand-consistency.mjs,seed-initial-clients.ts}
 __tests__/  ·  e2e/                           # 3 unit + 3 e2e
 ```
@@ -163,7 +163,7 @@ grep -n "^model " prisma/schema.prisma        # modelos disponibles
 
 ## Zonas protegidas (confirmar antes de editar)
 
-`middleware.ts` · `app/layout.tsx` (tiene la lógica real de bootstrap) · `lib/auth-bootstrap.ts` · `next.config.ts` · `prisma/schema.prisma` + `migrations/` · `lib/supabase/admin.ts` · `.github/workflows/*.yml` · `.env.example`.
+`proxy.ts` · `app/layout.tsx` (tiene la lógica real de bootstrap) · `lib/auth-bootstrap.ts` · `next.config.ts` · `prisma/schema.prisma` + `migrations/` · `lib/supabase/admin.ts` · `.github/workflows/*.yml` · `.env.example`.
 
 ---
 

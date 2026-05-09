@@ -1,20 +1,21 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Edge-safe middleware — only handles session cookie refresh + unauth redirect.
-// Heavy work (Profile upsert, PENDING gate, activeClient cookie) is done in
-// app/layout.tsx which runs on Node.js and can use Prisma.
+// Edge-safe proxy (Next 16, formerly "middleware") — only handles session
+// cookie refresh + unauth redirect. Heavy work (Profile upsert, PENDING gate,
+// activeClient cookie) is done in app/layout.tsx which runs on Node.js and
+// can use Prisma.
 
 const PUBLIC_PATHS = ['/login', '/pending-approval', '/auth/reset-password']
 // `/api/auth` is excluded by the `matcher` below (never runs through this
-// middleware). No public `/api/*` prefixes currently — the stale `/api/debug`
+// proxy). No public `/api/*` prefixes currently — the stale `/api/debug`
 // was removed when the debug route was deleted.
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   // Forward pathname to server components (Next.js drops it from downstream headers).
   const requestHeaders = new Headers(request.headers)

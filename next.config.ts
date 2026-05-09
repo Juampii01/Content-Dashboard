@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -32,6 +33,11 @@ const cspHeader = [
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Pin Turbopack root to this project to silence the multi-lockfile warning
+  // when there's a stray ~/package-lock.json on the user's machine.
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.cdninstagram.com' },
