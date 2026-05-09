@@ -11,8 +11,6 @@ import {
   ThumbsUp,
   Eye,
   MessageCircle,
-  Play,
-  Camera,
   Telescope,
   Inbox,
 } from 'lucide-react'
@@ -20,6 +18,9 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Section } from '@/components/ui/Section'
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
+import { PlatformBadge, type Platform } from '@/components/ui/PlatformBadge'
+import { formatK } from '@/lib/utils/formatters'
+import { formatDate } from '@/lib/utils/formatDate'
 import { toast } from 'sonner'
 
 interface ResearchVideo {
@@ -38,7 +39,7 @@ interface ResearchVideo {
 
 interface ResearchRow {
   id: string
-  platform: 'youtube' | 'instagram'
+  platform: Platform
   channelUrl: string
   channelName: string | null
   channelAvatar: string | null
@@ -47,26 +48,11 @@ interface ResearchRow {
   createdAt: string
 }
 
-function fmt(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
-  return String(n)
-}
+// `formatK` (lib/utils/formatters) handles 1.5K / 1.5M compaction.
+// `formatDate` (lib/utils/formatDate) handles locale + Intl options.
+const dateOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
-function PlatformIcon({ platform }: { platform: 'youtube' | 'instagram' }) {
-  const Icon = platform === 'youtube' ? Play : Camera
-  return <Icon size={14} style={{ color: 'var(--accent)' }} />
-}
-
-function VideoCard({ video, platform }: { video: ResearchVideo; platform: 'youtube' | 'instagram' }) {
+function VideoCard({ video, platform }: { video: ResearchVideo; platform: Platform }) {
   return (
     <div
       className="rounded-xl overflow-hidden card-lift"
@@ -86,9 +72,9 @@ function VideoCard({ video, platform }: { video: ResearchVideo; platform: 'youtu
       )}
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
-          <PlatformIcon platform={platform} />
+          <PlatformBadge platform={platform} variant="icon" size={14} />
           <span className="tabular-nums">{video.duration}</span>
-          {video.publishedAt && <span>· {formatDate(video.publishedAt)}</span>}
+          {video.publishedAt && <span>· {formatDate(video.publishedAt, dateOpts)}</span>}
         </div>
         <h3
           className="text-sm font-semibold leading-snug mb-3 line-clamp-2"
@@ -99,13 +85,13 @@ function VideoCard({ video, platform }: { video: ResearchVideo; platform: 'youtu
 
         <div className="flex items-center gap-3 text-xs mb-3" style={{ color: 'var(--muted-foreground)' }}>
           <span className="inline-flex items-center gap-1 tabular-nums">
-            <Eye size={11} /> {fmt(video.views)}
+            <Eye size={11} /> {formatK(video.views)}
           </span>
           <span className="inline-flex items-center gap-1 tabular-nums">
-            <ThumbsUp size={11} /> {fmt(video.likes)}
+            <ThumbsUp size={11} /> {formatK(video.likes)}
           </span>
           <span className="inline-flex items-center gap-1 tabular-nums">
-            <MessageCircle size={11} /> {fmt(video.comments)}
+            <MessageCircle size={11} /> {formatK(video.comments)}
           </span>
         </div>
 
@@ -149,13 +135,13 @@ function ResearchPanel({ row }: { row: ResearchRow }) {
       style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
     >
       <div className="flex items-center gap-3 mb-4">
-        <PlatformIcon platform={row.platform} />
+        <PlatformBadge platform={row.platform} variant="icon" size={14} />
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-semibold leading-tight" style={{ color: 'var(--foreground)' }}>
             {row.channelName ?? row.channelUrl}
           </h3>
           <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-            Top 5 de los últimos {row.timeframeDays} días · {formatDate(row.createdAt)}
+            Top 5 de los últimos {row.timeframeDays} días · {formatDate(row.createdAt, dateOpts)}
           </p>
         </div>
         <a
