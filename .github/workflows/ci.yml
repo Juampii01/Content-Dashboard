@@ -39,6 +39,15 @@ jobs:
       - name: CLAUDE.md coherence
         run: npm run check:claude-md
 
+      - name: Prisma schema drift
+        # Fail-soft: when DATABASE_URL is not configured (e.g. forks, PRs from
+        # contributors without secret access), the script logs a ::warning::
+        # and exits 0. Real drift causes a hard failure.
+        run: npm run check:prisma-drift
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
       - name: Unit tests with coverage
         run: npm test -- --coverage --ci
 
