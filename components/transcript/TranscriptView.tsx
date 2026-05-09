@@ -393,17 +393,23 @@ export function TranscriptView() {
         className="surface-elevated p-4 mb-6"
       >
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5"
+          <div className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-[var(--accent)]"
             style={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)' }}
           >
-            <Link2 size={16} style={{ color: 'var(--muted-foreground)' }} />
+            <Link2 size={16} style={{ color: 'var(--muted-foreground)' }} aria-hidden="true" />
+            <label htmlFor="transcript-url" className="sr-only">
+              URL de YouTube o Instagram
+            </label>
             <input
+              id="transcript-url"
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://www.youtube.com/watch?v=…  ó  https://instagram.com/reel/…"
               required
               disabled={loading}
+              aria-describedby={error ? 'transcript-error' : undefined}
+              aria-invalid={error ? true : undefined}
               className="flex-1 bg-transparent outline-none text-sm placeholder:opacity-50"
               style={{ color: 'var(--foreground)' }}
             />
@@ -423,7 +429,7 @@ export function TranscriptView() {
           </button>
         </div>
         {error && (
-          <p className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>
+          <p id="transcript-error" role="alert" className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>
             {error}
           </p>
         )}

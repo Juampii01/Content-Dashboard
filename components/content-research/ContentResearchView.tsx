@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Image from 'next/image'
 import {
   Search,
   Loader2,
@@ -18,6 +19,8 @@ import {
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Section } from '@/components/ui/Section'
+import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
+import { toast } from 'sonner'
 
 interface ResearchVideo {
   videoId: string
@@ -70,14 +73,16 @@ function VideoCard({ video, platform }: { video: ResearchVideo; platform: 'youtu
       style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
     >
       {video.thumbnail && (
-        <div
-          className="aspect-video w-full"
-          style={{
-            backgroundImage: `url(${video.thumbnail})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
+        <div className="relative aspect-video w-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
+          <Image
+            src={video.thumbnail}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 100vw"
+            className="object-cover"
+            unoptimized={platform === 'instagram'}
+          />
+        </div>
       )}
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
@@ -181,6 +186,8 @@ export function ContentResearchView() {
   const [current, setCurrent] = useState<ResearchRow | null>(null)
   const [history, setHistory] = useState<ResearchRow[]>([])
   const [historyLoading, setHistoryLoading] = useState(true)
+  const [pendingDelete, setPendingDelete] = useState<ResearchRow | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
@@ -227,8 +234,11 @@ export function ContentResearchView() {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return
+    const id = pendingDelete.id
     const previous = history
+    setDeleting(true)
     setHistory(history.filter((h) => h.id !== id))
     try {
       const r = await fetch('/api/content-research', {
@@ -236,9 +246,18 @@ export function ContentResearchView() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       })
-      if (!r.ok) setHistory(previous)
+      if (!r.ok) {
+        setHistory(previous)
+        toast.error('No se pudo eliminar la investigación.')
+      } else {
+        toast.success('Investigación eliminada.')
+      }
     } catch {
       setHistory(previous)
+      toast.error('Error de red al eliminar.')
+    } finally {
+      setDeleting(false)
+      setPendingDelete(null)
     }
   }
 
@@ -257,26 +276,36 @@ export function ContentResearchView() {
       >
         <div className="flex flex-col sm:flex-row gap-3">
           <div
-            className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5"
+            className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-[var(--accent)]"
             style={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)' }}
           >
-            <Search size={16} style={{ color: 'var(--muted-foreground)' }} />
+            <Search size={16} style={{ color: 'var(--muted-foreground)' }} aria-hidden="true" />
+            <label htmlFor="research-channel" className="sr-only">
+              URL del canal de YouTube o perfil de Instagram
+            </label>
             <input
+              id="research-channel"
               type="url"
               value={channelUrl}
               onChange={(e) => setChannelUrl(e.target.value)}
               placeholder="https://www.youtube.com/@canal  ó  https://instagram.com/usuario"
               required
               disabled={loading}
+              aria-describedby={error ? 'research-error' : undefined}
+              aria-invalid={error ? true : undefined}
               className="flex-1 bg-transparent outline-none text-sm placeholder:opacity-50"
               style={{ color: 'var(--foreground)' }}
             />
           </div>
+          <label htmlFor="research-timeframe" className="sr-only">
+            Periodo de búsqueda
+          </label>
           <select
+            id="research-timeframe"
             value={timeframe}
             onChange={(e) => setTimeframe(Number(e.target.value))}
             disabled={loading}
-            className="rounded-xl px-3 py-2.5 text-sm cursor-pointer"
+            className="rounded-xl px-3 py-2.5 text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             style={{
               backgroundColor: 'var(--background)',
               border: '1px solid var(--border)',
@@ -302,7 +331,11 @@ export function ContentResearchView() {
             {loading ? 'Buscando…' : 'Investigar'}
           </button>
         </div>
-        {error && <p className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>{error}</p>}
+        {error && (
+          <p id="research-error" role="alert" className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>
+            {error}
+          </p>
+        )}
       </form>
 
       {current && (
@@ -329,10 +362,10 @@ export function ContentResearchView() {
                 <ResearchPanel row={row} />
                 <button
                   type="button"
-                  onClick={() => void handleDelete(row.id)}
-                  className="absolute top-4 right-4 p-2 rounded-lg hover:opacity-70 cursor-pointer"
+                  onClick={() => setPendingDelete(row)}
+                  className="absolute top-4 right-4 p-2 rounded-lg hover:opacity-70 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
                   style={{ color: 'var(--muted-foreground)' }}
-                  aria-label="Eliminar"
+                  aria-label={`Eliminar investigación de ${row.channelName ?? row.channelUrl}`}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -341,6 +374,24 @@ export function ContentResearchView() {
           </div>
         )}
       </Section>
+
+      {pendingDelete && (
+        <ConfirmDeleteModal
+          title="Eliminar investigación"
+          description={
+            <>
+              Vas a eliminar permanentemente la investigación de{' '}
+              <strong>&ldquo;{pendingDelete.channelName ?? pendingDelete.channelUrl}&rdquo;</strong>{' '}
+              y los {pendingDelete.videos.length} videos analizados. Esta acción no se puede deshacer.
+            </>
+          }
+          confirmLabel={deleting ? 'Eliminando…' : 'Eliminar'}
+          busy={deleting}
+          icon={<Trash2 size={12} />}
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
     </div>
   )
 }
