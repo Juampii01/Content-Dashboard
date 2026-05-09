@@ -14,13 +14,17 @@ const cspHeader = [
   // Tailwind CSS-in-JS utilities rely on inline styles at runtime.
   "style-src 'self' 'unsafe-inline'",
   // blob: for chart canvas exports; data: for any base64 assets.
-  // Instagram CDN domains needed for thumbnailUrl and profilePicUrl in <img> tags.
-  "img-src 'self' blob: data: https://*.cdninstagram.com https://*.fbcdn.net",
+  // Allowed remote sources for <img> and next/image-served thumbnails:
+  //  - *.cdninstagram.com / *.fbcdn.net  → Instagram post thumbnails + profile pics
+  //  - i.ytimg.com / *.ggpht.com         → YouTube video thumbnails + channel avatars
+  //  - *.supabase.co                     → user-uploaded avatars in Supabase Storage
+  "img-src 'self' blob: data: https://*.cdninstagram.com https://*.fbcdn.net https://i.ytimg.com https://*.ggpht.com https://*.supabase.co",
   // Fonts self-hosted by next/font — no external CDN needed.
   "font-src 'self'",
   // API calls: Apify and Anthropic are called server-side only (Route Handlers).
   // Client-initiated fetches: our own API + Supabase Auth (signup/signin/session).
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  // (img-src extended below to cover next/image-served thumbnails for YouTube/IG/Supabase)
   // Google Drive video embed for login page background.
   "frame-src https://drive.google.com https://drive.usercontent.google.com",
   "object-src 'none'",
@@ -42,6 +46,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: '**.cdninstagram.com' },
       { protocol: 'https', hostname: '**.fbcdn.net' },
+      // YouTube thumbnails + channel avatars
+      { protocol: 'https', hostname: 'i.ytimg.com' },
+      { protocol: 'https', hostname: '**.ggpht.com' },
+      // Supabase Storage (user-uploaded avatars). Hostname varies per project.
+      { protocol: 'https', hostname: '**.supabase.co' },
     ],
   },
   async headers() {

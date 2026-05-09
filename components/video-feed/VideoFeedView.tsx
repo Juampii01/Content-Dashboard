@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Image from 'next/image'
 import {
   Loader2,
   RefreshCw,
@@ -75,14 +76,18 @@ function PostCard({ post, rank }: { post: FeedPost; rank: number }) {
         {rank}
       </div>
       {post.thumbnail && (
-        <div
-          className="aspect-square w-full"
-          style={{
-            backgroundImage: `url(${post.thumbnail})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
+        <div className="relative aspect-square w-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
+          <Image
+            src={post.thumbnail}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover"
+            // Instagram CDN URLs are signed and short-lived; bypass Next's
+            // optimizer to avoid serving stale or 403'd transforms.
+            unoptimized
+          />
+        </div>
       )}
       <div className="p-3">
         <div className="flex items-center gap-2 mb-1.5 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>

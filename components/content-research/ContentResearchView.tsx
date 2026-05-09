@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Image from 'next/image'
 import {
   Search,
   Loader2,
@@ -72,14 +73,16 @@ function VideoCard({ video, platform }: { video: ResearchVideo; platform: 'youtu
       style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
     >
       {video.thumbnail && (
-        <div
-          className="aspect-video w-full"
-          style={{
-            backgroundImage: `url(${video.thumbnail})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
+        <div className="relative aspect-video w-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
+          <Image
+            src={video.thumbnail}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 100vw"
+            className="object-cover"
+            unoptimized={platform === 'instagram'}
+          />
+        </div>
       )}
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
