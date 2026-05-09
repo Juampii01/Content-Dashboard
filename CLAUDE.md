@@ -35,7 +35,9 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 ## Dónde vive cada responsabilidad (verificado leyendo el código)
 
 - **`proxy.ts`** (Next 16, ex-`middleware.ts`) — SOLO refresca la sesión de Supabase y redirige a `/login` si no hay user. Nada más.
-- **`app/layout.tsx` + `lib/auth-bootstrap.ts`** — upsert de `Profile` con `globalRole: 'PENDING'`, redirect a `/pending-approval`, auto-set del cookie `activeClientId` al primer cliente accesible.
+- **`app/layout.tsx` + `lib/auth-bootstrap.ts`** — upsert de `Profile` con `globalRole: 'PENDING'`, redirect a `/pending-approval`, auto-set del cookie `activeClientId` al primer cliente accesible. El theme (eternity/govbidder) lo resuelve `getActiveThemeKey()` desde `lib/active-brand.ts`.
+- **`lib/themes.ts`** — registry puro: `VALID_THEME_KEYS`, `ThemeKey`, `DEFAULT_THEME_KEY`, `isValidThemeKey`. Sin DB ni `next/*` imports → usable en server, client y tests.
+- **`lib/active-brand.ts`** — `getActiveThemeKey()` server-only: lee cookie `activeClientId` + busca `Client.themeKey`. Fallback a `DEFAULT_THEME_KEY` ante cualquier error.
 - **`next.config.ts`** — CSP y headers de seguridad (no están en `proxy.ts`).
 - **`lib/auth-user.ts`** — helpers: `requireUserId()`, `requireProfile()`, `requireSuperAdmin()`, `requireActiveClient()` (devuelve `{ userId, clientId }`). Constante `ACTIVE_CLIENT_COOKIE = 'activeClientId'`.
 - **`lib/supabase/{client,server,admin}.ts`** — browser / server-with-cookies / service-role (bypasa RLS, cached con `let` local).
