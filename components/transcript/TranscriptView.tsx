@@ -1,228 +1,22 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import {
-  Loader2,
-  FileText,
-  Sparkles,
-  Trash2,
-  Link2,
-  ExternalLink,
-  Inbox,
-} from 'lucide-react'
+import { Loader2, FileText, Sparkles, Trash2, Link2, Inbox } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Section } from '@/components/ui/Section'
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
-import { PlatformBadge, type Platform } from '@/components/ui/PlatformBadge'
-import { CopyButton } from '@/components/ui/CopyButton'
-import { formatDate } from '@/lib/utils/formatDate'
-
-interface HistoryItem {
-  id: string
-  url: string
-  platform: Platform
-  title: string | null
-  creator: string | null
-  duration: string | null
-  thumbnail: string | null
-  transcript: string | null
-  summary: string | null
-  createdAt: string
-}
-
-interface CurrentResult {
-  id?: string
-  url: string
-  platform: Platform
-  title: string | null
-  creator: string | null
-  duration: string | null
-  thumbnail: string | null
-  transcript: string
-  summary: string
-}
-
-// Local opts: long form with year + time-of-day, used for the history list.
-const historyDateOpts: Intl.DateTimeFormatOptions = {
-  day: 'numeric', month: 'short', year: 'numeric',
-  hour: '2-digit', minute: '2-digit',
-}
+import type { Platform } from '@/components/ui/PlatformBadge'
+import { ResultPanel } from './ResultPanel'
+import { HistoryRow } from './HistoryRow'
+import type { CurrentResult, HistoryItem } from './types'
 
 function inferPlatformFromUrl(url: string): Platform | null {
   if (/youtube\.com|youtu\.be/i.test(url)) return 'youtube'
   if (/instagram\.com\/(p|reel|reels|tv)\//i.test(url)) return 'instagram'
   return null
 }
-
-// ─── Summary block parser (RESUMEN / PUNTOS CLAVE / CONCLUSIÓN) ──────────────
-
-const SECTION_STYLES: Record<
-  string,
-  { fg: string; bg: string; border: string }
-> = {
-  RESUMEN: {
-    fg: 'color-mix(in srgb, var(--secondary, #1e3a8a) 80%, var(--foreground))',
-    bg: 'color-mix(in srgb, var(--secondary, #1e3a8a) 8%, transparent)',
-    border: 'color-mix(in srgb, var(--secondary, #1e3a8a) 25%, var(--border))',
-  },
-  'PUNTOS CLAVE': {
-    fg: 'var(--accent)',
-    bg: 'color-mix(in srgb, var(--accent) 8%, transparent)',
-    border: 'color-mix(in srgb, var(--accent) 25%, var(--border))',
-  },
-  CONCLUSIÓN: {
-    fg: 'color-mix(in srgb, var(--foreground) 90%, transparent)',
-    bg: 'color-mix(in srgb, var(--stat-icon) 10%, transparent)',
-    border: 'color-mix(in srgb, var(--stat-icon) 25%, var(--border))',
-  },
-}
-
-interface SummarySection {
-  header: string | null
-  body: string
-}
-
-function splitSummary(text: string): SummarySection[] {
-  const clean = text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/#{1,3}\s*/g, '').trim()
-  return clean
-    .split(/\n{2,}/)
-    .map((block) => {
-      const lines = block.trim().split('\n')
-      const first = lines[0]?.trim() ?? ''
-      const isHeader = /^[A-ZÁÉÍÓÚÑ\s]{3,40}$/.test(first)
-      if (isHeader && lines.length > 1) {
-        return { header: first, body: lines.slice(1).join('\n').trim() }
-      }
-      return { header: null, body: block.trim() }
-    })
-    .filter((s) => s.body.length > 0)
-}
-
-// ─── Summary renderer ────────────────────────────────────────────────────────
-
-function SummaryBlock({ text }: { text: string }) {
-  const sections = splitSummary(text)
-  if (sections.length === 0) {
-    return (
-      <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--muted-foreground)' }}>
-        {text}
-      </p>
-    )
-  }
-  return (
-    <div className="grid gap-3">
-      {sections.map((s, i) => {
-        const cfg = s.header ? SECTION_STYLES[s.header] : null
-        return (
-          <div
-            key={i}
-            className="rounded-xl overflow-hidden"
-            style={{ border: `1px solid ${cfg?.border ?? 'var(--border)'}` }}
-          >
-            {s.header && cfg && (
-              <div
-                className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest"
-                style={{ background: cfg.bg, color: cfg.fg, borderBottom: `1px solid ${cfg.border}` }}
-              >
-                {s.header}
-              </div>
-            )}
-            <div className="px-4 py-3.5" style={{ backgroundColor: 'var(--card)' }}>
-              <p
-                className="text-sm leading-relaxed whitespace-pre-wrap"
-                style={{ color: 'var(--foreground)' }}
-              >
-                {s.body}
-              </p>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-// ─── Result panel ────────────────────────────────────────────────────────────
-
-function ResultPanel({ result }: { result: CurrentResult }) {
-  return (
-    <div
-      className="rounded-2xl p-5 card-lift"
-      style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
-    >
-      <div className="flex items-start gap-3 mb-4">
-        <PlatformBadge platform={result.platform} />
-        {result.duration && (
-          <span className="text-xs font-medium tabular-nums" style={{ color: 'var(--muted-foreground)' }}>
-            {result.duration}
-          </span>
-        )}
-        <a
-          href={result.url}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="ml-auto inline-flex items-center gap-1 text-xs hover:underline"
-          style={{ color: 'var(--muted-foreground)' }}
-        >
-          <ExternalLink size={11} /> abrir original
-        </a>
-      </div>
-
-      <h2
-        className="text-lg font-semibold leading-tight mb-1"
-        style={{ color: 'var(--foreground)' }}
-      >
-        {result.title ?? 'Sin título'}
-      </h2>
-      {result.creator && (
-        <p className="text-xs mb-5" style={{ color: 'var(--muted-foreground)' }}>
-          {result.creator}
-        </p>
-      )}
-
-      {result.summary && (
-        <section className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Sparkles size={14} style={{ color: 'var(--accent)' }} />
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                Resumen IA
-              </h3>
-            </div>
-            <CopyButton text={result.summary} label="Copiar resumen" />
-          </div>
-          <SummaryBlock text={result.summary} />
-        </section>
-      )}
-
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <FileText size={14} style={{ color: 'var(--muted-foreground)' }} />
-            <h3 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-              Transcripción completa
-            </h3>
-          </div>
-          <CopyButton text={result.transcript} label="Copiar transcript" />
-        </div>
-        <div
-          className="rounded-xl p-4 text-sm leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto"
-          style={{
-            backgroundColor: 'color-mix(in srgb, var(--card) 60%, var(--background))',
-            color: 'var(--foreground)',
-            border: '1px solid var(--border)',
-          }}
-        >
-          {result.transcript}
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// ─── Main view ───────────────────────────────────────────────────────────────
 
 export function TranscriptView() {
   const [url, setUrl] = useState('')
@@ -337,22 +131,26 @@ export function TranscriptView() {
       />
 
       {/* Input form */}
-      <form
-        onSubmit={handleSubmit}
-        className="surface-elevated p-4 mb-6"
-      >
+      <form onSubmit={handleSubmit} className="surface-elevated p-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5"
+          <div
+            className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-[var(--accent)]"
             style={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)' }}
           >
-            <Link2 size={16} style={{ color: 'var(--muted-foreground)' }} />
+            <Link2 size={16} style={{ color: 'var(--muted-foreground)' }} aria-hidden="true" />
+            <label htmlFor="transcript-url" className="sr-only">
+              URL de YouTube o Instagram
+            </label>
             <input
+              id="transcript-url"
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://www.youtube.com/watch?v=…  ó  https://instagram.com/reel/…"
               required
               disabled={loading}
+              aria-describedby={error ? 'transcript-error' : undefined}
+              aria-invalid={error ? true : undefined}
               className="flex-1 bg-transparent outline-none text-sm placeholder:opacity-50"
               style={{ color: 'var(--foreground)' }}
             />
@@ -360,24 +158,27 @@ export function TranscriptView() {
           <button
             type="submit"
             disabled={loading || url.trim().length === 0}
-            className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 cursor-pointer hover:brightness-110 active:brightness-95"
+            aria-busy={loading || undefined}
+            className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 cursor-pointer hover:brightness-110 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
             style={{
               background: 'var(--gradient-accent)',
               color: 'var(--accent-foreground)',
               boxShadow: 'var(--shadow-card)',
             }}
           >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            {loading
+              ? <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+              : <Sparkles size={14} aria-hidden="true" />}
             {loading ? 'Procesando…' : 'Transcribir'}
           </button>
         </div>
         {error && (
-          <p className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>
+          <p id="transcript-error" role="alert" className="mt-3 text-sm" style={{ color: 'var(--destructive)' }}>
             {error}
           </p>
         )}
         {loading && (
-          <p className="mt-3 text-xs" style={{ color: 'var(--muted-foreground)' }}>
+          <p role="status" aria-live="polite" className="mt-3 text-xs" style={{ color: 'var(--muted-foreground)' }}>
             Esto puede tardar 30-90 segundos. Apify resuelve el video, Groq Whisper transcribe, Claude resume.
           </p>
         )}
@@ -393,8 +194,8 @@ export function TranscriptView() {
       {/* History */}
       <Section eyebrow="Historial" flush>
         {historyLoading ? (
-          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            <Loader2 size={14} className="animate-spin" /> Cargando…
+          <div role="status" aria-live="polite" aria-label="Cargando historial" className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
+            <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Cargando…
           </div>
         ) : history.length === 0 ? (
           <EmptyState
@@ -404,66 +205,15 @@ export function TranscriptView() {
           />
         ) : (
           <div className="grid gap-3">
-            {history.map((item) => {
-              const expanded = expandedId === item.id
-              return (
-                <div
-                  key={item.id}
-                  className="rounded-xl card-lift"
-                  style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setExpandedId(expanded ? null : item.id)}
-                    className="w-full text-left p-4 flex items-start gap-3 cursor-pointer"
-                  >
-                    <PlatformBadge platform={item.platform} />
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className="text-sm font-semibold leading-tight truncate"
-                        style={{ color: 'var(--foreground)' }}
-                      >
-                        {item.title ?? item.url}
-                      </p>
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-                        {[item.creator, item.duration, formatDate(item.createdAt, historyDateOpts)]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setPendingDelete(item)
-                      }}
-                      className="p-2 rounded-lg hover:opacity-70 transition-opacity cursor-pointer"
-                      style={{ color: 'var(--muted-foreground)' }}
-                      aria-label="Eliminar"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </button>
-                  {expanded && (
-                    <div className="px-4 pb-4">
-                      <ResultPanel
-                        result={{
-                          id: item.id,
-                          url: item.url,
-                          platform: item.platform,
-                          title: item.title,
-                          creator: item.creator,
-                          duration: item.duration,
-                          thumbnail: item.thumbnail,
-                          transcript: item.transcript ?? '',
-                          summary: item.summary ?? '',
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+            {history.map((item) => (
+              <HistoryRow
+                key={item.id}
+                item={item}
+                expanded={expandedId === item.id}
+                onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                onRequestDelete={() => setPendingDelete(item)}
+              />
+            ))}
           </div>
         )}
       </Section>
