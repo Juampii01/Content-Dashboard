@@ -18,6 +18,8 @@ import {
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Section } from '@/components/ui/Section'
+import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
+import { toast } from 'sonner'
 
 interface ResearchVideo {
   videoId: string
@@ -181,6 +183,8 @@ export function ContentResearchView() {
   const [current, setCurrent] = useState<ResearchRow | null>(null)
   const [history, setHistory] = useState<ResearchRow[]>([])
   const [historyLoading, setHistoryLoading] = useState(true)
+  const [pendingDelete, setPendingDelete] = useState<ResearchRow | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
@@ -227,8 +231,11 @@ export function ContentResearchView() {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return
+    const id = pendingDelete.id
     const previous = history
+    setDeleting(true)
     setHistory(history.filter((h) => h.id !== id))
     try {
       const r = await fetch('/api/content-research', {
@@ -236,9 +243,18 @@ export function ContentResearchView() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       })
-      if (!r.ok) setHistory(previous)
+      if (!r.ok) {
+        setHistory(previous)
+        toast.error('No se pudo eliminar la investigación.')
+      } else {
+        toast.success('Investigación eliminada.')
+      }
     } catch {
       setHistory(previous)
+      toast.error('Error de red al eliminar.')
+    } finally {
+      setDeleting(false)
+      setPendingDelete(null)
     }
   }
 
@@ -329,10 +345,10 @@ export function ContentResearchView() {
                 <ResearchPanel row={row} />
                 <button
                   type="button"
-                  onClick={() => void handleDelete(row.id)}
-                  className="absolute top-4 right-4 p-2 rounded-lg hover:opacity-70 cursor-pointer"
+                  onClick={() => setPendingDelete(row)}
+                  className="absolute top-4 right-4 p-2 rounded-lg hover:opacity-70 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
                   style={{ color: 'var(--muted-foreground)' }}
-                  aria-label="Eliminar"
+                  aria-label={`Eliminar investigación de ${row.channelName ?? row.channelUrl}`}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -341,6 +357,24 @@ export function ContentResearchView() {
           </div>
         )}
       </Section>
+
+      {pendingDelete && (
+        <ConfirmDeleteModal
+          title="Eliminar investigación"
+          description={
+            <>
+              Vas a eliminar permanentemente la investigación de{' '}
+              <strong>&ldquo;{pendingDelete.channelName ?? pendingDelete.channelUrl}&rdquo;</strong>{' '}
+              y los {pendingDelete.videos.length} videos analizados. Esta acción no se puede deshacer.
+            </>
+          }
+          confirmLabel={deleting ? 'Eliminando…' : 'Eliminar'}
+          busy={deleting}
+          icon={<Trash2 size={12} />}
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
     </div>
   )
 }
