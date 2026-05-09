@@ -5,10 +5,10 @@
  * minimal honest detail view using only real persisted fields (thumbnail,
  * caption, view/like/comment counts, published date, link to Instagram).
  *
- * The richer analytics view (engagement benchmarks, retention curve, best-day
- * chart) was previously built against `lib/mock-data/reel-detail.ts` with
- * fabricated numbers. That version lives in `ReelDetailContent.tsx` and stays
- * in the repo for re-enabling when Apify-based Instagram analytics are wired.
+ * A richer analytics view (engagement benchmarks, retention curve, best-day
+ * chart) lived here previously, fed by fabricated mock data. It was deleted
+ * in favor of this honest baseline; re-add a richer version once Apify-based
+ * Instagram analytics are actually wired and persisted to `UserReel`.
  */
 
 import { notFound, redirect } from 'next/navigation'
