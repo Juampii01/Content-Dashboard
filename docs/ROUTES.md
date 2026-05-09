@@ -7,7 +7,7 @@
 | Route          | Component file                                  | Purpose                                                          |
 | -------------- | ----------------------------------------------- | ---------------------------------------------------------------- |
 | `/`            | `app/page.tsx` → `components/home/HomeContent`  | Home / overview dashboard                                        |
-| `/ads`         | `app/ads/page.tsx` → `AdsContent`               | Ads dashboard — Meta Ads + TikTok Ads centralizados              |
+| `/ads`         | `app/ads/page.tsx` → `AdsContent`               | Ads dashboard — `ComingSoonBanner` placeholder hasta wirear Meta + TikTok Ads APIs |
 | `/ai`          | `app/ai/page.tsx` → `EternityAIContent`         | Eternity AI — streaming chat grounded on workspace data          |
 | `/analizador`  | `app/analizador/page.tsx` → `AnalizadorContent` | Content analyzer (uses `app/api/analizador`)                     |
 | `/bases`       | `app/bases/page.tsx` → `BasesContent`           | Knowledge bases / source library                                 |
@@ -20,7 +20,7 @@
 | `/transcript`  | `app/transcript/page.tsx` → `TranscriptView`    | Paste a YouTube/Instagram URL → transcript + AI summary (Apify + Groq + Claude). History scoped to active client. |
 | `/content-research` | `app/content-research/page.tsx` → `ContentResearchView` | Channel-level research — top 5 videos in a timeframe with AI analysis (YouTube via Data API, Instagram via Apify). |
 | `/video-feed`  | `app/video-feed/page.tsx` → `VideoFeedView`     | Connect own Instagram → last 30 days ranked by engagement, AI analysis per post. Singleton per (client, platform). |
-| `/tiktok`      | `app/tiktok/page.tsx` → `TikTokContent`         | TikTok analytics — 4 tabs (Dashboard, Videos, Tendencias, Audiencia) |
+| `/tiktok`      | `app/tiktok/page.tsx` → `TikTokContent`         | TikTok analytics — `ComingSoonBanner` placeholder hasta wirear TikTok Display API |
 | `/youtube`     | `app/youtube/page.tsx` → `YouTubeContent`       | YouTube analytics — 3 tabs (Dashboard, Videos, Audiencia) + ConnectButton |
 | `/pending-approval` | `app/pending-approval/page.tsx`            | Landing for PENDING users — shown until a SUPER_ADMIN approves them |
 | `/admin`       | `app/admin/page.tsx`                            | Admin overview — counters (users, pendientes, clientes). SUPER_ADMIN only |
@@ -79,7 +79,7 @@ API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `yo
 ```
 Visual verification — all routes
 - [ ] /            home renders, no console errors
-- [ ] /ads         loads, tabs (Resumen, Meta Ads, TikTok Ads, Creativos) renderizan
+- [ ] /ads         loads, ComingSoonBanner renderiza con título + 4 chips de features
 - [ ] /ai          Eternity chat renders; nueva conversación, streaming, historial funcionan
 - [ ] /analizador  loads, brand accents correct
 - [ ] /bases       loads, brand accents correct
@@ -92,7 +92,7 @@ Visual verification — all routes
 - [ ] /transcript  URL form renders; paste YouTube link returns transcript + summary; history list shows past items
 - [ ] /content-research  channel input + timeframe; results grid renders with AI analysis chips; history works
 - [ ] /video-feed  empty state shows connect form; after connect, posts grid renders ranked with AI summaries
-- [ ] /tiktok      loads, tabs (Dashboard, Videos, Tendencias, Audiencia) renderizan
+- [ ] /tiktok      loads, ComingSoonBanner renderiza con título + 4 chips de features
 - [ ] /youtube     loads, tabs (Dashboard, Videos, Audiencia) renderizan
 - [ ] /pending-approval  PENDING user lands here, sign-out works
 - [ ] /admin       (SUPER_ADMIN) overview cards render; non-admin sees 404
