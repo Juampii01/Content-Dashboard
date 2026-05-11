@@ -3,6 +3,7 @@
 import { POSTS } from '@/lib/mock-data/publicaciones'
 import { formatK, formatPercent } from '@/lib/utils/formatters'
 import { Eye, Heart, Bookmark, MessageCircle } from 'lucide-react'
+import { DemoDataPill } from '@/components/instagram/InstagramSyncBanner'
 
 export function PublicacionesTab() {
   const totalReach = POSTS.reduce((s, p) => s + p.reach, 0)
@@ -10,6 +11,7 @@ export function PublicacionesTab() {
 
   return (
     <div>
+      <div className="mb-3"><DemoDataPill /></div>
       <div className="grid grid-cols-4 gap-3 mb-6">
         {[
           { label: 'PUBLICACIONES', value: POSTS.length.toString() },

@@ -70,7 +70,7 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 - `/api/discovery` (POST persists `DiscoveryResponse`, GET SUPER_ADMIN only)
 
 **UI que lee mocks** (`grep -rln "lib/mock-data" app components`):
-- `/instagram` — los 5 tabs (`PublicacionesTab`, `DashboardTab`, `ReelsTab`, `HistoriasTab`, `CompetenciaTab`) + `app/instagram/reels/[id]/page.tsx`
+- `/instagram` — 2 tabs wireados con fallback a mock (`DashboardTab`, `ReelsTab` usan `useInstagramDataContext`; muestran `DemoDataPill` cuando no hay data real) + 3 tabs demo-only con pill visible (`PublicacionesTab`, `HistoriasTab`, `CompetenciaTab` — no hay backend para posts/stories/competitor benchmarks) + `app/instagram/reels/[id]/page.tsx`
 - `/youtube` — sólo `YouTubeAudienciaTab` (Dashboard y Videos ya leen real)
 - `components/home/HomeContent` (lee `lib/mock-data/dashboard.ts`)
 - `app/tiktok/TikTokContent.tsx` (mock + ComingSoonBanner)

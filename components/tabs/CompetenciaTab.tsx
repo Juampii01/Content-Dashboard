@@ -3,10 +3,12 @@
 import { COMPETITORS } from '@/lib/mock-data/competencia'
 import { formatK, formatPercent } from '@/lib/utils/formatters'
 import { TrendingUp } from 'lucide-react'
+import { DemoDataPill } from '@/components/instagram/InstagramSyncBanner'
 
 export function CompetenciaTab() {
   return (
     <div>
+      <div className="mb-3"><DemoDataPill /></div>
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
         <table className="w-full text-sm">
           <thead>
