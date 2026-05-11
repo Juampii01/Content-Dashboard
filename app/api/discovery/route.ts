@@ -76,17 +76,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     db.profile.findUnique({ where: { id: userId }, select: { email: true } }),
   ])
 
-  const row = await db.discoveryResponse.create({
-    data: {
-      userId,
-      clientId: clientId ?? null,
-      email: profile?.email ?? null,
-      answers: parsed.data.answers,
-    },
-    select: { id: true, createdAt: true },
-  })
-
-  return NextResponse.json({ ok: true, id: row.id, createdAt: row.createdAt })
+  try {
+    const row = await db.discoveryResponse.create({
+      data: {
+        userId,
+        clientId: clientId ?? null,
+        email: profile?.email ?? null,
+        answers: parsed.data.answers,
+      },
+      select: { id: true, createdAt: true },
+    })
+    return NextResponse.json({ ok: true, id: row.id, createdAt: row.createdAt })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[POST /api/discovery] persist failed:', message)
+    return NextResponse.json(
+      { error: 'DB_WRITE_FAILED', detail: message },
+      { status: 500 },
+    )
+  }
 }
 
 export async function GET(): Promise<NextResponse> {
