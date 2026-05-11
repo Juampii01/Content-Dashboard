@@ -12,6 +12,7 @@
 | `/analizador`  | `app/analizador/page.tsx` → `AnalizadorContent` | Content analyzer (uses `app/api/analizador`)                     |
 | `/bases`       | `app/bases/page.tsx` → `BasesContent`           | Knowledge bases / source library                                 |
 | `/competidores` | `app/competidores/page.tsx`                    | Competitor list (scrape, refresh, open detail)                   |
+| `/discovery`   | `app/discovery/page.tsx`                        | Generic discovery / intake form. Visible para cualquier user logueado. UI-only (no persiste todavía). |
 | `/competidores/[username]` | `app/competidores/[username]/page.tsx` | Competitor detail — reels, transcribe, analysis, chat            |
 | `/contenido`   | `app/contenido/page.tsx` → `ContenidoContent`   | Content workspace (editor + lists)                               |
 | `/instagram`   | `app/instagram/page.tsx` → `InstagramContent`   | Instagram analytics view                                         |
@@ -86,6 +87,7 @@ Visual verification — all routes
 - [ ] /bases       loads, brand accents correct
 - [ ] /competidores  list renders; add/refresh competitor works
 - [ ] /competidores/[username]  detail renders (reels, transcribe, analysis, chat)
+- [ ] /discovery   form renders, todos los campos funcionan, submit muestra estado de éxito
 - [ ] /contenido   loads, brand accents correct
 - [ ] /instagram   loads, filters render (incl. ReelFilters, TimeFilter), ConnectButton visible
 - [ ] /login       form renders; successful login redirects to /
