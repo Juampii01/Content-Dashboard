@@ -12,7 +12,7 @@
 | `/analizador`  | `app/analizador/page.tsx` → `AnalizadorContent` | Content analyzer (uses `app/api/analizador`)                     |
 | `/bases`       | `app/bases/page.tsx` → `BasesContent`           | Knowledge bases / source library                                 |
 | `/competidores` | `app/competidores/page.tsx`                    | Competitor list (scrape, refresh, open detail)                   |
-| `/discovery`   | `app/discovery/page.tsx`                        | Generic discovery / intake form. Visible para cualquier user logueado. UI-only (no persiste todavía). |
+| `/discovery`   | `app/discovery/page.tsx`                        | Cuestionario estratégico (9 bloques, 40 preguntas). Visible para cualquier user logueado, incluso sin ClientAccess. Autoguarda borrador en `localStorage`; submit persiste en `DiscoveryResponse`. |
 | `/competidores/[username]` | `app/competidores/[username]/page.tsx` | Competitor detail — reels, transcribe, analysis, chat            |
 | `/contenido`   | `app/contenido/page.tsx` → `ContenidoContent`   | Content workspace (editor + lists)                               |
 | `/instagram`   | `app/instagram/page.tsx` → `InstagramContent`   | Instagram analytics view                                         |
@@ -58,6 +58,11 @@ API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `yo
 - `GET /api/video-feed` — return the active client's connected Instagram feed (or `{ account: null }`).
 - `POST /api/video-feed` — body `{ channelUrl }`. Connect or refresh: scrapes profile, only re-analyzes new posts, merges with existing analyses, persists. Rate-limited 5/min.
 - `DELETE /api/video-feed` — disconnect (removes the row).
+
+### Discovery APIs
+
+- `POST /api/discovery` — body `{ answers: Record<string, string> }`. Persists a `DiscoveryResponse` row scoped to the submitting user (no `ClientAccess` required). Snapshots `activeClientId` cookie + `Profile.email` at submission time. Rate-limited 5/min per IP.
+- `GET /api/discovery` — SUPER_ADMIN only. Returns the last 100 submissions.
 
 ### Admin + auth APIs
 

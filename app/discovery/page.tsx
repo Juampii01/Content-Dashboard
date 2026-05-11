@@ -1,6 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+const DRAFT_KEY = 'discovery-draft-v1'
+type SaveState = 'idle' | 'saving' | 'saved'
 
 interface Question {
   id: string
@@ -249,24 +252,109 @@ export default function DiscoveryPage() {
   const [answers, setAnswers] = useState<Record<string, string>>(EMPTY)
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [saveState, setSaveState] = useState<SaveState>('idle')
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [hydrated, setHydrated] = useState(false)
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Hydrate from localStorage on mount. Only treat it as a real draft if at
+  // least one answer is non-empty — avoids showing "Guardado" the first time.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, string>
+        const merged = { ...EMPTY, ...parsed }
+        setAnswers(merged)
+        if (Object.values(parsed).some((v) => typeof v === 'string' && v.trim().length > 0)) {
+          setSaveState('saved')
+        }
+      }
+    } catch {
+      // Corrupt JSON — ignore, user starts fresh.
+    }
+    setHydrated(true)
+  }, [])
+
+  // Debounced persistence. We write 500ms after the last keystroke so we
+  // don't thrash localStorage on every character. Skipped before hydration
+  // so the initial render doesn't overwrite a valid draft with EMPTY.
+  useEffect(() => {
+    if (!hydrated) return
+    setSaveState('saving')
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      try {
+        window.localStorage.setItem(DRAFT_KEY, JSON.stringify(answers))
+        setSaveState('saved')
+      } catch {
+        setSaveState('idle')
+      }
+    }, 500)
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+    }
+  }, [answers, hydrated])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 400))
-    setLoading(false)
-    setSubmitted(true)
+    setSubmitError(null)
+    try {
+      const res = await fetch('/api/discovery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers }),
+      })
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null
+        const code = data?.error ?? `HTTP_${res.status}`
+        setSubmitError(
+          code === 'UNAUTHORIZED'
+            ? 'Tu sesión expiró. Volvé a entrar antes de enviar.'
+            : code === 'RATE_LIMIT'
+              ? 'Esperá un minuto antes de enviar de nuevo.'
+              : 'No pudimos guardar las respuestas. Probá de nuevo.',
+        )
+        return
+      }
+      try {
+        window.localStorage.removeItem(DRAFT_KEY)
+      } catch {
+        // ignore
+      }
+      setSubmitted(true)
+    } catch {
+      setSubmitError('Error de red. Probá de nuevo.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
       <header className="mb-8">
-        <p
-          className="text-[11px] font-medium uppercase tracking-[0.2em]"
-          style={{ color: 'var(--muted-foreground)' }}
-        >
-          Discovery · Eternity
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <p
+            className="text-[11px] font-medium uppercase tracking-[0.2em]"
+            style={{ color: 'var(--muted-foreground)' }}
+          >
+            Discovery · Eternity
+          </p>
+          {hydrated && !submitted && (
+            <span
+              className="text-[11px] font-medium"
+              style={{ color: 'var(--muted-foreground)' }}
+              aria-live="polite"
+            >
+              {saveState === 'saving'
+                ? 'Guardando…'
+                : saveState === 'saved'
+                  ? 'Borrador guardado en este navegador'
+                  : ''}
+            </span>
+          )}
+        </div>
         <h1 className="mt-2 text-2xl font-bold md:text-3xl" style={{ color: 'var(--foreground)' }}>
           Cuestionario estratégico
         </h1>
@@ -313,8 +401,14 @@ export default function DiscoveryPage() {
           <button
             type="button"
             onClick={() => {
+              try {
+                window.localStorage.removeItem(DRAFT_KEY)
+              } catch {
+                // ignore
+              }
               setAnswers(EMPTY)
               setSubmitted(false)
+              setSaveState('idle')
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
             className="mt-6 rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
@@ -392,6 +486,16 @@ export default function DiscoveryPage() {
               </div>
             </section>
           ))}
+
+          {submitError && (
+            <p
+              className="text-center text-sm"
+              style={{ color: 'var(--accent)' }}
+              role="alert"
+            >
+              {submitError}
+            </p>
+          )}
 
           <button
             type="submit"

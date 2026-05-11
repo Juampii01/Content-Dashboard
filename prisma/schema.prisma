@@ -578,6 +578,22 @@ model TranscriptHistory {
   @@index([clientId, createdAt])
 }
 
+// DiscoveryResponse: /discovery — answers to the strategic questionnaire.
+// Visible to any logged-in user (incl. users without ClientAccess — the
+// form is an onboarding entry point). Multiple submissions per user are
+// allowed: each "Empezar de nuevo" inserts a new row.
+model DiscoveryResponse {
+  id        String   @id @default(cuid())
+  userId    String   // Profile.id (submitter)
+  clientId  String?  // active client cookie at submission, if any
+  email     String?  // snapshot from Profile.email at submission time
+  answers   Json     // { q1: "…", q2: "…", … q40: "…" }
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([clientId, createdAt])
+}
+
 // IncomeRecord: /ventas — one income entry, optionally tied to a reel.
 model IncomeRecord {
   id          String   @id @default(cuid())
