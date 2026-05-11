@@ -582,12 +582,54 @@ model TranscriptHistory {
 // Visible to any logged-in user (incl. users without ClientAccess — the
 // form is an onboarding entry point). Multiple submissions per user are
 // allowed: each "Empezar de nuevo" inserts a new row.
+//
+// 40 separate columns (q1..q40) instead of one JSONB blob so each answer is
+// directly visible in the Supabase Table Editor.
 model DiscoveryResponse {
   id        String   @id @default(cuid())
   userId    String   // Profile.id (submitter)
   clientId  String?  // active client cookie at submission, if any
   email     String?  // snapshot from Profile.email at submission time
-  answers   Json     // { q1: "…", q2: "…", … q40: "…" }
+  q1        String?
+  q2        String?
+  q3        String?
+  q4        String?
+  q5        String?
+  q6        String?
+  q7        String?
+  q8        String?
+  q9        String?
+  q10       String?
+  q11       String?
+  q12       String?
+  q13       String?
+  q14       String?
+  q15       String?
+  q16       String?
+  q17       String?
+  q18       String?
+  q19       String?
+  q20       String?
+  q21       String?
+  q22       String?
+  q23       String?
+  q24       String?
+  q25       String?
+  q26       String?
+  q27       String?
+  q28       String?
+  q29       String?
+  q30       String?
+  q31       String?
+  q32       String?
+  q33       String?
+  q34       String?
+  q35       String?
+  q36       String?
+  q37       String?
+  q38       String?
+  q39       String?
+  q40       String?
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
