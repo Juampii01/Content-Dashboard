@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 export interface InstagramAccountSummary {
   connected: boolean
+  reason?: 'NO_SESSION' | 'NO_ACTIVE_CLIENT' | 'NOT_CONNECTED'
   accountName?: string
   accountPic?: string | null
   expiresAt?: string | null
@@ -54,17 +55,25 @@ export function useInstagramData(): UseInstagramDataReturn {
         fetch('/api/instagram/account-summary'),
         fetch('/api/instagram/reels'),
       ])
+
       if (sumRes.ok) {
         setSummary((await sumRes.json()) as InstagramAccountSummary)
+      } else if (sumRes.status !== 401) {
+        toast.error('No pudimos cargar el estado de Instagram. Refrescá la página.')
       }
+
       if (reelsRes.ok) {
         const json = (await reelsRes.json()) as { reels?: UserReelRow[] }
         setReels(json.reels ?? [])
-      } else {
+      } else if (reelsRes.status === 403) {
+        // Tenant not yet wired (no active client / no access). Empty is correct.
+        setReels([])
+      } else if (reelsRes.status !== 401) {
+        toast.error('No pudimos cargar tus reels. Refrescá la página.')
         setReels([])
       }
     } catch {
-      // keep previous state
+      toast.error('Error de red cargando Instagram. Revisá tu conexión.')
     } finally {
       setLoading(false)
     }

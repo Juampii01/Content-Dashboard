@@ -50,7 +50,8 @@ export function InstagramContent() {
         loading={loading}
         syncing={syncing}
         onSync={() => void sync()}
-        reelCount={reels.length}
+        reelCount={summary?.reelCount ?? reels.length}
+        loadedReels={reels.length}
       />
 
       {/* Tab navigation */}
