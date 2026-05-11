@@ -46,9 +46,9 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 
 ---
 
-## Modelos Prisma (26 en `schema.prisma`)
+## Modelos Prisma (30 en `schema.prisma`)
 
-`Profile` · `Client` · `ClientAccess` · `SocialConnection` · `OAuthState` · `Competitor` · `Reel` · `Transcription` · `Analysis` · `ChatMessage` · `ScrapeJob` · `Conversation` · `AIMessage` · `Task` · `ContentPiece` · `ContentTemplate` · `ICPProfile` · `BusinessBase` · `Idea` · `GuionTab` · `GuionItem` · `UserReel` · `Story` · `YouTubeVideo` · `AccountSnapshot` · `IncomeRecord`.
+`Profile` · `Client` · `ClientAccess` · `SocialConnection` · `OAuthState` · `Competitor` · `Reel` · `Transcription` · `Analysis` · `ChatMessage` · `ScrapeJob` · `Conversation` · `AIMessage` · `Task` · `DiscoveryAnswers` · `ContentPiece` · `ContentTemplate` · `ICPProfile` · `BusinessBase` · `Idea` · `GuionTab` · `GuionItem` · `UserReel` · `Story` · `YouTubeVideo` · `AccountSnapshot` · `ContentResearchHistory` · `VideoFeedAccount` · `TranscriptHistory` · `IncomeRecord`.
 
 **Antes de usar un modelo**: `grep -n "^model " prisma/schema.prisma` para confirmar.
 

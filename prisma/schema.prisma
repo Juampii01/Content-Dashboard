@@ -578,6 +578,16 @@ model TranscriptHistory {
   @@index([clientId, createdAt])
 }
 
+// DiscoveryAnswers: single-row store for the product-owner discovery
+// cuestionario answers. Questions live in code (`lib/discovery/questions.ts`),
+// so this table only holds the responses keyed by question id. Access is
+// gated to SUPER_ADMIN at the route layer.
+model DiscoveryAnswers {
+  id        String   @id @default(cuid())
+  answers   Json     @default("{}")
+  updatedAt DateTime @updatedAt
+}
+
 // IncomeRecord: /ventas — one income entry, optionally tied to a reel.
 model IncomeRecord {
   id          String   @id @default(cuid())
