@@ -27,6 +27,7 @@
 | `/admin`       | `app/admin/page.tsx`                            | Admin overview — counters (users, pendientes, clientes). SUPER_ADMIN only |
 | `/admin/users` | `app/admin/users/page.tsx` → `UsersAdminClient` | User management — approve, role changes, manage client access. SUPER_ADMIN only |
 | `/admin/clients` | `app/admin/clients/page.tsx` → `ClientsAdminClient` | Tenant management — create / edit / delete clients. SUPER_ADMIN only |
+| `/admin/discovery` | `app/admin/discovery/page.tsx` → `DiscoveryAdminList` | Viewer for `DiscoveryResponse` submissions. SUPER_ADMIN only. Server-side fetch (no client API call). Accordion: click a row → ver las 40 respuestas agrupadas por bloque. |
 
 API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `youtube/*`, `admin/*`, `me/*`) and are not user-facing.
 
@@ -106,6 +107,7 @@ Visual verification — all routes
 - [ ] /admin       (SUPER_ADMIN) overview cards render; non-admin sees 404
 - [ ] /admin/users (SUPER_ADMIN) table + filter + approve + access modal work
 - [ ] /admin/clients (SUPER_ADMIN) table + create/edit/delete flows work
+- [ ] /admin/discovery (SUPER_ADMIN) lista de submissions, expandir muestra los 9 bloques con sus respuestas
 - [ ] Sidebar      TikTok + Ads NO aparecen (intencional — Cristián confirmó que sobran por ahora; las páginas siguen accesibles por URL)
 - [ ] Sidebar      ClientSwitcher visible
 - [ ] Sidebar      grupo ADMIN aparece solo para SUPER_ADMIN
