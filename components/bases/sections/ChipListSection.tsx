@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { ChipEditor } from '../ChipEditor'
 
 interface ChipListSectionProps {
@@ -49,12 +50,17 @@ export function ChipListSection({
   const save = useCallback((next: string[]) => {
     setItems(next)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      fetch(`/api/bases/${sectionId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: next }),
-      }).catch(() => {})
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/bases/${sectionId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: next }),
+        })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      } catch {
+        toast.error('No pudimos guardar los cambios en bases.')
+      }
     }, 400)
   }, [sectionId])
 

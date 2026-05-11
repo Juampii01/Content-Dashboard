@@ -2,10 +2,13 @@
 
 import { useEffect, useRef, useCallback } from 'react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import type { GuionTab, GuionItem } from '@/lib/types'
 import { GuionesGrid } from './guiones/GuionesGrid'
 import { GuionEditor } from './guiones/GuionEditor'
 import { EmojiPickerPortal } from './guiones/EmojiPicker'
+
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 // ─── DB row shapes (API responses mirror Prisma types) ────────────────────────
 
@@ -66,6 +69,40 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
   const menuRef   = useRef<HTMLDivElement>(null)
   const pickerRef = useRef<HTMLDivElement>(null)
   const initializedRef = useRef(false)
+
+  // ─── Item content autosave ──────────────────────────────────────────────
+  // Editor state (title + content) saves with a 500ms debounce so we don't
+  // fire a PATCH per keystroke. The pending patch is coalesced per item;
+  // switching items flushes whatever is pending. Status is surfaced to the
+  // editor footer so users see saving / saved / error explicitly.
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingPatchRef = useRef<Partial<GuionItem>>({})
+  const pendingItemIdRef = useRef<string | null>(null)
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+
+  const flushItemSave = useCallback(async () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+    const patch = pendingPatchRef.current
+    const itemId = pendingItemIdRef.current
+    pendingPatchRef.current = {}
+    pendingItemIdRef.current = null
+    if (!itemId || Object.keys(patch).length === 0) return
+    try {
+      const res = await fetch(`/api/guiones/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setSaveStatus('saved')
+    } catch {
+      setSaveStatus('error')
+      toast.error('No pudimos guardar el guión. Revisá tu conexión.')
+    }
+  }, [])
 
   // ─── Load from API on mount ──────────────────────────────────────────────
 
@@ -195,19 +232,41 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
     await fetch(`/api/guiones/items/${id}`, { method: 'DELETE' })
   }
 
-  const updateActive = async (patch: Partial<GuionItem>) => {
+  const updateActive = (patch: Partial<GuionItem>) => {
     if (!activeItemId) return
+
+    // If the user is switching items mid-edit, flush the previous item's
+    // pending patch first so it doesn't end up writing to the new item.
+    if (
+      pendingItemIdRef.current &&
+      pendingItemIdRef.current !== activeItemId
+    ) {
+      void flushItemSave()
+    }
+
+    // Optimistic UI update.
     const now = new Date().toISOString()
     setItems(prev =>
       prev.map(i => i.id === activeItemId ? { ...i, ...patch, updatedAt: now } : i)
     )
 
-    await fetch(`/api/guiones/items/${activeItemId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
-    })
+    // Coalesce + debounce the actual PATCH.
+    pendingPatchRef.current = { ...pendingPatchRef.current, ...patch }
+    pendingItemIdRef.current = activeItemId
+    setSaveStatus('saving')
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      void flushItemSave()
+    }, 500)
   }
+
+  // Flush any pending save when the active item changes or component unmounts.
+  useEffect(() => {
+    return () => {
+      void flushItemSave()
+    }
+  }, [activeItemId, flushItemSave])
 
   const finishRenameItem = async (itemId: string) => {
     const name = renameItemVal.trim() || 'Sin título'
@@ -286,6 +345,7 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
         label={label}
         onUpdate={updateActive}
         onDelete={deleteItem}
+        saveStatus={saveStatus}
       />
     </div>
   )
