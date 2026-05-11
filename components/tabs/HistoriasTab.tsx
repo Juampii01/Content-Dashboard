@@ -3,6 +3,7 @@
 import { STORIES } from '@/lib/mock-data/historias'
 import { formatK } from '@/lib/utils/formatters'
 import { Eye, MessageSquare, MousePointer, LogOut } from 'lucide-react'
+import { DemoDataPill } from '@/components/instagram/InstagramSyncBanner'
 
 export function HistoriasTab() {
   const totalReach = STORIES.reduce((s, h) => s + h.reach, 0)
@@ -11,6 +12,7 @@ export function HistoriasTab() {
   return (
     <div className="flex gap-6">
       <div className="flex-1">
+        <div className="mb-3"><DemoDataPill /></div>
         <div className="grid grid-cols-4 gap-3 mb-6">
           {[
             { label: 'ALCANCE TOTAL', value: formatK(totalReach), icon: <Eye size={14} /> },

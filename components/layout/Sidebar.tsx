@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Camera, Play, Bot,
   CheckSquare, BookOpen, Search, Kanban,
   ChevronLeft, ChevronRight, Users,
-  Music, Megaphone, LogOut, Shield, UserCog, Building2,
+  LogOut, Shield, UserCog, Building2,
   FileText, Telescope, Rss, ClipboardList,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -42,7 +42,6 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Instagram', href: '/instagram', icon: Camera },
       { label: 'YouTube', href: '/youtube', icon: Play },
-      { label: 'TikTok', href: '/tiktok', icon: Music },
     ],
   },
   {
@@ -58,12 +57,6 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'ADS',
-    items: [
-      { label: 'Ads', href: '/ads', icon: Megaphone },
-    ],
-  },
-  {
     label: 'IA',
     items: [
       { label: 'Eternity AI', href: '/ai', icon: Bot },
@@ -76,6 +69,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Resumen', href: '/admin', icon: Shield },
       { label: 'Usuarios', href: '/admin/users', icon: UserCog },
       { label: 'Clientes', href: '/admin/clients', icon: Building2 },
+      { label: 'Discovery', href: '/admin/discovery', icon: ClipboardList },
     ],
   },
 ]

@@ -11,6 +11,7 @@ import { getActiveClientId, getUserIdOrNull } from '@/lib/auth-user'
 
 interface Response {
   connected: boolean
+  reason?: 'NO_SESSION' | 'NO_ACTIVE_CLIENT' | 'NOT_CONNECTED'
   accountName?: string
   accountPic?: string | null
   expiresAt?: string | null
@@ -25,14 +26,14 @@ interface Response {
 
 export async function GET(): Promise<NextResponse<Response>> {
   const userId = await getUserIdOrNull()
-  if (!userId) return NextResponse.json({ connected: false })
+  if (!userId) return NextResponse.json({ connected: false, reason: 'NO_SESSION' })
   const clientId = await getActiveClientId()
-  if (!clientId) return NextResponse.json({ connected: false })
+  if (!clientId) return NextResponse.json({ connected: false, reason: 'NO_ACTIVE_CLIENT' })
 
   const conn = await db.socialConnection.findUnique({
     where: { clientId_platform: { clientId, platform: 'instagram' } },
   })
-  if (!conn) return NextResponse.json({ connected: false })
+  if (!conn) return NextResponse.json({ connected: false, reason: 'NOT_CONNECTED' })
 
   const [snapshot, reelCount] = await Promise.all([
     db.accountSnapshot.findFirst({
