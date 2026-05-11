@@ -3,15 +3,27 @@
 import { Trash2, FileText } from 'lucide-react'
 import type { GuionItem } from '@/lib/types'
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+
 interface GuionEditorProps {
   activeItem: GuionItem | null
   hasTabs: boolean
   label: string
   onUpdate: (patch: Partial<GuionItem>) => void
   onDelete: (id: string) => void
+  saveStatus?: SaveStatus
 }
 
-export function GuionEditor({ activeItem, hasTabs, label, onUpdate, onDelete }: GuionEditorProps) {
+function statusLabel(status: SaveStatus): string {
+  switch (status) {
+    case 'saving': return 'Guardando…'
+    case 'saved':  return 'Guardado'
+    case 'error':  return '⚠ No se pudo guardar — revisá tu conexión'
+    default:       return 'Guardado automáticamente'
+  }
+}
+
+export function GuionEditor({ activeItem, hasTabs, label, onUpdate, onDelete, saveStatus = 'idle' }: GuionEditorProps) {
   if (!activeItem) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3">
@@ -55,8 +67,14 @@ export function GuionEditor({ activeItem, hasTabs, label, onUpdate, onDelete }: 
       </div>
 
       <div className="px-6 py-2 border-t" style={{ borderColor: 'var(--border)' }}>
-        <p className="text-[10px]" style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}>
-          Guardado automáticamente · {activeItem.content.split(/\s+/).filter(Boolean).length} palabras
+        <p
+          className="text-[10px]"
+          style={{
+            color: saveStatus === 'error' ? 'var(--accent)' : 'var(--muted-foreground)',
+            opacity: saveStatus === 'error' ? 1 : 0.6,
+          }}
+        >
+          {statusLabel(saveStatus)} · {activeItem.content.split(/\s+/).filter(Boolean).length} palabras
         </p>
       </div>
     </div>

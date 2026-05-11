@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
-import { CheckCircle2, Loader2 } from 'lucide-react'
+import { CheckCircle2, Loader2, AlertTriangle } from 'lucide-react'
+import { toast } from 'sonner'
 import { EditorToolbar } from './EditorToolbar'
 import { BASES_SECTIONS } from './BasesTabNav'
 
-type SaveStatus = 'idle' | 'saving' | 'saved'
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 const PLACEHOLDERS: Record<string, string> = {
   'cliente-ideal': 'Describe a tu cliente ideal: edad, ocupación, intereses, comportamientos...',
@@ -52,12 +53,14 @@ export function BasesEditor({ sectionId }: BasesEditorProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content: html }),
         })
-          .then(() => {
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
             setSaveStatus('saved')
             savedTimeoutRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
           })
           .catch(() => {
-            setSaveStatus('idle')
+            setSaveStatus('error')
+            toast.error('No pudimos guardar los cambios en bases.')
           })
       }, 600)
     },
@@ -113,11 +116,30 @@ export function BasesEditor({ sectionId }: BasesEditorProps) {
         </div>
 
         {/* Save status indicator */}
-        <div className="flex items-center gap-1.5 text-xs transition-opacity duration-300"
-          style={{ opacity: saveStatus === 'idle' ? 0 : 1, color: saveStatus === 'saved' ? '#4ade80' : 'var(--muted-foreground)' }}>
+        <div
+          className="flex items-center gap-1.5 text-xs transition-opacity duration-300"
+          style={{
+            opacity: saveStatus === 'idle' ? 0 : 1,
+            color:
+              saveStatus === 'saved'
+                ? '#4ade80'
+                : saveStatus === 'error'
+                  ? 'var(--accent)'
+                  : 'var(--muted-foreground)',
+          }}
+        >
           {saveStatus === 'saving' && <Loader2 size={12} className="animate-spin" />}
           {saveStatus === 'saved'  && <CheckCircle2 size={12} />}
-          <span>{saveStatus === 'saving' ? 'Guardando…' : 'Guardado'}</span>
+          {saveStatus === 'error'  && <AlertTriangle size={12} />}
+          <span>
+            {saveStatus === 'saving'
+              ? 'Guardando…'
+              : saveStatus === 'saved'
+                ? 'Guardado'
+                : saveStatus === 'error'
+                  ? 'No se pudo guardar'
+                  : ''}
+          </span>
         </div>
       </div>
 
