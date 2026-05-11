@@ -149,14 +149,6 @@ export async function GET(): Promise<NextResponse> {
   const items = await db.discoveryResponse.findMany({
     orderBy: { createdAt: 'desc' },
     take: 100,
-    select: {
-      id: true,
-      userId: true,
-      clientId: true,
-      email: true,
-      answers: true,
-      createdAt: true,
-    },
   })
   return NextResponse.json({ items })
 }
