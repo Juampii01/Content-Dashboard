@@ -307,14 +307,19 @@ export default function DiscoveryPage() {
         body: JSON.stringify({ answers }),
       })
       if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null
+        const data = (await res.json().catch(() => null)) as
+          | { error?: string; detail?: string }
+          | null
         const code = data?.error ?? `HTTP_${res.status}`
+        const detail = data?.detail
         setSubmitError(
           code === 'UNAUTHORIZED'
             ? 'Tu sesión expiró. Volvé a entrar antes de enviar.'
             : code === 'RATE_LIMIT'
               ? 'Esperá un minuto antes de enviar de nuevo.'
-              : 'No pudimos guardar las respuestas. Probá de nuevo.',
+              : detail
+                ? `Error ${res.status}: ${detail}`
+                : `Error ${res.status} (${code}). Probá de nuevo.`,
         )
         return
       }
