@@ -9,12 +9,14 @@
 
 import { Users, Globe2 } from 'lucide-react'
 import { youtubeMockDemographics } from '@/lib/mock-data/youtube'
+import { DemoDataPill } from '@/components/instagram/InstagramSyncBanner'
 
 export function YouTubeAudienciaTab() {
   const { ageGroups, gender, topCountries } = youtubeMockDemographics
 
   return (
     <div className="space-y-6">
+      <div><DemoDataPill /></div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Age groups */}
         <div

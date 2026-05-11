@@ -106,7 +106,8 @@ Visual verification — all routes
 - [ ] /admin       (SUPER_ADMIN) overview cards render; non-admin sees 404
 - [ ] /admin/users (SUPER_ADMIN) table + filter + approve + access modal work
 - [ ] /admin/clients (SUPER_ADMIN) table + create/edit/delete flows work
-- [ ] Sidebar      TikTok + Ads aparecen correctamente; ClientSwitcher visible
+- [ ] Sidebar      TikTok + Ads NO aparecen (intencional — Cristián confirmó que sobran por ahora; las páginas siguen accesibles por URL)
+- [ ] Sidebar      ClientSwitcher visible
 - [ ] Sidebar      grupo ADMIN aparece solo para SUPER_ADMIN
 - [ ] `npm run check:brand` passes
 ```
