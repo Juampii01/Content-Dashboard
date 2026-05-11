@@ -46,36 +46,41 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 
 ---
 
-## Modelos Prisma (26 en `schema.prisma`)
+## Modelos Prisma (30 en `schema.prisma`)
 
-`Profile` · `Client` · `ClientAccess` · `SocialConnection` · `OAuthState` · `Competitor` · `Reel` · `Transcription` · `Analysis` · `ChatMessage` · `ScrapeJob` · `Conversation` · `AIMessage` · `Task` · `ContentPiece` · `ContentTemplate` · `ICPProfile` · `BusinessBase` · `Idea` · `GuionTab` · `GuionItem` · `UserReel` · `Story` · `YouTubeVideo` · `AccountSnapshot` · `IncomeRecord`.
+`Profile` · `Client` · `ClientAccess` · `SocialConnection` · `OAuthState` · `Competitor` · `Reel` · `Transcription` · `Analysis` · `ChatMessage` · `ScrapeJob` · `Conversation` · `AIMessage` · `Task` · `ContentPiece` · `ContentTemplate` · `ICPProfile` · `BusinessBase` · `Idea` · `GuionTab` · `GuionItem` · `UserReel` · `Story` · `YouTubeVideo` · `AccountSnapshot` · `ContentResearchHistory` · `VideoFeedAccount` · `TranscriptHistory` · `DiscoveryResponse` · `IncomeRecord`.
 
 **Antes de usar un modelo**: `grep -n "^model " prisma/schema.prisma` para confirmar.
 
 ---
 
-## Qué es real vs mock hoy (verificado con grep)
+## Qué es real vs mock hoy (verificado con grep el 2026-05-11)
 
 **Backend real**:
 - `/api/admin/*` (SUPER_ADMIN CRUD de users/clients, con rate limit)
-- `/api/me/*` (profile + active-client)
+- `/api/me/*` (profile + active-client + global-stats)
 - `/api/auth/notify-signup` (Resend, rate-limited 3/h por IP)
-- `/api/social/[platform]/{connect,callback}` (platforms: `instagram`, `tiktok`, `youtube`)
-- `/api/youtube/{sync,videos,channel-summary}` (llama YouTube API real, no mock)
+- `/api/social/[platform]/{connect,callback,disconnect,status}` (platforms: `instagram`, `tiktok`, `youtube`)
+- `/api/instagram/{sync,reels,account-summary}` (real, no mock)
+- `/api/youtube/{sync,videos,channel-summary,snapshots}` (llama YouTube API real)
 - `/api/analizador/{scrape,analyze}` (Apify + Claude, rate-limited 5 y 20 req/min)
 - `/api/competitors/[id]` y `/api/reels/[id]/{analyze,transcribe,chat,refresh-video-url}`
 - `/api/ai/{chat, conversations, conversations/[id]}` (Eternity AI — Anthropic SDK streaming, rate-limited 20/min)
+- `/api/transcript`, `/api/content-research`, `/api/video-feed`
+- `/api/discovery` (POST persists `DiscoveryResponse`, GET SUPER_ADMIN only)
 
-**UI que lee mocks** (`grep "lib/mock-data"`):
-- `/instagram` — los 5 tabs
-- `/youtube` UI — demografía + dashboards (aunque `/api/youtube/*` sí es real)
+**UI que lee mocks** (`grep -rln "lib/mock-data" app components`):
+- `/instagram` — los 5 tabs (`PublicacionesTab`, `DashboardTab`, `ReelsTab`, `HistoriasTab`, `CompetenciaTab`) + `app/instagram/reels/[id]/page.tsx`
+- `/youtube` — sólo `YouTubeAudienciaTab` (Dashboard y Videos ya leen real)
 - `components/home/HomeContent` (lee `lib/mock-data/dashboard.ts`)
+- `app/tiktok/TikTokContent.tsx` (mock + ComingSoonBanner)
+- `app/ads/AdsContent.tsx` (mock + ComingSoonBanner)
 
-**TopBar** ya NO usa mocks: lee `/api/me/global-stats` (real, suma de `AccountSnapshot` por plataforma). Sin data → muestra `—`.
+**TopBar** ya NO usa mocks: lee `/api/me/global-stats` (real). El único hit al grep que parece mock es el header comment del route.
 
-**Placeholders (`ComingSoonBanner`)**: `/ads`, `/tiktok` (antes leían `lib/mock-data/{ads,tiktok}.ts`; ambos archivos + sus 13 componentes tab fueron eliminados).
+**TikTok backend incompleto**: el OAuth connect/callback está wireado (en `/api/social/[platform]/*`), pero **no existe `lib/tiktok/`** — no hay fetch de métricas implementado. La UI de `/tiktok` muestra ComingSoonBanner.
 
-**`/competidores` NO usa mocks** — lee de DB real (corrección de versiones anteriores de este archivo).
+**`/competidores` NO usa mocks** — lee de DB real.
 
 ---
 
