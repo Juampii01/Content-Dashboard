@@ -8,6 +8,9 @@ import { GreetingBlock } from './GreetingBlock'
 import { StatGrid } from './StatGrid'
 import { PerformanceCharts } from './PerformanceCharts'
 import { QuickSummarySidebar } from './QuickSummarySidebar'
+import { DemoDataPill } from '@/components/instagram/InstagramSyncBanner'
+import { formatK, formatPercent } from '@/lib/utils/formatters'
+import { Users, Eye, Heart } from 'lucide-react'
 
 const PERIODS: { label: string; value: Period }[] = [
   { label: '7d',  value: 7  },
@@ -15,6 +18,12 @@ const PERIODS: { label: string; value: Period }[] = [
   { label: '30d', value: 30 },
   { label: '90d', value: 90 },
 ]
+
+interface GlobalStats {
+  followers: number
+  views: number
+  engagementRate: number
+}
 
 export function HomeContent() {
   const [period, setPeriod] = useState<Period>(30)
@@ -35,6 +44,8 @@ export function HomeContent() {
   const [clientData, setClientData] = useState<{
     produccion: number; programado: number; ideasCount: number; loaded: boolean
   }>({ produccion: 0, programado: 0, ideasCount: 0, loaded: false })
+  const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null)
+  const [globalLoaded, setGlobalLoaded] = useState(false)
 
   useEffect(() => {
     // Try to read creator name from ICP API
@@ -46,6 +57,17 @@ export function HomeContent() {
         }
       })
       .catch(() => {})
+
+    // Real aggregated stats across connected platforms.
+    fetch('/api/me/global-stats')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((row) => {
+        if (row && typeof row === 'object' && 'followers' in row) {
+          setGlobalStats(row as GlobalStats)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setGlobalLoaded(true))
 
     const loadContentStats = async () => {
       let produccion = 0, programado = 0, ideasCount = 0
@@ -82,8 +104,34 @@ export function HomeContent() {
         />
       </motion.div>
 
-      <motion.div {...fadeUp(1)} className="flex items-center justify-between">
-        <p className="text-eyebrow">Rendimiento Instagram</p>
+      {globalLoaded && globalStats && (
+        <motion.div {...fadeUp(1)}>
+          <p className="text-eyebrow mb-3">Tus métricas reales</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <RealStatTile
+              icon={<Users size={14} />}
+              label="Seguidores"
+              value={formatK(globalStats.followers)}
+            />
+            <RealStatTile
+              icon={<Eye size={14} />}
+              label="Vistas (últimas snapshots)"
+              value={formatK(globalStats.views)}
+            />
+            <RealStatTile
+              icon={<Heart size={14} />}
+              label="Engagement rate"
+              value={formatPercent(globalStats.engagementRate)}
+            />
+          </div>
+        </motion.div>
+      )}
+
+      <motion.div {...fadeUp(2)} className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <p className="text-eyebrow">Rendimiento Instagram</p>
+          <DemoDataPill />
+        </div>
         <div className="relative flex items-center gap-1 p-1 rounded-xl"
           style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}>
           {PERIODS.map(({ label, value }) => (
@@ -110,14 +158,39 @@ export function HomeContent() {
         </div>
       </motion.div>
 
-      <motion.div {...fadeUp(2)}>
+      <motion.div {...fadeUp(3)}>
         <StatGrid stats={s} />
       </motion.div>
 
-      <motion.div {...fadeUp(3)} className="flex flex-col xl:flex-row gap-6" style={{ alignItems: 'stretch' }}>
+      <motion.div {...fadeUp(4)} className="flex flex-col xl:flex-row gap-6" style={{ alignItems: 'stretch' }}>
         <PerformanceCharts stats={s} />
         <QuickSummarySidebar stats={s} />
       </motion.div>
+    </div>
+  )
+}
+
+function RealStatTile({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string
+}) {
+  return (
+    <div
+      className="rounded-xl p-4"
+      style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+    >
+      <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--muted-foreground)' }}>
+        {icon}
+        <p className="text-xs tracking-wide uppercase">{label}</p>
+      </div>
+      <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
+        {value}
+      </p>
     </div>
   )
 }
