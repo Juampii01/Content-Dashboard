@@ -48,7 +48,7 @@ export async function bootstrapAuth(): Promise<void> {
       create: {
         id: user.id,
         email: supabaseEmail,
-        globalRole: 'PENDING',
+        globalRole: 'MEMBER',
       },
     })
   } catch (err) {
