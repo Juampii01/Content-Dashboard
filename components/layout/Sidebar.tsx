@@ -8,7 +8,7 @@ import {
   CheckSquare, BookOpen, Search, Kanban,
   ChevronLeft, ChevronRight, Users,
   Music, Megaphone, LogOut, Shield, UserCog, Building2,
-  FileText, Telescope, Rss,
+  FileText, Telescope, Rss, ClipboardList,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -75,6 +75,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Resumen', href: '/admin', icon: Shield },
       { label: 'Usuarios', href: '/admin/users', icon: UserCog },
       { label: 'Clientes', href: '/admin/clients', icon: Building2 },
+      { label: 'Discovery', href: '/discovery', icon: ClipboardList },
     ],
   },
 ]

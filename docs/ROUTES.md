@@ -26,6 +26,7 @@
 | `/admin`       | `app/admin/page.tsx`                            | Admin overview — counters (users, pendientes, clientes). SUPER_ADMIN only |
 | `/admin/users` | `app/admin/users/page.tsx` → `UsersAdminClient` | User management — approve, role changes, manage client access. SUPER_ADMIN only |
 | `/admin/clients` | `app/admin/clients/page.tsx` → `ClientsAdminClient` | Tenant management — create / edit / delete clients. SUPER_ADMIN only |
+| `/discovery`   | `app/discovery/page.tsx` → `DiscoveryForm`      | Strategic discovery cuestionario — SUPER_ADMIN only (Cristián). Textareas with blur-autosave. 404 for everyone else. |
 
 API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `youtube/*`, `admin/*`, `me/*`) and are not user-facing.
 
@@ -57,6 +58,11 @@ API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `yo
 - `GET /api/video-feed` — return the active client's connected Instagram feed (or `{ account: null }`).
 - `POST /api/video-feed` — body `{ channelUrl }`. Connect or refresh: scrapes profile, only re-analyzes new posts, merges with existing analyses, persists. Rate-limited 5/min.
 - `DELETE /api/video-feed` — disconnect (removes the row).
+
+### Discovery APIs
+
+- `GET /api/discovery` — returns `{ answers, updatedAt }`. Auto-creates the singleton row on first call. SUPER_ADMIN only.
+- `PATCH /api/discovery` — body `{ questionId, answer }` updates one answer. SUPER_ADMIN only. `questionId` validated against the fixed 40-question set in `lib/discovery/questions.ts`.
 
 ### Admin + auth APIs
 
@@ -99,6 +105,7 @@ Visual verification — all routes
 - [ ] /admin       (SUPER_ADMIN) overview cards render; non-admin sees 404
 - [ ] /admin/users (SUPER_ADMIN) table + filter + approve + access modal work
 - [ ] /admin/clients (SUPER_ADMIN) table + create/edit/delete flows work
+- [ ] /discovery   SUPER_ADMIN ve 40 preguntas + autosave on blur; otros → 404
 - [ ] Sidebar      TikTok + Ads aparecen correctamente; ClientSwitcher visible
 - [ ] Sidebar      grupo ADMIN aparece solo para SUPER_ADMIN
 - [ ] `npm run check:brand` passes
