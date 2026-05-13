@@ -22,7 +22,7 @@ const VideoFeedView    = dynamic(() => import('@/components/video-feed/VideoFeed
 
 export function InstagramContent() {
   const [tab] = useTab()
-  const { summary, reels, loading, syncing, sync } = useInstagramData()
+  const { summary, reels, loading, syncing, sync, hasMore, loadingMore, loadMore } = useInstagramData()
 
   const ctxValue: InstagramDataContextValue = useMemo(
     () => ({
@@ -31,8 +31,11 @@ export function InstagramContent() {
       summary,
       reels,
       loading,
+      hasMore,
+      loadingMore,
+      loadMore: () => void loadMore(),
     }),
-    [summary, reels, loading],
+    [summary, reels, loading, hasMore, loadingMore, loadMore],
   )
 
   return (

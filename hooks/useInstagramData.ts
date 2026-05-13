@@ -34,8 +34,11 @@ interface UseInstagramDataReturn {
   reels: UserReelRow[]
   loading: boolean
   syncing: boolean
+  hasMore: boolean
+  loadingMore: boolean
   sync: () => Promise<void>
   refresh: () => Promise<void>
+  loadMore: () => Promise<void>
 }
 
 /**
@@ -45,8 +48,10 @@ interface UseInstagramDataReturn {
 export function useInstagramData(): UseInstagramDataReturn {
   const [summary, setSummary] = useState<InstagramAccountSummary | null>(null)
   const [reels, setReels] = useState<UserReelRow[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -63,14 +68,17 @@ export function useInstagramData(): UseInstagramDataReturn {
       }
 
       if (reelsRes.ok) {
-        const json = (await reelsRes.json()) as { reels?: UserReelRow[] }
+        const json = (await reelsRes.json()) as { reels?: UserReelRow[]; nextCursor?: string | null }
         setReels(json.reels ?? [])
+        setNextCursor(json.nextCursor ?? null)
       } else if (reelsRes.status === 403) {
         // Tenant not yet wired (no active client / no access). Empty is correct.
         setReels([])
+        setNextCursor(null)
       } else if (reelsRes.status !== 401) {
         toast.error('No pudimos cargar tus reels. Refrescá la página.')
         setReels([])
+        setNextCursor(null)
       }
     } catch {
       toast.error('Error de red cargando Instagram. Revisá tu conexión.')
@@ -78,6 +86,27 @@ export function useInstagramData(): UseInstagramDataReturn {
       setLoading(false)
     }
   }, [])
+
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const res = await fetch(`/api/instagram/reels?cursor=${encodeURIComponent(nextCursor)}`)
+      if (!res.ok) {
+        if (res.status !== 401) {
+          toast.error('No pudimos traer más reels. Probá de nuevo.')
+        }
+        return
+      }
+      const json = (await res.json()) as { reels?: UserReelRow[]; nextCursor?: string | null }
+      setReels((prev) => [...prev, ...(json.reels ?? [])])
+      setNextCursor(json.nextCursor ?? null)
+    } catch {
+      toast.error('Error de red cargando más reels.')
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [nextCursor, loadingMore])
 
   useEffect(() => {
     void refresh()
@@ -118,5 +147,15 @@ export function useInstagramData(): UseInstagramDataReturn {
     }
   }, [refresh])
 
-  return { summary, reels, loading, syncing, sync, refresh }
+  return {
+    summary,
+    reels,
+    loading,
+    syncing,
+    hasMore: nextCursor !== null,
+    loadingMore,
+    sync,
+    refresh,
+    loadMore,
+  }
 }
