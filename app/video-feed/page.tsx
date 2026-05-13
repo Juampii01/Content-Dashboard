@@ -7,6 +7,6 @@ import { redirect } from 'next/navigation'
  * de /instagram para evitar duplicación con el módulo de Instagram.
  * Esta ruta queda como redirect para no romper bookmarks ni links pegados.
  */
-export default function VideoFeedRedirect(): never {
+export default function VideoFeedRedirect() {
   redirect('/instagram?tab=top30d')
 }
