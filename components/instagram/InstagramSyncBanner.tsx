@@ -90,11 +90,8 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, onConne
         className="flex flex-col gap-3 rounded-xl px-4 py-3 mb-4"
         style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
       >
-        {/* Apify path: @handle */}
-        <form
-          onSubmit={handleConnect}
-          className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-        >
+        {/* Meta OAuth path: primary — recomendado */}
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -104,12 +101,36 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, onConne
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                Conectar vía @handle (recomendado)
+                Conectar con Meta <span className="text-xs font-normal ml-1 px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}>Recomendado</span>
               </p>
               <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-                Sincronizamos públicamente vía scraper — sin login ni permisos de Meta.
+                Métricas reales — vistas, impresiones, alcance y visitas al perfil. Sin costo de tokens.
               </p>
             </div>
+          </div>
+          <a
+            href="/api/social/instagram/connect?returnTo=/instagram"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium flex-shrink-0 hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+          >
+            <ExternalLink size={14} />
+            Conectar con Meta
+          </a>
+        </div>
+
+        {/* Apify path: @handle — fallback para cuentas sin Business account */}
+        <form
+          onSubmit={handleConnect}
+          className="flex flex-col gap-2 pt-3 sm:flex-row sm:items-center sm:justify-between"
+          style={{ borderTop: '1px solid var(--border)' }}
+        >
+          <div className="min-w-0">
+            <p className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>
+              ¿Cuenta personal sin Facebook Page vinculada?
+            </p>
+            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+              Conectá vía @handle (scraper público, métricas limitadas).
+            </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <div
@@ -127,44 +148,23 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, onConne
                 disabled={submitting}
                 placeholder="tu_handle"
                 maxLength={30}
-                className="bg-transparent outline-none text-sm w-32"
+                className="bg-transparent outline-none text-sm w-28"
                 style={{ color: 'var(--foreground)' }}
               />
             </div>
             <button
               type="submit"
               disabled={submitting || !handle.trim()}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
-              style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
+              style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
             >
-              {submitting ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
-              {submitting ? 'Conectando…' : 'Conectar'}
+              {submitting ? <Loader2 size={14} className="animate-spin" /> : <AtSign size={14} />}
+              {submitting ? 'Conectando…' : 'Usar handle'}
             </button>
           </div>
         </form>
 
-        {/* Meta OAuth path: full insights */}
-        <div
-          className="flex items-center justify-between gap-3 pt-3"
-          style={{ borderTop: '1px solid var(--border)' }}
-        >
-          <div className="min-w-0">
-            <p className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>
-              ¿Cuenta de Instagram Business o Creator?
-            </p>
-            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              Conectar con Meta desbloquea impresiones, alcance y visitas al perfil reales.
-            </p>
-          </div>
-          <a
-            href="/api/social/instagram/connect?returnTo=/instagram"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium flex-shrink-0 hover:opacity-80 transition-opacity"
-            style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
-          >
-            <ExternalLink size={12} />
-            Conectar con Meta
-          </a>
-        </div>
+        {/* placeholder para cerrar el bloque anterior que fue reemplazado */}
       </div>
     )
   }
@@ -186,7 +186,7 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, onConne
               Tu conexión con Instagram expiró
             </p>
             <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              Reconectá la cuenta tipeando de nuevo tu @handle abajo.
+              Reconectá con Meta OAuth o ingresá el @handle nuevamente.
             </p>
           </div>
         </div>
