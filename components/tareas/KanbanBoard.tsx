@@ -24,6 +24,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { useAuth } from '@/components/layout/AuthProvider'
 import { toast } from 'sonner'
 import { User } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 
 // ─── Column config ─────────────────────────────────────────────────────────
 
@@ -357,10 +358,25 @@ export function KanbanBoard() {
       />
 
       {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            Cargando tareas…
-          </span>
+        <div className="flex xl:grid xl:grid-cols-3 gap-5 flex-1 min-h-0 overflow-x-auto xl:overflow-x-visible -mx-6 px-6 xl:mx-0 xl:px-0">
+          {COLUMNS.map((col, colIdx) => (
+            <div key={col.id} className="shrink-0 xl:shrink w-[280px] xl:w-auto min-h-0 flex flex-col gap-3">
+              <Skeleton
+                className="rounded-xl"
+                style={{ height: 44, animationDelay: `${colIdx * 80}ms` }}
+              />
+              {Array.from({ length: 3 }).map((_, taskIdx) => (
+                <Skeleton
+                  key={taskIdx}
+                  className="rounded-xl"
+                  style={{
+                    height: 92,
+                    animationDelay: `${colIdx * 80 + taskIdx * 60}ms`,
+                  }}
+                />
+              ))}
+            </div>
+          ))}
         </div>
       ) : (
         <DndContext
