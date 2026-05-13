@@ -52,11 +52,11 @@ export function QuickSummarySidebar({ stats: s }: QuickSummarySidebarProps) {
   const animatedEng       = (animatedEngRaw / 10).toFixed(1)
 
   const summaryRows = [
-    { label: 'Alcance promedio/día', value: fmt(animatedReach) },
-    { label: 'Visitas al perfil',    value: fmt(animatedVisits) },
-    { label: 'Nuevos seguidores',    value: `+${fmt(animatedFollowers)}` },
-    { label: 'Mejor reel',           value: fmt(animatedBestReel) + ' vistas' },
-  ]
+    { label: 'Vistas promedio/día', value: fmt(animatedReach),     show: true },
+    { label: 'Visitas al perfil',   value: fmt(animatedVisits),    show: s.profileVisits  > 0 },
+    { label: 'Nuevos seguidores',   value: `+${fmt(animatedFollowers)}`, show: s.newFollowers > 0 },
+    { label: 'Mejor reel',          value: fmt(animatedBestReel) + ' vistas', show: s.bestReelViews > 0 },
+  ].filter((r) => r.show)
 
   return (
     <div className="flex flex-col gap-4 w-full xl:w-64 xl:flex-shrink-0">
@@ -79,24 +79,26 @@ export function QuickSummarySidebar({ stats: s }: QuickSummarySidebarProps) {
         </div>
       </div>
 
-      {/* Metas del mes — rings animados */}
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
-        <p className="text-sm font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Metas del Mes</p>
-        <div className="flex justify-around">
-          {[
-            { label: 'Vistas',     pct: s.viewsGoalPct,     color: 'var(--accent)' },
-            { label: 'Seguidores', pct: s.followersGoalPct, color: 'var(--stat-icon)' },
-          ].map(({ label, pct, color }) => (
-            <div key={label} className="flex flex-col items-center gap-2">
-              <div className="relative flex items-center justify-center">
-                <RingProgress pct={pct} color={color} size={72} />
-                <span className="absolute text-sm font-bold" style={{ color: 'var(--foreground)' }}>{pct}%</span>
+      {/* Metas del mes — only shown when goals are configured */}
+      {(s.viewsGoalPct > 0 || s.followersGoalPct > 0) && (
+        <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+          <p className="text-sm font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Metas del Mes</p>
+          <div className="flex justify-around">
+            {[
+              { label: 'Vistas',     pct: s.viewsGoalPct,     color: 'var(--accent)' },
+              { label: 'Seguidores', pct: s.followersGoalPct, color: 'var(--stat-icon)' },
+            ].map(({ label, pct, color }) => (
+              <div key={label} className="flex flex-col items-center gap-2">
+                <div className="relative flex items-center justify-center">
+                  <RingProgress pct={pct} color={color} size={72} />
+                  <span className="absolute text-sm font-bold" style={{ color: 'var(--foreground)' }}>{pct}%</span>
+                </div>
+                <span className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>{label}</span>
               </div>
-              <span className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>{label}</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Engagement rate — número animado */}
       <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>

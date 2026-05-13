@@ -688,3 +688,21 @@ model IncomeRecord {
   @@index([clientId, date])
   @@index([clientId, source])
 }
+
+// ContentReference: /instagram tab Referencias — client's saved content inspiration library.
+model ContentReference {
+  id        String   @id @default(cuid())
+  clientId  String
+  createdBy String?
+  updatedBy String?
+  title     String
+  category  String
+  tags      String[]
+  url       String?
+  platform  String   @default("IG")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+}
