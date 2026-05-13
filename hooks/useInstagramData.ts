@@ -30,14 +30,31 @@ export interface UserReelRow {
   mediaType?: string | null  // 'VIDEO' | 'REELS' | 'IMAGE' | 'CAROUSEL_ALBUM' | null (legacy)
 }
 
+export interface UserStoryRow {
+  id: string
+  instagramId: string
+  thumbnailUrl: string | null
+  reach: number
+  impressions: number
+  replies: number
+  stickerTaps: number
+  exits: number
+  completionRate: number
+  publishedAt: string | null
+  syncedAt: string
+}
+
 interface UseInstagramDataReturn {
   summary: InstagramAccountSummary | null
   reels: UserReelRow[]
+  stories: UserStoryRow[]
   loading: boolean
   syncing: boolean
+  syncingStories: boolean
   hasMore: boolean
   loadingMore: boolean
   sync: () => Promise<void>
+  syncStories: () => Promise<void>
   refresh: () => Promise<void>
   loadMore: () => Promise<void>
 }
@@ -49,17 +66,20 @@ interface UseInstagramDataReturn {
 export function useInstagramData(): UseInstagramDataReturn {
   const [summary, setSummary] = useState<InstagramAccountSummary | null>(null)
   const [reels, setReels] = useState<UserReelRow[]>([])
+  const [stories, setStories] = useState<UserStoryRow[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
+  const [syncingStories, setSyncingStories] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
 
   const refresh = useCallback(async () => {
     setLoading(true)
     try {
-      const [sumRes, reelsRes] = await Promise.all([
+      const [sumRes, reelsRes, storiesRes] = await Promise.all([
         fetch('/api/instagram/account-summary'),
         fetch('/api/instagram/reels'),
+        fetch('/api/instagram/stories'),
       ])
 
       if (sumRes.ok) {
@@ -81,12 +101,49 @@ export function useInstagramData(): UseInstagramDataReturn {
         setReels([])
         setNextCursor(null)
       }
+
+      if (storiesRes.ok) {
+        const json = (await storiesRes.json()) as { stories?: UserStoryRow[] }
+        setStories(json.stories ?? [])
+      } else if (storiesRes.status === 403 || storiesRes.status === 401) {
+        setStories([])
+      } else {
+        // Non-fatal: stories endpoint can fail without breaking the page
+        setStories([])
+      }
     } catch {
       toast.error('Error de red cargando Instagram. Revisá tu conexión.')
     } finally {
       setLoading(false)
     }
   }, [])
+
+  const syncStories = useCallback(async () => {
+    setSyncingStories(true)
+    try {
+      const res = await fetch('/api/instagram/stories/sync', { method: 'POST' })
+      if (res.status === 404) {
+        toast.error('Conectá tu Instagram primero.')
+        return
+      }
+      if (res.status === 429) {
+        toast.error('Esperá un minuto antes de re-sincronizar stories.')
+        return
+      }
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null
+        toast.error(data?.detail ? `Stories: ${data.detail}` : 'No pudimos sincronizar stories.')
+        return
+      }
+      const data = (await res.json()) as { synced?: { stories: number } }
+      toast.success(`Sincronizadas ${data.synced?.stories ?? 0} stories.`)
+      await refresh()
+    } catch {
+      toast.error('Error de red sincronizando stories.')
+    } finally {
+      setSyncingStories(false)
+    }
+  }, [refresh])
 
   const loadMore = useCallback(async () => {
     if (!nextCursor || loadingMore) return
@@ -151,11 +208,14 @@ export function useInstagramData(): UseInstagramDataReturn {
   return {
     summary,
     reels,
+    stories,
     loading,
     syncing,
+    syncingStories,
     hasMore: nextCursor !== null,
     loadingMore,
     sync,
+    syncStories,
     refresh,
     loadMore,
   }
