@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 // activeClient cookie) is done in app/layout.tsx which runs on Node.js and
 // can use Prisma.
 
-const PUBLIC_PATHS = ['/login', '/pending-approval', '/auth/reset-password']
+const PUBLIC_PATHS = ['/login', '/pending-approval', '/auth/reset-password', '/privacy', '/terms']
 // `/api/auth` is excluded by the `matcher` below (never runs through this
 // proxy). No public `/api/*` prefixes currently — the stale `/api/debug`
 // was removed when the debug route was deleted.

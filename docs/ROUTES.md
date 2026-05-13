@@ -23,6 +23,8 @@
 | `/tiktok`      | `app/tiktok/page.tsx` → `TikTokContent`         | TikTok analytics — `ComingSoonBanner` placeholder hasta wirear TikTok Display API |
 | `/youtube`     | `app/youtube/page.tsx` → `YouTubeContent`       | YouTube analytics — 3 tabs (Dashboard, Videos, Audiencia) + ConnectButton |
 | `/pending-approval` | `app/pending-approval/page.tsx`            | Landing for PENDING users — shown until a SUPER_ADMIN approves them |
+| `/privacy`     | `app/privacy/page.tsx`                          | Privacy Policy — public, no auth required. Required for Meta App Review. Includes `#data-deletion` anchor. |
+| `/terms`       | `app/terms/page.tsx`                            | Terms of Service — public, no auth required.                     |
 | `/admin`       | `app/admin/page.tsx`                            | Admin overview — counters (users, pendientes, clientes). SUPER_ADMIN only |
 | `/admin/users` | `app/admin/users/page.tsx` → `UsersAdminClient` | User management — approve, role changes, manage client access. SUPER_ADMIN only |
 | `/admin/clients` | `app/admin/clients/page.tsx` → `ClientsAdminClient` | Tenant management — create / edit / delete clients. SUPER_ADMIN only |
