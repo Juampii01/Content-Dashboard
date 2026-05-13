@@ -47,6 +47,24 @@ export const InstagramAccountSchema = z.object({
 })
 export type InstagramAccount = z.infer<typeof InstagramAccountSchema>
 
+// ─── Media insights (from /{ig-media-id}/insights) ───────────────────────────
+// Requires instagram_manage_insights. Metrics by media type:
+//   VIDEO / REELS : plays, impressions, reach, saved, shares
+//   IMAGE / CAROUSEL: impressions, reach, saved, shares
+
+export const InstagramInsightItemSchema = z.object({
+  name: z.string(),
+  period: z.string().optional(),
+  values: z.array(z.object({ value: z.number(), end_time: z.string().optional() })),
+  title: z.string().optional(),
+  id: z.string().optional(),
+})
+
+export const InstagramMediaInsightsSchema = z.object({
+  data: z.array(InstagramInsightItemSchema),
+})
+export type InstagramMediaInsights = z.infer<typeof InstagramMediaInsightsSchema>
+
 // ─── Error envelope (Graph API) ──────────────────────────────────────────────
 
 export const InstagramGraphErrorSchema = z.object({

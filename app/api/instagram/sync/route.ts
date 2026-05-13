@@ -14,7 +14,7 @@
  *   500 { error: 'SYNC_FAILED', detail }
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import {
   requireActiveClient,
@@ -25,8 +25,10 @@ import {
   InstagramAccountSchema,
   InstagramGraphErrorSchema,
   InstagramMediaListSchema,
+  InstagramMediaInsightsSchema,
 } from '@/lib/schemas/instagram'
 import { accountToSnapshot, mediaToUserReel } from '@/lib/instagram/transform'
+import { checkRateLimit } from '@/lib/utils/ratelimit'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -60,7 +62,13 @@ async function graphGet<T>(url: string): Promise<{ ok: true; data: T } | { ok: f
 
 // ─── POST ────────────────────────────────────────────────────────────────────
 
-export async function POST(): Promise<NextResponse> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const rl = await checkRateLimit(ip, 'instagram-sync', 5, '60 s')
+  if (rl && !rl.success) {
+    return NextResponse.json({ error: 'RATE_LIMITED' }, { status: 429 })
+  }
+
   let userId: string
   let clientId: string
   try {
@@ -79,7 +87,9 @@ export async function POST(): Promise<NextResponse> {
     return NextResponse.json({ error: 'NOT_CONNECTED' }, { status: 404 })
   }
 
-  // 2. Token expiry check
+  // Token expiry is only set to new Date(0) when the Graph API returns error 190.
+  // Page tokens from a long-lived user token don't have a natural expiry, so we
+  // skip the pre-check and let the 190 handler below cover invalidated tokens.
   if (conn.expiresAt && conn.expiresAt.getTime() <= Date.now()) {
     return NextResponse.json({ error: 'TOKEN_EXPIRED' }, { status: 401 })
   }
@@ -164,7 +174,80 @@ export async function POST(): Promise<NextResponse> {
   )
   const reelsSynced = upsertResults.filter((r) => r.status === 'fulfilled').length
 
-  // 5. Fetch account info
+  // 5. Fetch per-reel insights (requires instagram_manage_insights scope).
+  // Probe the first reel: if the scope isn't approved yet, the API returns a
+  // permissions error (code 10 / 200) and we skip the rest silently so the
+  // sync still succeeds with the data we have. Once App Review is approved,
+  // all reels get viewsCount / impressions / reachCount / savesCount / sharesCount.
+  const INSIGHT_PERMISSION_ERRORS = new Set([10, 200, 190])
+  let insightsSynced = 0
+
+  if (mediaParsed.data.data.length > 0) {
+    const [firstMedia, ...restMedia] = mediaParsed.data.data
+
+    const fetchInsights = async (mediaId: string, mediaType: string | undefined) => {
+      const isVideo = mediaType === 'VIDEO' || mediaType === 'REELS'
+      const metrics = isVideo
+        ? 'plays,impressions,reach,saved,shares'
+        : 'impressions,reach,saved,shares'
+      const url =
+        `${GRAPH}/${mediaId}/insights?metric=${metrics}` +
+        `&access_token=${encodeURIComponent(accessToken)}`
+      const res = await graphGet<unknown>(url)
+      if (!res.ok) return null
+      const parsed = InstagramMediaInsightsSchema.safeParse(res.data)
+      if (!parsed.success) return null
+      const vals: Record<string, number> = {}
+      for (const item of parsed.data.data) {
+        vals[item.name] = item.values[0]?.value ?? 0
+      }
+      return vals
+    }
+
+    const probeVals = await fetchInsights(firstMedia.id, firstMedia.media_type)
+
+    if (probeVals !== null) {
+      // Scope available — apply first reel and fetch the rest in parallel
+      const applyInsights = async (mediaId: string, vals: Record<string, number>) => {
+        await db.userReel.update({
+          where: { instagramId: mediaId },
+          data: {
+            viewsCount: vals.plays ?? 0,
+            impressions: vals.impressions ?? 0,
+            reachCount: vals.reach ?? 0,
+            savesCount: vals.saved ?? 0,
+            sharesCount: vals.shares ?? 0,
+          },
+        })
+      }
+
+      const remainingResults = await Promise.allSettled(
+        restMedia.map(async (m) => {
+          const vals = await fetchInsights(m.id, m.media_type)
+          if (vals) await applyInsights(m.id, vals)
+          return vals !== null
+        }),
+      )
+
+      await applyInsights(firstMedia.id, probeVals).catch(() => null)
+      insightsSynced =
+        1 + remainingResults.filter((r) => r.status === 'fulfilled' && r.value).length
+    } else {
+      // Check if it was a permission error by probing again — graphGet already
+      // returned null meaning the parse failed; check the raw error via a fresh call
+      const probeUrl =
+        `${GRAPH}/${firstMedia.id}/insights?metric=impressions` +
+        `&access_token=${encodeURIComponent(accessToken)}`
+      const probeRaw = await graphGet<unknown>(probeUrl)
+      if (!probeRaw.ok && probeRaw.err.code !== null && INSIGHT_PERMISSION_ERRORS.has(probeRaw.err.code)) {
+        console.info('[instagram/sync] instagram_manage_insights not yet approved — insights skipped')
+      } else {
+        console.warn('[instagram/sync] insights probe failed (non-fatal)', probeRaw.ok ? 'parse error' : probeRaw.err)
+      }
+    }
+  }
+
+  // 7. Fetch account info
   const accountUrl =
     `${GRAPH}/${igId}` +
     `?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count` +
@@ -228,6 +311,6 @@ export async function POST(): Promise<NextResponse> {
 
   return NextResponse.json({
     ok: true,
-    synced: { reels: reelsSynced, snapshot: snapshotWritten },
+    synced: { reels: reelsSynced, snapshot: snapshotWritten, insights: insightsSynced },
   })
 }

@@ -77,9 +77,10 @@ async function exchangeInstagram(
   }
   const longData = (await longRes.json()) as { access_token: string; expires_in?: number }
   const accessToken = longData.access_token
-  const expiresAt = longData.expires_in
-    ? new Date(Date.now() + longData.expires_in * 1000)
-    : undefined
+  // Page tokens derived from a long-lived user token don't expire. We don't
+  // store expiresAt here — the sync route marks the connection expired only when
+  // the Graph API returns error code 190 (token invalidated by the user).
+  const expiresAt = undefined
 
   // 3. Fetch pages to find Instagram business account
   const pagesRes = await fetch(
