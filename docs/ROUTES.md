@@ -14,13 +14,13 @@
 | `/competidores` | `app/competidores/page.tsx`                    | Competitor list (scrape, refresh, open detail)                   |
 | `/discovery`   | `app/discovery/page.tsx`                        | Cuestionario estratégico (9 bloques, 40 preguntas). Visible para cualquier user logueado, incluso sin ClientAccess. Autoguarda borrador en `localStorage`; submit persiste en `DiscoveryResponse`. |
 | `/competidores/[username]` | `app/competidores/[username]/page.tsx` | Competitor detail — reels, transcribe, analysis, chat            |
-| `/contenido`   | `app/contenido/page.tsx` → `ContenidoContent`   | Content workspace (editor + lists)                               |
-| `/instagram`   | `app/instagram/page.tsx` → `InstagramContent`   | Instagram analytics view                                         |
+| `/contenido`   | `app/contenido/page.tsx` → `ContenidoContent`   | Content workspace. Tabs: Pipeline · Tareas · Cal. Reels · Cal. Historias · Guiones Reels · Guiones Historias · Copy IA. Accept `?tab=` deep links. |
+| `/instagram`   | `app/instagram/page.tsx` → `InstagramContent`   | Instagram analytics. Tabs: Dashboard · Reels · Top 30d · Historias · Publicaciones · Competencia · Referencias · Demografía. Top 30d absorbs former `/video-feed`. |
 | `/login`       | `app/login/page.tsx`                            | Supabase Auth — email/password. Redirects to `/` on success      |
-| `/tareas`      | `app/tareas/page.tsx` → `KanbanBoard`           | Task kanban board                                                |
-| `/transcript`  | `app/transcript/page.tsx` → `TranscriptView`    | Paste a YouTube/Instagram URL → transcript + AI summary (Apify + Groq + Claude). History scoped to active client. |
-| `/content-research` | `app/content-research/page.tsx` → `ContentResearchView` | Channel-level research — top 5 videos in a timeframe with AI analysis (YouTube via Data API, Instagram via Apify). |
-| `/video-feed`  | `app/video-feed/page.tsx` → `VideoFeedView`     | Connect own Instagram → last 30 days ranked by engagement, AI analysis per post. Singleton per (client, platform). |
+| `/tareas`      | `app/tareas/page.tsx` (redirect)                | Server redirect → `/contenido?tab=tareas`. Kanban now lives as a tab inside Contenido. |
+| `/transcript`  | `app/transcript/page.tsx` → `TranscriptView`    | Paste a YouTube/Instagram URL → transcript + AI summary. **No aparece en sidebar** — accesible por URL hasta absorberse como tool de `/competidores`. |
+| `/content-research` | `app/content-research/page.tsx` → `ContentResearchView` | Channel-level research — top 5 videos in a timeframe with AI analysis. **No aparece en sidebar** — accesible por URL hasta absorberse como tool de `/competidores`. |
+| `/video-feed`  | `app/video-feed/page.tsx` (redirect)            | Server redirect → `/instagram?tab=top30d`. Top 30d ranking now lives as a tab inside Instagram. |
 | `/tiktok`      | `app/tiktok/page.tsx` → `TikTokContent`         | TikTok analytics — `ComingSoonBanner` placeholder hasta wirear TikTok Display API |
 | `/youtube`     | `app/youtube/page.tsx` → `YouTubeContent`       | YouTube analytics — 3 tabs (Dashboard, Videos, Audiencia) + ConnectButton |
 | `/pending-approval` | `app/pending-approval/page.tsx`            | Landing for PENDING users — shown until a SUPER_ADMIN approves them |

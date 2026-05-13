@@ -42,7 +42,8 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 - **`lib/auth-user.ts`** — helpers: `requireUserId()`, `requireProfile()`, `requireSuperAdmin()`, `requireActiveClient()` (devuelve `{ userId, clientId }`). Constante `ACTIVE_CLIENT_COOKIE = 'activeClientId'`.
 - **`lib/supabase/{client,server,admin}.ts`** — browser / server-with-cookies / service-role (bypasa RLS, cached con `let` local).
 - **`lib/db.ts`** — Prisma singleton vía `globalThis`. Export `{ db }`.
-- **`lib/utils/ratelimit.ts`** — wrapper Upstash. Variantes: `checkRateLimit` (devuelve `{ success }`) y `checkSignupRateLimit` (IP, 3/hora). ⚠️ Admin routes usan `rl.success`; analizador usa `rl.allowed` — **shapes inconsistentes, cuidado al copiar**.
+- **`lib/utils/ratelimit.ts`** — wrapper Upstash. Variantes: `checkRateLimit` (devuelve `{ success } | null`) y `checkSignupRateLimit` (IP, 3/hora). El shape es `.success` en todas las rutas hoy (la inconsistencia `.allowed` ya no existe).
+- **`lib/claude/models.ts`** — registry de modelos Claude (Haiku 4.5 / Sonnet 4.6 / Opus 4.7) con precios por 1M tokens. Exporta `DEFAULT_MODEL` (Sonnet — usado en Competidores para que el user elija) y `CHEAP_MODEL` (Haiku — usado en jobs de alta frecuencia: summarize-transcript, analizador/analyze, copy/generate).
 
 ---
 
@@ -50,37 +51,43 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 
 `Profile` · `Client` · `ClientAccess` · `SocialConnection` · `OAuthState` · `Competitor` · `Reel` · `Transcription` · `Analysis` · `ChatMessage` · `ScrapeJob` · `Conversation` · `AIMessage` · `Task` · `ContentPiece` · `ContentTemplate` · `ICPProfile` · `BusinessBase` · `Idea` · `GuionTab` · `GuionItem` · `UserReel` · `Story` · `YouTubeVideo` · `AccountSnapshot` · `ContentResearchHistory` · `VideoFeedAccount` · `TranscriptHistory` · `DiscoveryResponse` · `IncomeRecord`.
 
+`Task` tiene `assignedTo: String?` (Profile.id; null = sin asignar). `UserReel` tiene `mediaType: String?` ('VIDEO' | 'REELS' | 'IMAGE' | 'CAROUSEL_ALBUM'; null en filas legacy).
+
 **Antes de usar un modelo**: `grep -n "^model " prisma/schema.prisma` para confirmar.
 
 ---
 
-## Qué es real vs mock hoy (verificado con grep el 2026-05-11)
+## Qué es real vs mock hoy (verificado con grep el 2026-05-13)
 
 **Backend real**:
 - `/api/admin/*` (SUPER_ADMIN CRUD de users/clients, con rate limit)
 - `/api/me/*` (profile + active-client + global-stats)
 - `/api/auth/notify-signup` (Resend, rate-limited 3/h por IP)
 - `/api/social/[platform]/{connect,callback,disconnect,status}` (platforms: `instagram`, `tiktok`, `youtube`)
-- `/api/instagram/{sync,reels,account-summary}` (real, no mock)
+- `/api/instagram/{sync,reels,account-summary}` (real, no mock). `/reels` ahora paginado con `?cursor=&limit=` (default 100, max 200) — devuelve `{ reels, nextCursor }`.
 - `/api/youtube/{sync,videos,channel-summary,snapshots}` (llama YouTube API real)
-- `/api/analizador/{scrape,analyze}` (Apify + Claude, rate-limited 5 y 20 req/min)
+- `/api/analizador/{scrape,analyze}` (Apify + Claude **Haiku**, rate-limited)
+- `/api/copy/generate` (Claude **Haiku**, rate-limited)
 - `/api/competitors/[id]` y `/api/reels/[id]/{analyze,transcribe,chat,refresh-video-url}`
 - `/api/ai/{chat, conversations, conversations/[id]}` (Eternity AI — Anthropic SDK streaming, rate-limited 20/min)
-- `/api/transcript`, `/api/content-research`, `/api/video-feed`
+- `/api/transcript` (resumen con Claude Haiku), `/api/content-research`, `/api/video-feed`
 - `/api/discovery` (POST persists `DiscoveryResponse`, GET SUPER_ADMIN only)
+- `/api/tasks` y `/api/tasks/[id]` — soportan `assignedTo` para asignación por miembro.
 
 **UI que lee mocks** (`grep -rln "lib/mock-data" app components`):
-- `/instagram` — 2 tabs wireados con fallback a mock (`DashboardTab`, `ReelsTab` usan `useInstagramDataContext`; muestran `DemoDataPill` cuando no hay data real) + 3 tabs demo-only con pill visible (`PublicacionesTab`, `HistoriasTab`, `CompetenciaTab` — no hay backend para posts/stories/competitor benchmarks) + `app/instagram/reels/[id]/page.tsx`
-- `/youtube` — sólo `YouTubeAudienciaTab` (Dashboard y Videos ya leen real)
-- `components/home/HomeContent` (lee `lib/mock-data/dashboard.ts`)
+- `/instagram` — 3 tabs con fallback a mock cuando no hay data real (`DashboardTab`, `ReelsTab`, **`PublicacionesTab`** ahora wireada a UserReel filtrado por `mediaType IMAGE | CAROUSEL_ALBUM`) + 2 tabs demo-only con pill visible (`HistoriasTab`, `CompetenciaTab` — no hay backend para stories/competitor benchmarks) + `app/instagram/reels/[id]/page.tsx`
+- `/youtube` — sólo `YouTubeAudienciaTab` (requiere YouTube Analytics API, scope extra)
+- `components/home/HomeContent` (mock para charts; reales: greeting + métricas globales via `/api/me/global-stats`)
 - `app/tiktok/TikTokContent.tsx` (mock + ComingSoonBanner)
 - `app/ads/AdsContent.tsx` (mock + ComingSoonBanner)
 
-**TopBar** ya NO usa mocks: lee `/api/me/global-stats` (real). El único hit al grep que parece mock es el header comment del route.
+**TopBar** ya NO usa mocks: lee `/api/me/global-stats` (real).
 
-**TikTok backend incompleto**: el OAuth connect/callback está wireado (en `/api/social/[platform]/*`), pero **no existe `lib/tiktok/`** — no hay fetch de métricas implementado. La UI de `/tiktok` muestra ComingSoonBanner.
+**TikTok backend incompleto**: el OAuth connect/callback está wireado (en `/api/social/[platform]/*`), pero **no existe `lib/tiktok/`** — no hay fetch de métricas implementado. La UI de `/tiktok` muestra ComingSoonBanner. **No aparece en sidebar.**
 
 **`/competidores` NO usa mocks** — lee de DB real.
+
+**Rutas escondidas del sidebar pero accesibles por URL**: `/analizador`, `/ads`, `/tiktok`, `/transcript`, `/content-research`. `/tareas` y `/video-feed` redirigen a `/contenido?tab=tareas` y `/instagram?tab=top30d` respectivamente.
 
 ---
 
