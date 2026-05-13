@@ -3,6 +3,7 @@ export type Period = 7 | 14 | 30 | 90
 export type Tab =
   | 'dashboard'
   | 'reels'
+  | 'top30d'
   | 'historias'
   | 'publicaciones'
   | 'competencia'

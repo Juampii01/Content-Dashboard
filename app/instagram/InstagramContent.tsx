@@ -18,6 +18,7 @@ const PublicacionesTab = dynamic(() => import('@/components/tabs/PublicacionesTa
 const CompetenciaTab   = dynamic(() => import('@/components/tabs/CompetenciaTab').then((m) => m.CompetenciaTab),     { ssr: false })
 const ReferenciasTab   = dynamic(() => import('@/components/tabs/ReferenciasTab').then((m) => m.ReferenciasTab),     { ssr: false })
 const DemografiaTab    = dynamic(() => import('@/components/tabs/DemografiaTab').then((m) => m.DemografiaTab),       { ssr: false })
+const VideoFeedView    = dynamic(() => import('@/components/video-feed/VideoFeedView').then((m) => m.VideoFeedView), { ssr: false })
 
 export function InstagramContent() {
   const [tab] = useTab()
@@ -63,6 +64,7 @@ export function InstagramContent() {
       <InstagramDataProvider value={ctxValue}>
         {tab === 'dashboard'     && <DashboardTab />}
         {tab === 'reels'         && <ReelsTab />}
+        {tab === 'top30d'        && <VideoFeedView />}
         {tab === 'historias'     && <HistoriasTab />}
         {tab === 'publicaciones' && <PublicacionesTab />}
         {tab === 'competencia'   && <CompetenciaTab />}

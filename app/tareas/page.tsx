@@ -1,15 +1,12 @@
-import type { Metadata } from 'next'
-import { KanbanBoard } from '@/components/tareas/KanbanBoard'
+import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Tareas | Eternity Dashboard',
-  description: 'Organiza tu flujo de trabajo de contenido con el tablero Kanban',
-}
-
-export default function TareasPage() {
-  return (
-    <main className="flex-1 p-6 min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
-      <KanbanBoard />
-    </main>
-  )
+/**
+ * /tareas → /contenido?tab=tareas
+ *
+ * El Kanban ahora vive como tab dentro de /contenido para evitar
+ * duplicación de surface en el sidebar. Esta ruta queda como redirect
+ * para no romper bookmarks ni links pegados.
+ */
+export default function TareasRedirect(): never {
+  redirect('/contenido?tab=tareas')
 }
