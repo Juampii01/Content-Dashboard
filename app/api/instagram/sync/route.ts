@@ -27,10 +27,17 @@ import {
   InstagramMediaListSchema,
 } from '@/lib/schemas/instagram'
 import { accountToSnapshot, mediaToUserReel } from '@/lib/instagram/transform'
+import {
+  startRun as apifyStartRun,
+  pollRun as apifyPollRun,
+  fetchItems as apifyFetchItems,
+  type ApifyReelItem,
+} from '@/lib/apify/instagram-reel-scraper'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const GRAPH = 'https://graph.facebook.com/v19.0'
+const APIFY_REEL_LIMIT = 50
 
 interface GraphErrorInfo {
   status: number
@@ -58,6 +65,111 @@ async function graphGet<T>(url: string): Promise<{ ok: true; data: T } | { ok: f
   return { ok: true, data: json as T }
 }
 
+/** Derive an instagramId / shortcode from an Apify reel-scraper item. */
+function shortcodeFromUrl(url: string): string {
+  const m = url.match(/\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)
+  return m?.[1] ?? ''
+}
+
+/**
+ * Run an Apify reel-scrape for the given handle and upsert the results into
+ * UserReel.  Used when the SocialConnection has no real access token (i.e.
+ * connected via /api/instagram/connect-handle instead of OAuth).
+ */
+async function syncViaApify(
+  handle: string,
+  clientId: string,
+  userId: string,
+): Promise<{ ok: true; reelsSynced: number } | { ok: false; status: number; error: string; detail?: string }> {
+  let runId: string
+  try {
+    const r = await apifyStartRun([handle], APIFY_REEL_LIMIT)
+    runId = r.runId
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[instagram/sync · apify] startRun failed:', message)
+    return { ok: false, status: 502, error: 'APIFY_START_FAILED', detail: message }
+  }
+
+  const poll = await apifyPollRun(runId, { pollIntervalMs: 4_000, maxWaitMs: 120_000 })
+  if (poll.status !== 'SUCCEEDED' || !poll.datasetId) {
+    return {
+      ok: false,
+      status: 502,
+      error: 'APIFY_RUN_FAILED',
+      detail: poll.error ?? 'no datasetId',
+    }
+  }
+
+  let items: ApifyReelItem[]
+  try {
+    items = await apifyFetchItems(poll.datasetId, APIFY_REEL_LIMIT)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[instagram/sync · apify] fetchItems failed:', message)
+    return { ok: false, status: 502, error: 'APIFY_FETCH_FAILED', detail: message }
+  }
+
+  const upserts = await Promise.allSettled(
+    items.map((item) => {
+      const shortcode =
+        item.shortCode?.trim() ||
+        (item.url ? shortcodeFromUrl(item.url) : '')
+      const instagramId = String(item.id ?? '').trim() || shortcode
+      if (!instagramId) {
+        return Promise.reject(new Error('item without id/shortcode'))
+      }
+      const url = item.url?.trim() || `https://www.instagram.com/reel/${shortcode}/`
+      const publishedAt =
+        item.timestamp && !isNaN(Date.parse(item.timestamp))
+          ? new Date(item.timestamp)
+          : null
+
+      return db.userReel.upsert({
+        where: { instagramId },
+        create: {
+          clientId,
+          createdBy: userId,
+          updatedBy: userId,
+          instagramId,
+          shortcode: shortcode || instagramId,
+          url,
+          thumbnailUrl: item.displayUrl ?? null,
+          videoUrl: item.videoUrl ?? null,
+          caption: item.caption ?? null,
+          durationSec: item.videoDuration ?? null,
+          viewsCount: item.videoPlayCount ?? 0,
+          likesCount: item.likesCount ?? 0,
+          commentsCount: item.commentsCount ?? 0,
+          sharesCount: item.sharesCount ?? 0,
+          publishedAt,
+          mediaType: 'REELS',
+          syncedAt: new Date(),
+        },
+        update: {
+          updatedBy: userId,
+          shortcode: shortcode || instagramId,
+          url,
+          thumbnailUrl: item.displayUrl ?? null,
+          videoUrl: item.videoUrl ?? null,
+          caption: item.caption ?? null,
+          durationSec: item.videoDuration ?? null,
+          viewsCount: item.videoPlayCount ?? 0,
+          likesCount: item.likesCount ?? 0,
+          commentsCount: item.commentsCount ?? 0,
+          sharesCount: item.sharesCount ?? 0,
+          publishedAt,
+          mediaType: 'REELS',
+          syncedAt: new Date(),
+        },
+      })
+    }),
+  )
+
+  const reelsSynced = upserts.filter((r) => r.status === 'fulfilled').length
+  return { ok: true, reelsSynced }
+}
+
 // ─── POST ────────────────────────────────────────────────────────────────────
 
 export async function POST(): Promise<NextResponse> {
@@ -79,7 +191,26 @@ export async function POST(): Promise<NextResponse> {
     return NextResponse.json({ error: 'NOT_CONNECTED' }, { status: 404 })
   }
 
-  // 2. Token expiry check
+  // 2. Branch on connection mode:
+  //    accessToken === ''  → Apify path (connected via @handle)
+  //    accessToken !== ''  → Graph API path (real OAuth — legacy / future)
+  if (conn.accessToken === '') {
+    const r = await syncViaApify(conn.accountId, clientId, userId)
+    if (!r.ok) {
+      return NextResponse.json(
+        { error: r.error, detail: r.detail },
+        { status: r.status },
+      )
+    }
+    return NextResponse.json({
+      ok: true,
+      synced: { reels: r.reelsSynced, snapshot: false },
+      via: 'apify',
+    })
+  }
+
+  // 3. Graph API path — only runs when a real OAuth access token is present.
+  //    Token expiry check
   if (conn.expiresAt && conn.expiresAt.getTime() <= Date.now()) {
     return NextResponse.json({ error: 'TOKEN_EXPIRED' }, { status: 401 })
   }
@@ -87,7 +218,7 @@ export async function POST(): Promise<NextResponse> {
   const igId = conn.accountId
   const accessToken = conn.accessToken
 
-  // 3. Fetch latest media (25)
+  // 4. Fetch latest media (25)
   const mediaUrl =
     `${GRAPH}/${igId}/media` +
     `?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode` +
@@ -231,5 +362,6 @@ export async function POST(): Promise<NextResponse> {
   return NextResponse.json({
     ok: true,
     synced: { reels: reelsSynced, snapshot: snapshotWritten },
+    via: 'graph',
   })
 }
