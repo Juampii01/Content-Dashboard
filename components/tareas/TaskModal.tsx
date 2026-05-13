@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'motion/react'
-import { X, Tag } from 'lucide-react'
+import { X, Tag, User, UserMinus } from 'lucide-react'
 import { Task, TaskColumnId, TaskLabel } from '@/lib/types'
 import { LabelBadge, LABEL_PRESETS } from './LabelBadge'
 import { DatePicker } from '@/components/calendario/DatePicker'
+import { useAuth } from '@/components/layout/AuthProvider'
 
 interface TaskModalProps {
   task?: Task | null
@@ -23,11 +24,16 @@ const COLUMNS: { id: TaskColumnId; label: string }[] = [
 ]
 
 export function TaskModal({ task, defaultColumnId = 'por-hacer', onSave, onDelete, onClose }: TaskModalProps) {
+  const { profile } = useAuth()
+  const currentUserId = profile?.userId ?? null
+
   const [title, setTitle] = useState(task?.title ?? '')
   const [description, setDescription] = useState(task?.description ?? '')
   const [dueDate, setDueDate] = useState(task?.dueDate ?? '')
   const [columnId, setColumnId] = useState<TaskColumnId>(task?.columnId ?? defaultColumnId)
   const [selectedLabel, setSelectedLabel] = useState<TaskLabel | undefined>(task?.label)
+  const [assignedTo, setAssignedTo] = useState<string | null>(task?.assignedTo ?? null)
+  const isMine = !!currentUserId && assignedTo === currentUserId
 
   // Portal mount: ensures createPortal only runs on client (SSR-safe).
   const [mounted, setMounted] = useState(false)
@@ -51,6 +57,7 @@ export function TaskModal({ task, defaultColumnId = 'por-hacer', onSave, onDelet
       dueDate: dueDate || undefined,
       label: selectedLabel,
       columnId,
+      assignedTo: assignedTo ?? undefined,
     })
     onClose()
   }
@@ -172,6 +179,56 @@ export function TaskModal({ task, defaultColumnId = 'por-hacer', onSave, onDelet
                   </button>
                 )
               })}
+            </div>
+          </div>
+
+          {/* Assignment */}
+          <div>
+            <label className="text-[11px] font-medium mb-1.5 flex items-center gap-1" style={{ color: 'var(--muted-foreground)' }}>
+              <User size={11} /> Asignación
+            </label>
+            <div className="flex items-center gap-2">
+              {!assignedTo ? (
+                <button
+                  type="button"
+                  onClick={() => currentUserId && setAssignedTo(currentUserId)}
+                  disabled={!currentUserId}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-opacity disabled:opacity-50"
+                  style={{
+                    backgroundColor: 'var(--card)',
+                    color: 'var(--foreground)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  <User size={12} /> Asignármela
+                </button>
+              ) : (
+                <>
+                  <span
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                    style={{
+                      backgroundColor: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+                      color: 'var(--accent)',
+                      border: '1px solid color-mix(in srgb, var(--accent) 25%, var(--border))',
+                    }}
+                  >
+                    <User size={12} /> {isMine ? 'Asignada a vos' : 'Asignada a otro miembro'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAssignedTo(null)}
+                    title="Liberar la asignación"
+                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-opacity hover:opacity-80"
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: 'var(--muted-foreground)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    <UserMinus size={12} /> Quitar
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

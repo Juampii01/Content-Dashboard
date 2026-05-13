@@ -26,6 +26,7 @@ const UpdateTaskSchema = z.object({
   labelColor: z.string().optional(),
   columnId: z.string().optional(),
   order: z.number().int().optional(),
+  assignedTo: z.string().nullable().optional(),
 })
 
 // ─── PATCH /api/tasks/[id] ─────────────────────────────────────────────────

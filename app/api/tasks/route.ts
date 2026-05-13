@@ -26,6 +26,7 @@ const CreateTaskSchema = z.object({
   labelColor: z.string().optional(),
   columnId: z.string().optional(),
   order: z.number().int().optional(),
+  assignedTo: z.string().nullable().optional(),
 })
 
 // ─── GET /api/tasks ────────────────────────────────────────────────────────
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     )
   }
 
-  const { title, description, dueDate, labelText, labelColor, columnId, order } = parsed.data
+  const { title, description, dueDate, labelText, labelColor, columnId, order, assignedTo } = parsed.data
 
   try {
     // Determine order: if not provided, append at end of column
@@ -87,6 +88,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         clientId,
         createdBy: userId,
         updatedBy: userId,
+        assignedTo: assignedTo ?? null,
         title,
         description: description ?? '',
         dueDate: dueDate ? new Date(dueDate) : null,

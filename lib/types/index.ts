@@ -166,6 +166,7 @@ export interface Task {
   columnId: TaskColumnId
   createdAt: string
   order: number
+  assignedTo?: string // Profile.id of the team member who owns this task
 }
 
 // ─── Unified content status (shared between Pipeline and Calendar) ────────────

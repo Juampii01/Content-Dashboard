@@ -265,6 +265,7 @@ model Task {
   clientId    String
   createdBy   String?
   updatedBy   String?
+  assignedTo  String?   // Profile.id of the team member who owns this task; null = unassigned
   title       String
   description String    @default("")
   dueDate     DateTime?
@@ -276,6 +277,7 @@ model Task {
   updatedAt   DateTime  @updatedAt
 
   @@index([clientId])
+  @@index([assignedTo])
 }
 
 // ContentPiece doubles as CalendarEvent (reels + historias calendar items)

@@ -21,7 +21,9 @@ import { KanbanColumn } from './KanbanColumn'
 import { TaskCard } from './TaskCard'
 import { TaskModal } from './TaskModal'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { useAuth } from '@/components/layout/AuthProvider'
 import { toast } from 'sonner'
+import { User } from 'lucide-react'
 
 // ─── Column config ─────────────────────────────────────────────────────────
 
@@ -42,6 +44,7 @@ interface ApiTask {
   labelColor: string
   columnId: string
   order: number
+  assignedTo: string | null
   createdAt: string
   updatedAt: string
 }
@@ -61,6 +64,7 @@ function apiToUiTask(t: ApiTask): Task {
     columnId: t.columnId as TaskColumnId,
     createdAt: t.createdAt,
     order: t.order,
+    assignedTo: t.assignedTo ?? undefined,
   }
 }
 
@@ -70,11 +74,18 @@ export function KanbanBoard() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [onlyMine, setOnlyMine] = useState(false)
   const [modalConfig, setModalConfig] = useState<{
     open: boolean
     task?: Task | null
     defaultColumnId?: TaskColumnId
   }>({ open: false })
+
+  const { profile } = useAuth()
+  const currentUserId = profile?.userId ?? null
+  const visibleTasks = onlyMine && currentUserId
+    ? tasks.filter((t) => t.assignedTo === currentUserId)
+    : tasks
 
   // ── Initial fetch ────────────────────────────────────────────────────────
 
@@ -212,6 +223,7 @@ export function KanbanBoard() {
               labelText: data.label?.text ?? '',
               labelColor: data.label?.color ?? '',
               columnId: data.columnId,
+              assignedTo: data.assignedTo ?? null,
             }),
           })
           if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -241,6 +253,7 @@ export function KanbanBoard() {
               labelColor: data.label?.color ?? '',
               columnId: data.columnId,
               order: colTasks.length,
+              assignedTo: data.assignedTo ?? null,
             }),
           })
           if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -317,13 +330,29 @@ export function KanbanBoard() {
         description="Organizá tu flujo de trabajo de contenido."
         icon={CheckSquare}
         actions={
-          <button
-            onClick={() => openCreateModal()}
-            className="btn btn-primary"
-          >
-            <Plus size={15} />
-            Nueva tarea
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setOnlyMine((v) => !v)}
+              disabled={!currentUserId}
+              title={currentUserId ? 'Filtrar por las tareas asignadas a vos' : 'Necesitás estar logueado para filtrar'}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-opacity disabled:opacity-50"
+              style={{
+                backgroundColor: onlyMine ? 'var(--accent)' : 'var(--card)',
+                color: onlyMine ? 'var(--accent-foreground)' : 'var(--muted-foreground)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              <User size={12} />
+              {onlyMine ? 'Solo mías' : 'Todas'}
+            </button>
+            <button
+              onClick={() => openCreateModal()}
+              className="btn btn-primary"
+            >
+              <Plus size={15} />
+              Nueva tarea
+            </button>
+          </div>
         }
       />
 
@@ -343,7 +372,7 @@ export function KanbanBoard() {
         >
           <div className="flex xl:grid xl:grid-cols-3 gap-5 flex-1 min-h-0 overflow-x-auto xl:overflow-x-visible -mx-6 px-6 xl:mx-0 xl:px-0">
             {COLUMNS.map((col) => {
-              const colTasks = tasks
+              const colTasks = visibleTasks
                 .filter((t) => t.columnId === col.id)
                 .sort((a, b) => a.order - b.order)
               return (
