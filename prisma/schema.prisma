@@ -464,6 +464,34 @@ model Story {
   @@index([clientId, publishedAt])
 }
 
+// TikTokVideo = a video belonging to the client's own TikTok account.
+// Separated from UserReel because TT metrics differ from IG (no equivalent
+// to reach/impressions/saves on the public surface, but plays/likes/shares
+// are public). Synced via the apify TikTok scraper.
+model TikTokVideo {
+  id            String    @id @default(cuid())
+  clientId      String
+  createdBy     String?
+  updatedBy     String?
+  tiktokId      String    @unique
+  shortcode     String?
+  url           String
+  thumbnailUrl  String?
+  videoUrl      String?
+  caption       String?
+  durationSec   Float?
+  viewsCount    Int       @default(0)
+  likesCount    Int       @default(0)
+  commentsCount Int       @default(0)
+  sharesCount   Int       @default(0)
+  publishedAt   DateTime?
+  syncedAt      DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([clientId, publishedAt])
+}
+
 // YouTubeVideo = a video belonging to the client's own YouTube channel.
 // Separated from UserReel because YT metrics differ substantially from IG
 // (watch time, average view duration, no saves/reach/organicPercent, etc.).
