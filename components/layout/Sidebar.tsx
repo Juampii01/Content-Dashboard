@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'motion/react'
 import {
-  LayoutDashboard, Camera, Play, Bot,
+  LayoutDashboard, Camera, Play, Bot, Music,
   BookOpen, Kanban,
   ChevronLeft, ChevronRight, Users,
   LogOut, Shield, UserCog, Building2,
@@ -49,6 +49,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Instagram', href: '/instagram', icon: Camera },
       { label: 'YouTube', href: '/youtube', icon: Play },
+      { label: 'TikTok', href: '/tiktok', icon: Music },
     ],
   },
   {
