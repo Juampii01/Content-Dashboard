@@ -23,8 +23,6 @@ interface Props {
   loadedReels?: number
 }
 
-const REELS_API_PAGE_SIZE = 100
-
 export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCount, loadedReels }: Props) {
   const { connect } = useSocialConnection('instagram')
   const [clicked, setClicked] = useState(false)
@@ -157,8 +155,8 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCou
         <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />
         <span>
           {reelCount} reels sincronizados
-          {typeof loadedReels === 'number' && reelCount > REELS_API_PAGE_SIZE
-            ? ` · mostrando los ${Math.min(loadedReels, REELS_API_PAGE_SIZE)} más recientes`
+          {typeof loadedReels === 'number' && loadedReels < reelCount
+            ? ` · mostrando ${loadedReels} (cargá más abajo)`
             : ''}
           {summary.latestSnapshot ? ` · ${summary.latestSnapshot.followers.toLocaleString('es-ES')} seguidores` : ''}
           {summary.accountName ? ` · @${summary.accountName}` : ''}

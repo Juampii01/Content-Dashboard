@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { Kanban, CalendarDays, CalendarClock, FileText, Wand2 } from 'lucide-react'
+import { Kanban, CalendarDays, CalendarClock, FileText, Wand2, CheckSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 
@@ -10,9 +11,11 @@ const PipelineBoard   = dynamic(() => import('@/components/pipeline/PipelineBoar
 const CalendarioTab   = dynamic(() => import('@/components/calendario/CalendarioTab').then((m) => m.CalendarioTab), { ssr: false })
 const GuionesSection  = dynamic(() => import('./GuionesSection').then((m) => m.GuionesSection),                     { ssr: false })
 const CopyGenerator   = dynamic(() => import('@/components/copy/CopyGenerator').then((m) => m.CopyGenerator),       { ssr: false })
+const KanbanBoard     = dynamic(() => import('@/components/tareas/KanbanBoard').then((m) => m.KanbanBoard),         { ssr: false })
 
 type SectionId =
   | 'pipeline'
+  | 'tareas'
   | 'cal-reels'
   | 'cal-historias'
   | 'guiones-reels'
@@ -21,6 +24,7 @@ type SectionId =
 
 const SECTIONS: { id: SectionId; label: string; icon: React.ElementType }[] = [
   { id: 'pipeline',          label: 'Pipeline',          icon: Kanban },
+  { id: 'tareas',            label: 'Tareas',            icon: CheckSquare },
   { id: 'cal-reels',         label: 'Cal. Reels',        icon: CalendarDays },
   { id: 'cal-historias',     label: 'Cal. Historias',    icon: CalendarClock },
   { id: 'guiones-reels',     label: 'Guiones Reels',     icon: FileText },
@@ -31,6 +35,7 @@ const SECTIONS: { id: SectionId; label: string; icon: React.ElementType }[] = [
 function SectionBody({ id }: { id: SectionId }) {
   // Root wrapper already supplies px-8 py-6; section bodies just render content.
   if (id === 'pipeline') return <PipelineBoard />
+  if (id === 'tareas') return <KanbanBoard />
   if (id === 'cal-reels') return <CalendarioTab type="reel" />
   if (id === 'cal-historias') return <CalendarioTab type="historia" />
   if (id === 'guiones-reels') return <GuionesSection type="reel" label="reel" />
@@ -39,8 +44,23 @@ function SectionBody({ id }: { id: SectionId }) {
   return null
 }
 
+const SECTION_IDS = new Set<SectionId>(SECTIONS.map((s) => s.id))
+
+function parseTab(raw: string | null): SectionId {
+  return raw && SECTION_IDS.has(raw as SectionId) ? (raw as SectionId) : 'pipeline'
+}
+
 export function ContenidoContent() {
-  const [active, setActive] = useState<SectionId>('pipeline')
+  const searchParams = useSearchParams()
+  const [active, setActive] = useState<SectionId>(() =>
+    parseTab(searchParams?.get('tab') ?? null),
+  )
+
+  // Keep tab state in sync if the URL changes externally (e.g. /tareas redirect).
+  useEffect(() => {
+    const next = parseTab(searchParams?.get('tab') ?? null)
+    setActive(next)
+  }, [searchParams])
 
   return (
     <div className="page-shell">

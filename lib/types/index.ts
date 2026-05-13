@@ -3,6 +3,7 @@ export type Period = 7 | 14 | 30 | 90
 export type Tab =
   | 'dashboard'
   | 'reels'
+  | 'top30d'
   | 'historias'
   | 'publicaciones'
   | 'competencia'
@@ -165,6 +166,7 @@ export interface Task {
   columnId: TaskColumnId
   createdAt: string
   order: number
+  assignedTo?: string // Profile.id of the team member who owns this task
 }
 
 // ─── Unified content status (shared between Pipeline and Calendar) ────────────

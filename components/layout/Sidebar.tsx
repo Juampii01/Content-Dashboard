@@ -5,10 +5,10 @@ import { usePathname } from 'next/navigation'
 import { motion } from 'motion/react'
 import {
   LayoutDashboard, Camera, Play, Bot,
-  CheckSquare, BookOpen, Search, Kanban,
+  BookOpen, Kanban,
   ChevronLeft, ChevronRight, Users,
   LogOut, Shield, UserCog, Building2,
-  FileText, Telescope, Rss, ClipboardList,
+  ClipboardList,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -29,12 +29,19 @@ type NavGroup = {
   items: { label: string; href: string; icon: React.ElementType }[]
 }
 
+// Sidebar comprimido: 14 → 8 items (sin admin). Las rutas suprimidas del
+// menú siguen accesibles por URL. Las que tienen lugar natural se absorben
+// como tabs dentro del padre lógico:
+//   /tareas             → tab "Tareas" dentro de /contenido
+//   /video-feed         → tab "Top 30d" dentro de /instagram
+//   /transcript         → herramienta dentro de /competidores
+//   /content-research   → herramienta dentro de /competidores
+//   /analizador         → herramienta dentro de /competidores
 const NAV_GROUPS: NavGroup[] = [
   {
     items: [
       { label: 'Dashboard', href: '/', icon: LayoutDashboard },
       { label: 'Discovery', href: '/discovery', icon: ClipboardList },
-      { label: 'Tareas', href: '/tareas', icon: CheckSquare },
     ],
   },
   {
@@ -49,11 +56,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Contenido', href: '/contenido', icon: Kanban },
       { label: 'Bases de negocio', href: '/bases', icon: BookOpen },
-      { label: 'Analizador', href: '/analizador', icon: Search },
       { label: 'Competidores', href: '/competidores', icon: Users },
-      { label: 'Transcript', href: '/transcript', icon: FileText },
-      { label: 'Content Research', href: '/content-research', icon: Telescope },
-      { label: 'Video Feed', href: '/video-feed', icon: Rss },
     ],
   },
   {

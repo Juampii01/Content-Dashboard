@@ -9,6 +9,7 @@ import { StatGrid } from './StatGrid'
 import { PerformanceCharts } from './PerformanceCharts'
 import { QuickSummarySidebar } from './QuickSummarySidebar'
 import { DemoDataPill } from '@/components/instagram/InstagramSyncBanner'
+import { Skeleton } from '@/components/ui/skeleton'
 import { formatK, formatPercent } from '@/lib/utils/formatters'
 import { Users, Eye, Heart } from 'lucide-react'
 
@@ -104,7 +105,20 @@ export function HomeContent() {
         />
       </motion.div>
 
-      {globalLoaded && globalStats && (
+      {!globalLoaded ? (
+        <motion.div {...fadeUp(1)}>
+          <p className="text-eyebrow mb-3">Tus métricas reales</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[0, 1, 2].map((i) => (
+              <Skeleton
+                key={i}
+                className="rounded-xl"
+                style={{ height: 86, animationDelay: `${i * 80}ms` }}
+              />
+            ))}
+          </div>
+        </motion.div>
+      ) : globalStats ? (
         <motion.div {...fadeUp(1)}>
           <p className="text-eyebrow mb-3">Tus métricas reales</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -125,7 +139,7 @@ export function HomeContent() {
             />
           </div>
         </motion.div>
-      )}
+      ) : null}
 
       <motion.div {...fadeUp(2)} className="flex items-center justify-between">
         <div className="flex items-center gap-2">

@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { AnalyzeRequestSchema } from '@/lib/schemas/analizador/analyze'
 import { checkRateLimit } from '@/lib/utils/ratelimit'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
+import { CHEAP_MODEL } from '@/lib/claude/models'
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
   ].filter(Boolean).join('\n\n')
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CHEAP_MODEL,
     max_tokens: 1024,
     messages: [
       {

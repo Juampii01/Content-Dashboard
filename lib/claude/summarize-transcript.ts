@@ -9,7 +9,7 @@
  * sonnet-4-6 is fast enough and a third the cost for this format.
  */
 import Anthropic from '@anthropic-ai/sdk'
-import { DEFAULT_MODEL } from './models'
+import { CHEAP_MODEL } from './models'
 
 const MAX_INPUT_CHARS = 8000
 const MAX_OUTPUT_TOKENS = 800
@@ -26,7 +26,7 @@ export async function summarizeTranscript(
   const creatorClause = creator ? ` del canal "${creator}"` : ''
 
   const msg = await anthropic.messages.create({
-    model: DEFAULT_MODEL,
+    model: CHEAP_MODEL,
     max_tokens: MAX_OUTPUT_TOKENS,
     messages: [
       {

@@ -265,6 +265,7 @@ model Task {
   clientId    String
   createdBy   String?
   updatedBy   String?
+  assignedTo  String?   // Profile.id of the team member who owns this task; null = unassigned
   title       String
   description String    @default("")
   dueDate     DateTime?
@@ -276,6 +277,7 @@ model Task {
   updatedAt   DateTime  @updatedAt
 
   @@index([clientId])
+  @@index([assignedTo])
 }
 
 // ContentPiece doubles as CalendarEvent (reels + historias calendar items)
@@ -429,12 +431,16 @@ model UserReel {
   multiplier     Float     @default(0)
   isAd           Boolean   @default(false)
   isTrialReel    Boolean   @default(false)
+  // Graph API media_type: 'VIDEO' | 'REELS' | 'IMAGE' | 'CAROUSEL_ALBUM'.
+  // Nullable for legacy rows synced before this field existed (treat as VIDEO).
+  mediaType      String?
   publishedAt    DateTime?
   syncedAt       DateTime  @default(now())
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
   @@index([clientId, publishedAt])
+  @@index([clientId, mediaType])
   @@index([clientId, viewsCount])
 }
 

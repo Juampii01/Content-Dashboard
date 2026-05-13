@@ -18,7 +18,7 @@ export function ReelsTab() {
   const [type, setType] = useState<ReelType>('all')
   const [traffic, setTraffic] = useState<TrafficType>('all')
 
-  const { hasRealData, reels: realReels } = useInstagramDataContext()
+  const { hasRealData, reels: realReels, hasMore, loadingMore, loadMore } = useInstagramDataContext()
 
   const sourceReels: Reel[] = useMemo(
     () => (hasRealData ? realReels.map(userReelToView) : REELS),
@@ -79,6 +79,25 @@ export function ReelsTab() {
             <ReelCard key={reel.id} reel={reel} />
           ))}
         </div>
+
+        {/* Load more — only when there is more real data to fetch */}
+        {hasRealData && hasMore && (
+          <div className="mb-6 flex justify-center">
+            <button
+              type="button"
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity disabled:opacity-60"
+              style={{
+                backgroundColor: 'var(--card)',
+                color: 'var(--foreground)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              {loadingMore ? 'Cargando…' : 'Cargar más reels'}
+            </button>
+          </div>
+        )}
 
         {/* Bottom charts */}
         <div className="grid grid-cols-2 gap-4">

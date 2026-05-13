@@ -2,10 +2,11 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Calendar } from 'lucide-react'
+import { Calendar, User } from 'lucide-react'
 import { Task } from '@/lib/types'
 import { LabelBadge } from './LabelBadge'
 import { formatDate } from '@/lib/utils/formatDate'
+import { useAuth } from '@/components/layout/AuthProvider'
 
 interface TaskCardProps {
   task: Task
@@ -13,6 +14,8 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onClick }: TaskCardProps) {
+  const { profile } = useAuth()
+  const isMine = !!task.assignedTo && task.assignedTo === profile?.userId
   const {
     attributes,
     listeners,
@@ -75,16 +78,35 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
         </p>
       )}
 
-      {/* Due date */}
-      {dueDateFormatted && (
-        <div className="flex items-center gap-1 mt-2">
-          <Calendar size={11} style={{ color: isOverdue ? '#E05252' : 'var(--muted-foreground)' }} />
-          <span
-            className="text-[11px]"
-            style={{ color: isOverdue ? '#E05252' : 'var(--muted-foreground)' }}
-          >
-            {dueDateFormatted}
-          </span>
+      {/* Bottom row: due date + assignee indicator */}
+      {(dueDateFormatted || task.assignedTo) && (
+        <div className="flex items-center justify-between gap-2 mt-2">
+          {dueDateFormatted ? (
+            <div className="flex items-center gap-1">
+              <Calendar size={11} style={{ color: isOverdue ? '#E05252' : 'var(--muted-foreground)' }} />
+              <span
+                className="text-[11px]"
+                style={{ color: isOverdue ? '#E05252' : 'var(--muted-foreground)' }}
+              >
+                {dueDateFormatted}
+              </span>
+            </div>
+          ) : <span />}
+          {task.assignedTo && (
+            <span
+              title={isMine ? 'Asignada a vos' : 'Asignada a otro miembro'}
+              className="inline-flex items-center justify-center w-5 h-5 rounded-full"
+              style={{
+                backgroundColor: isMine
+                  ? 'color-mix(in srgb, var(--accent) 18%, transparent)'
+                  : 'var(--muted)',
+                color: isMine ? 'var(--accent)' : 'var(--muted-foreground)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              <User size={10} />
+            </span>
+          )}
         </div>
       )}
     </div>
