@@ -39,6 +39,13 @@ export type ClaudeModelId = (typeof CLAUDE_MODELS)[number]['id']
 
 export const DEFAULT_MODEL: ClaudeModelId = 'claude-sonnet-4-6'
 
+/**
+ * Model for high-volume / low-complexity jobs where Haiku produces results
+ * indistinguishable from Sonnet at ~20% of the cost: transcript summaries,
+ * one-shot copy generation, structured analysis of single reels.
+ */
+export const CHEAP_MODEL: ClaudeModelId = 'claude-haiku-4-5-20251001'
+
 export function getModelMeta(id: ClaudeModelId): ClaudeModelMeta {
   const m = CLAUDE_MODELS.find((x) => x.id === id)
   if (!m) throw new Error(`Modelo Claude desconocido: ${id}`)

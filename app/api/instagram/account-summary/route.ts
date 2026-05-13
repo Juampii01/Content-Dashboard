@@ -30,8 +30,15 @@ export async function GET(): Promise<NextResponse<Response>> {
   const clientId = await getActiveClientId()
   if (!clientId) return NextResponse.json({ connected: false, reason: 'NO_ACTIVE_CLIENT' })
 
+  // Defense in depth: never select the access / refresh tokens — they only
+  // belong on server-side sync paths.
   const conn = await db.socialConnection.findUnique({
     where: { clientId_platform: { clientId, platform: 'instagram' } },
+    select: {
+      accountName: true,
+      accountPic: true,
+      expiresAt: true,
+    },
   })
   if (!conn) return NextResponse.json({ connected: false, reason: 'NOT_CONNECTED' })
 

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GenerateRequestSchema } from '@/lib/schemas/copy/generate'
 import { checkRateLimit } from '@/lib/utils/ratelimit'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
+import { CHEAP_MODEL } from '@/lib/claude/models'
 
 const TYPE_INSTRUCTIONS: Record<string, string> = {
   'reels-virales': `Genera scripts/hooks para reels virales de Instagram o TikTok orientados a máximo alcance.
@@ -90,7 +91,7 @@ REGLAS:
 - Formato exacto: {"items": ["variante 1", "variante 2", ...]}`
 
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: CHEAP_MODEL,
       max_tokens: 1500,
       messages: [{ role: 'user', content: prompt }],
     })

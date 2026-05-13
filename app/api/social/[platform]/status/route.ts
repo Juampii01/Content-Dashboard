@@ -47,7 +47,17 @@ export async function GET(
   }
 
   try {
-    const connection = await db.socialConnection.findUnique({ where: { clientId_platform: { clientId, platform } } })
+    // Defense in depth: never expose accessToken / refreshToken in API
+    // responses — they only belong on server-side sync paths.
+    const connection = await db.socialConnection.findUnique({
+      where: { clientId_platform: { clientId, platform } },
+      select: {
+        accountName: true,
+        accountPic: true,
+        connectedAt: true,
+        expiresAt: true,
+      },
+    })
 
     if (!connection) {
       return NextResponse.json({ connected: false })
