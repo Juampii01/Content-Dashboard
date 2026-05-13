@@ -19,6 +19,7 @@ export interface UserReelUpsert {
   likesCount: number
   commentsCount: number
   publishedAt: Date | null
+  mediaType: string | null
 }
 
 /**
@@ -43,6 +44,7 @@ export function mediaToUserReel(m: InstagramMedia): UserReelUpsert {
     likesCount: m.like_count ?? 0,
     commentsCount: m.comments_count ?? 0,
     publishedAt: m.timestamp ? new Date(m.timestamp) : null,
+    mediaType: m.media_type ?? null,
   }
 }
 

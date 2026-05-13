@@ -140,6 +140,7 @@ export async function POST(): Promise<NextResponse> {
             likesCount: u.likesCount,
             commentsCount: u.commentsCount,
             publishedAt: u.publishedAt,
+            mediaType: u.mediaType,
             syncedAt: new Date(),
           },
           update: {
@@ -152,6 +153,7 @@ export async function POST(): Promise<NextResponse> {
             likesCount: u.likesCount,
             commentsCount: u.commentsCount,
             publishedAt: u.publishedAt,
+            mediaType: u.mediaType,
             syncedAt: new Date(),
           },
         })

@@ -27,6 +27,7 @@ export interface UserReelRow {
   viewsCount: number
   publishedAt: string | null
   syncedAt: string
+  mediaType?: string | null  // 'VIDEO' | 'REELS' | 'IMAGE' | 'CAROUSEL_ALBUM' | null (legacy)
 }
 
 interface UseInstagramDataReturn {
