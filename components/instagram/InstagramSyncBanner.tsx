@@ -3,15 +3,23 @@
 /**
  * Banner shown at the top of the /instagram page.
  *
- * - Not connected         → prominent "Conectar Instagram" CTA
- * - Connected, empty      → "Sincronizar ahora" CTA
- * - Connected, token bad  → "Reconectar" CTA
- * - Connected + data      → small "Datos reales · N reels · followers" badge
+ * Connection model: Apify-first.
+ *   The user types their @handle, we persist it to SocialConnection (no
+ *   OAuth, no tokens) and subsequent syncs scrape via Apify. The legacy
+ *   OAuth path still works if the SocialConnection has a real access token
+ *   (e.g. created by a previous Meta-App-Review-aware flow).
+ *
+ * States:
+ *   - Loading            → skeleton row
+ *   - Not connected      → @handle input + "Conectar"
+ *   - Connected, empty   → "Sincronizar ahora" CTA
+ *   - Token expired      → "Reconectar" (legacy OAuth connections only)
+ *   - Connected + data   → small "N reels · @handle" badge
  */
 
-import { useState } from 'react'
-import { Camera, Loader2, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react'
-import { useSocialConnection } from '@/hooks/useSocialConnection'
+import { useState, type FormEvent } from 'react'
+import { Camera, Loader2, RefreshCw, AlertTriangle, CheckCircle2, AtSign } from 'lucide-react'
+import { toast } from 'sonner'
 import type { InstagramAccountSummary } from '@/hooks/useInstagramData'
 
 interface Props {
@@ -19,13 +27,49 @@ interface Props {
   loading: boolean
   syncing: boolean
   onSync: () => void
+  onConnected?: () => void
   reelCount: number
   loadedReels?: number
 }
 
-export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCount, loadedReels }: Props) {
-  const { connect } = useSocialConnection('instagram')
-  const [clicked, setClicked] = useState(false)
+export function InstagramSyncBanner({ summary, loading, syncing, onSync, onConnected, reelCount, loadedReels }: Props) {
+  const [handle, setHandle] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleConnect(e: FormEvent) {
+    e.preventDefault()
+    const trimmed = handle.trim().replace(/^@/, '')
+    if (!trimmed) {
+      toast.error('Ingresá tu @handle de Instagram.')
+      return
+    }
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/instagram/connect-handle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handle: trimmed }),
+      })
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null
+        toast.error(
+          data?.detail
+            ? `No pudimos conectar: ${data.detail}`
+            : data?.error === 'RATE_LIMIT'
+              ? 'Probá de nuevo en un minuto.'
+              : 'No pudimos conectar. Revisá el @handle.',
+        )
+        return
+      }
+      toast.success(`Instagram conectado como @${trimmed}.`)
+      setHandle('')
+      onConnected?.()
+    } catch {
+      toast.error('Error de red al conectar Instagram.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -42,44 +86,65 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCou
   // ── Not connected ──────────────────────────────────────────────────────────
   if (!summary?.connected) {
     return (
-      <div
-        className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 mb-4"
+      <form
+        onSubmit={handleConnect}
+        className="flex flex-col gap-3 rounded-xl px-4 py-3 mb-4 sm:flex-row sm:items-center sm:justify-between"
         style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: '#E1306C18', border: '1px solid #E1306C30' }}
           >
             <Camera size={16} style={{ color: '#E1306C' }} />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
               Conecta tu cuenta de Instagram
             </p>
             <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              Sincroniza tus reels y métricas reales. Mientras tanto verás datos de demo.
+              Ingresá tu @handle. Sincronizamos públicamente vía scraper — sin pedir login a Meta.
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setClicked(true)
-            connect()
-          }}
-          disabled={clicked}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
-          style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
-        >
-          {clicked ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
-          Conectar Instagram
-        </button>
-      </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-2"
+            style={{
+              backgroundColor: 'var(--background)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <AtSign size={13} style={{ color: 'var(--muted-foreground)' }} />
+            <input
+              type="text"
+              autoComplete="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              value={handle}
+              onChange={(e) => setHandle(e.target.value)}
+              disabled={submitting}
+              placeholder="tu_handle"
+              maxLength={30}
+              className="bg-transparent outline-none text-sm w-32"
+              style={{ color: 'var(--foreground)' }}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={submitting || !handle.trim()}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
+            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+          >
+            {submitting ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+            {submitting ? 'Conectando…' : 'Conectar'}
+          </button>
+        </div>
+      </form>
     )
   }
 
-  // ── Connected but token expired ────────────────────────────────────────────
+  // ── Connected but token expired (legacy OAuth path) ───────────────────────
   if (summary.tokenExpired) {
     return (
       <div
@@ -96,19 +161,40 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCou
               Tu conexión con Instagram expiró
             </p>
             <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              Reconecta la cuenta para seguir sincronizando datos.
+              Reconectá la cuenta tipeando de nuevo tu @handle abajo.
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={connect}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
-          style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
-        >
-          <RefreshCw size={14} />
-          Reconectar
-        </button>
+        <form onSubmit={handleConnect} className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-2"
+            style={{
+              backgroundColor: 'var(--background)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <AtSign size={13} style={{ color: 'var(--muted-foreground)' }} />
+            <input
+              type="text"
+              value={handle}
+              onChange={(e) => setHandle(e.target.value)}
+              disabled={submitting}
+              placeholder="tu_handle"
+              maxLength={30}
+              className="bg-transparent outline-none text-sm w-28"
+              style={{ color: 'var(--foreground)' }}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={submitting || !handle.trim()}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-60"
+            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+          >
+            <RefreshCw size={14} />
+            Reconectar
+          </button>
+        </form>
       </div>
     )
   }
