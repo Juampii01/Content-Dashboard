@@ -117,7 +117,7 @@ export function HistoriasTab() {
             className="rounded-2xl p-10 text-center text-sm"
             style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', color: 'var(--muted-foreground)' }}
           >
-            Tu cuenta no tiene stories activas en este momento. Stories duran 24h — tocá "Traer stories activas" arriba para sincronizar lo que está live.
+            Tu cuenta no tiene stories activas en este momento. Stories duran 24h — tocá &quot;Traer stories activas&quot; arriba para sincronizar lo que está live.
           </div>
         ) : (
           <>

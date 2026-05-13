@@ -42,6 +42,8 @@ interface FeedPost {
 }
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+// Module-level cutoff: stable reference safe to use inside useMemo without Date.now() in render
+const THIRTY_DAY_CUTOFF = Date.now() - THIRTY_DAYS_MS
 
 function reelToFeedPost(r: UserReelRow): FeedPost {
   const firstLine = (r.caption ?? '').split('\n')[0]?.trim() || '(sin caption)'
@@ -122,12 +124,11 @@ export function VideoFeedView() {
 
   const posts = useMemo<FeedPost[]>(() => {
     if (!hasRealData) return []
-    const cutoff = Date.now() - THIRTY_DAYS_MS
     return reels
       .filter((r) => {
         if (!r.publishedAt) return false
         const t = Date.parse(r.publishedAt)
-        return Number.isFinite(t) && t >= cutoff
+        return Number.isFinite(t) && t >= THIRTY_DAY_CUTOFF
       })
       .map(reelToFeedPost)
       .sort((a, b) => engagementScore(b) - engagementScore(a))

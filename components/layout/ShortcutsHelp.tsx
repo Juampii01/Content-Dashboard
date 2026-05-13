@@ -9,7 +9,7 @@
  * duplicating handlers.
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { Command as CommandIcon, X } from 'lucide-react'
@@ -60,9 +60,7 @@ function shouldIgnoreKey(target: EventTarget | null): boolean {
 
 export function ShortcutsHelp() {
   const [open, setOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

@@ -31,9 +31,10 @@ function buildOAuthUrl(platform: Platform, state: string): string | null {
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirect,
-      // NOTE: only scopes available without Meta App Review. `instagram_manage_insights`
-      // and `pages_read_engagement` require review and will 400 during OAuth otherwise.
-      scope: 'instagram_basic,pages_show_list',
+      // instagram_basic + pages_show_list: available without App Review.
+      // instagram_manage_insights + pages_read_engagement: require App Review for
+      // general public; work for Meta app testers even without review.
+      scope: 'instagram_basic,pages_show_list,instagram_manage_insights,pages_read_engagement',
       state,
       response_type: 'code',
     })

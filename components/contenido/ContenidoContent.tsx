@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { Kanban, CalendarDays, CalendarClock, FileText, Wand2, CheckSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -52,15 +51,9 @@ function parseTab(raw: string | null): SectionId {
 
 export function ContenidoContent() {
   const searchParams = useSearchParams()
-  const [active, setActive] = useState<SectionId>(() =>
-    parseTab(searchParams?.get('tab') ?? null),
-  )
-
-  // Keep tab state in sync if the URL changes externally (e.g. /tareas redirect).
-  useEffect(() => {
-    const next = parseTab(searchParams?.get('tab') ?? null)
-    setActive(next)
-  }, [searchParams])
+  const router = useRouter()
+  const active = parseTab(searchParams?.get('tab') ?? null)
+  const setActive = (id: SectionId) => router.push(`?tab=${id}`, { scroll: false })
 
   return (
     <div className="page-shell">

@@ -27,6 +27,7 @@ import {
   InstagramMediaListSchema,
 } from '@/lib/schemas/instagram'
 import { accountToSnapshot, mediaToUserReel } from '@/lib/instagram/transform'
+import { maybeRefreshToken } from '@/lib/instagram/refresh-token'
 import {
   startRun as apifyStartRun,
   pollRun as apifyPollRun,
@@ -216,13 +217,17 @@ export async function POST(): Promise<NextResponse> {
   }
 
   const igId = conn.accountId
-  const accessToken = conn.accessToken
+  // Refresh token if expiring within 7 days (no-op if token is still fresh)
+  const accessToken = await maybeRefreshToken(
+    { accessToken: conn.accessToken, expiresAt: conn.expiresAt, clientId },
+    userId,
+  )
 
-  // 4. Fetch latest media (25)
+  // 4. Fetch latest media (50) — video_views available for VIDEO/REELS without App Review
   const mediaUrl =
     `${GRAPH}/${igId}/media` +
-    `?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode` +
-    `&limit=25&access_token=${encodeURIComponent(accessToken)}`
+    `?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode,video_views` +
+    `&limit=50&access_token=${encodeURIComponent(accessToken)}`
 
   const mediaRes = await graphGet<unknown>(mediaUrl)
   if (!mediaRes.ok) {
@@ -270,6 +275,7 @@ export async function POST(): Promise<NextResponse> {
             caption: u.caption,
             likesCount: u.likesCount,
             commentsCount: u.commentsCount,
+            viewsCount: u.viewsCount,
             publishedAt: u.publishedAt,
             mediaType: u.mediaType,
             syncedAt: new Date(),
@@ -283,6 +289,7 @@ export async function POST(): Promise<NextResponse> {
             caption: u.caption,
             likesCount: u.likesCount,
             commentsCount: u.commentsCount,
+            viewsCount: u.viewsCount,
             publishedAt: u.publishedAt,
             mediaType: u.mediaType,
             syncedAt: new Date(),
@@ -297,7 +304,68 @@ export async function POST(): Promise<NextResponse> {
   )
   const reelsSynced = upsertResults.filter((r) => r.status === 'fulfilled').length
 
-  // 5. Fetch account info
+  // 5. Per-media insights (requires instagram_manage_insights scope — skip silently if unavailable)
+  //    Fetches saves, impressions, reach per VIDEO/REELS item and patches viewsCount/savesCount.
+  const videoMedia = mediaParsed.data.data.filter(
+    (m) => m.media_type === 'VIDEO' || m.media_type === 'REELS',
+  )
+  if (videoMedia.length > 0) {
+    await Promise.allSettled(
+      videoMedia.map(async (m) => {
+        const insightUrl =
+          `${GRAPH}/${m.id}/insights` +
+          `?metric=impressions,reach,saved,video_views` +
+          `&access_token=${encodeURIComponent(accessToken)}`
+        const insRes = await graphGet<{ data: Array<{ name: string; values: Array<{ value: number }> }> }>(insightUrl)
+        if (!insRes.ok) return // 403 = scope not available, skip
+        const vals: Record<string, number> = {}
+        for (const metric of insRes.data.data) {
+          vals[metric.name] = metric.values?.[0]?.value ?? 0
+        }
+        const views = vals['video_views'] ?? 0
+        const saves = vals['saved'] ?? 0
+        if (views > 0 || saves > 0) {
+          await db.userReel.updateMany({
+            where: { instagramId: m.id, clientId },
+            data: {
+              ...(views > 0 ? { viewsCount: views } : {}),
+              ...(saves > 0 ? { savesCount: saves } : {}),
+              updatedBy: userId,
+            },
+          })
+        }
+      }),
+    )
+  }
+
+  // 6. Account-level insights (requires instagram_manage_insights — skip silently if unavailable)
+  //    Fetches impressions, reach, profile_views, follower_count for today.
+  const insightsSince = Math.floor(Date.now() / 1000) - 86400 // yesterday
+  const insightsUntil = Math.floor(Date.now() / 1000)
+  const accountInsightUrl =
+    `${GRAPH}/${igId}/insights` +
+    `?metric=impressions,reach,profile_views` +
+    `&period=day&since=${insightsSince}&until=${insightsUntil}` +
+    `&access_token=${encodeURIComponent(accessToken)}`
+
+  const accountInsightRes = await graphGet<{
+    data: Array<{ name: string; values: Array<{ value: number; end_time: string }> }>
+  }>(accountInsightUrl)
+
+  let insightsData: { impressions: number; reach: number; profileViews: number } | null = null
+  if (accountInsightRes.ok) {
+    const agg: Record<string, number> = {}
+    for (const metric of accountInsightRes.data.data) {
+      agg[metric.name] = metric.values.reduce((s, v) => s + (v.value ?? 0), 0)
+    }
+    insightsData = {
+      impressions:  agg['impressions']   ?? 0,
+      reach:        agg['reach']         ?? 0,
+      profileViews: agg['profile_views'] ?? 0,
+    }
+  }
+
+  // 7. Fetch account info
   const accountUrl =
     `${GRAPH}/${igId}` +
     `?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count` +
@@ -326,11 +394,21 @@ export async function POST(): Promise<NextResponse> {
             date: today,
             followers: snap.followers,
             posts: snap.posts,
+            ...(insightsData ? {
+              impressions:  insightsData.impressions,
+              reach:        insightsData.reach,
+              profileVisits: insightsData.profileViews,
+            } : {}),
           },
           update: {
             updatedBy: userId,
             followers: snap.followers,
             posts: snap.posts,
+            ...(insightsData ? {
+              impressions:  insightsData.impressions,
+              reach:        insightsData.reach,
+              profileVisits: insightsData.profileViews,
+            } : {}),
           },
         })
         snapshotWritten = true

@@ -18,7 +18,7 @@
  */
 
 import { useState, type FormEvent } from 'react'
-import { Camera, Loader2, RefreshCw, AlertTriangle, CheckCircle2, AtSign } from 'lucide-react'
+import { Camera, Loader2, RefreshCw, AlertTriangle, CheckCircle2, AtSign, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import type { InstagramAccountSummary } from '@/hooks/useInstagramData'
 
@@ -86,61 +86,86 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, onConne
   // ── Not connected ──────────────────────────────────────────────────────────
   if (!summary?.connected) {
     return (
-      <form
-        onSubmit={handleConnect}
-        className="flex flex-col gap-3 rounded-xl px-4 py-3 mb-4 sm:flex-row sm:items-center sm:justify-between"
+      <div
+        className="flex flex-col gap-3 rounded-xl px-4 py-3 mb-4"
         style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: '#E1306C18', border: '1px solid #E1306C30' }}
-          >
-            <Camera size={16} style={{ color: '#E1306C' }} />
+        {/* Apify path: @handle */}
+        <form
+          onSubmit={handleConnect}
+          className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: '#E1306C18', border: '1px solid #E1306C30' }}
+            >
+              <Camera size={16} style={{ color: '#E1306C' }} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                Conectar vía @handle (recomendado)
+              </p>
+              <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                Sincronizamos públicamente vía scraper — sin login ni permisos de Meta.
+              </p>
+            </div>
           </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-2"
+              style={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)' }}
+            >
+              <AtSign size={13} style={{ color: 'var(--muted-foreground)' }} />
+              <input
+                type="text"
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                value={handle}
+                onChange={(e) => setHandle(e.target.value)}
+                disabled={submitting}
+                placeholder="tu_handle"
+                maxLength={30}
+                className="bg-transparent outline-none text-sm w-32"
+                style={{ color: 'var(--foreground)' }}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submitting || !handle.trim()}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
+              style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+            >
+              {submitting ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+              {submitting ? 'Conectando…' : 'Conectar'}
+            </button>
+          </div>
+        </form>
+
+        {/* Meta OAuth path: full insights */}
+        <div
+          className="flex items-center justify-between gap-3 pt-3"
+          style={{ borderTop: '1px solid var(--border)' }}
+        >
           <div className="min-w-0">
-            <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-              Conecta tu cuenta de Instagram
+            <p className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>
+              ¿Cuenta de Instagram Business o Creator?
             </p>
             <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              Ingresá tu @handle. Sincronizamos públicamente vía scraper — sin pedir login a Meta.
+              Conectar con Meta desbloquea impresiones, alcance y visitas al perfil reales.
             </p>
           </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-2"
-            style={{
-              backgroundColor: 'var(--background)',
-              border: '1px solid var(--border)',
-            }}
+          <a
+            href="/api/social/instagram/connect?returnTo=/instagram"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium flex-shrink-0 hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
           >
-            <AtSign size={13} style={{ color: 'var(--muted-foreground)' }} />
-            <input
-              type="text"
-              autoComplete="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              value={handle}
-              onChange={(e) => setHandle(e.target.value)}
-              disabled={submitting}
-              placeholder="tu_handle"
-              maxLength={30}
-              className="bg-transparent outline-none text-sm w-32"
-              style={{ color: 'var(--foreground)' }}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={submitting || !handle.trim()}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
-            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
-          >
-            {submitting ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
-            {submitting ? 'Conectando…' : 'Conectar'}
-          </button>
+            <ExternalLink size={12} />
+            Conectar con Meta
+          </a>
         </div>
-      </form>
+      </div>
     )
   }
 
@@ -194,6 +219,14 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, onConne
             <RefreshCw size={14} />
             Reconectar
           </button>
+          <a
+            href="/api/social/instagram/connect?returnTo=/instagram"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
+          >
+            <ExternalLink size={14} />
+            OAuth Meta
+          </a>
         </form>
       </div>
     )

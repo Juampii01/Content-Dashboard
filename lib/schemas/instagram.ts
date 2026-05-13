@@ -21,6 +21,7 @@ export const InstagramMediaSchema = z.object({
   shortcode: z.string().optional(),
   like_count: z.number().int().nonnegative().optional(),
   comments_count: z.number().int().nonnegative().optional(),
+  video_views: z.number().int().nonnegative().optional(),
 })
 export type InstagramMedia = z.infer<typeof InstagramMediaSchema>
 
