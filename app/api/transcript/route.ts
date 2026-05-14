@@ -39,7 +39,7 @@ import {
   getYouTubeTranscript,
   getYouTubeMetadataFromWatchPage,
 } from '@/lib/youtube/transcript-fetch'
-import { transcribeFromUrl } from '@/lib/groq/transcribe'
+import { transcribeFromUrl } from '@/lib/assemblyai/transcribe'
 import { summarizeTranscript } from '@/lib/claude/summarize-transcript'
 
 export const runtime = 'nodejs'

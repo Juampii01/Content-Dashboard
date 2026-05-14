@@ -21,10 +21,10 @@ interface ScrapedReel {
 
 interface ReelAnalyzerCardProps {
   reel: ScrapedReel
-  sortField: string
+  rank: number
 }
 
-export function ReelAnalyzerCard({ reel, sortField }: ReelAnalyzerCardProps) {
+export function ReelAnalyzerCard({ reel, rank }: ReelAnalyzerCardProps) {
   const [loading, setLoading] = useState(false)
   const [structure, setStructure] = useState<GuionStructure | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -60,14 +60,6 @@ export function ReelAnalyzerCard({ reel, sortField }: ReelAnalyzerCardProps) {
 
   const title = reel.caption?.slice(0, 80) ?? `Reel ${reel.id?.slice(-6)}`
 
-  const METRIC_HIGHLIGHT: Record<string, { value: number; color: string }> = {
-    views: { value: views, color: '#5B8DEF' },
-    likes: { value: likes, color: '#E05252' },
-    comments: { value: comments, color: '#10B981' },
-    shares: { value: shares, color: '#B08A4A' },
-  }
-  const highlighted = METRIC_HIGHLIGHT[sortField]
-
   return (
     <>
       <div
@@ -83,14 +75,18 @@ export function ReelAnalyzerCard({ reel, sortField }: ReelAnalyzerCardProps) {
               <Clapperboard className="h-8 w-8" style={{ color: 'var(--muted-foreground)' }} />
             </div>
           )}
-          {highlighted && (
-            <div
-              className="absolute top-2 right-2 text-[11px] font-bold px-2 py-1 rounded-lg"
-              style={{ backgroundColor: highlighted.color + 'CC', color: '#fff' }}
-            >
-              {formatK(highlighted.value)}
-            </div>
-          )}
+          <div
+            className="absolute top-2 left-2 text-[11px] font-bold px-2 py-0.5 rounded-full"
+            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+          >
+            #{rank}
+          </div>
+          <div
+            className="absolute top-2 right-2 text-[11px] font-bold px-2 py-0.5 rounded-lg"
+            style={{ backgroundColor: '#0008', color: '#fff' }}
+          >
+            {formatK(views)}
+          </div>
         </div>
 
         {/* Content */}
