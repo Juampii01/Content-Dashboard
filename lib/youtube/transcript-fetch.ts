@@ -193,35 +193,56 @@ async function fetchFromApify(videoId: string): Promise<YouTubeTranscriptResult>
   }
 }
 
+// Headers that mimic a real browser to avoid YouTube's bot detection on cloud IPs.
+// The CONSENT cookie bypasses the GDPR consent wall that YouTube shows to server IPs.
+const YT_BROWSER_HEADERS: Record<string, string> = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+  'Accept-Language': 'es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Cache-Control': 'no-cache',
+  'Cookie': 'CONSENT=YES+cb; SOCS=CAISNQgDEitib3FfaWRlbnRpdHlmcm9udGVuZHVpeF8yMDIzMDkyOC4xXzAxJzAuNzI2',
+}
+
 async function fetchFromWatchPage(videoId: string): Promise<YouTubeTranscriptResult> {
   try {
     const watchRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
+      headers: YT_BROWSER_HEADERS,
       signal: AbortSignal.timeout(20_000),
     })
     if (!watchRes.ok) {
       return { transcript: null, provider: 'watch_page', reason: `watch_http_${watchRes.status}` }
     }
     const html = await watchRes.text()
+
+    // Detect consent/verification redirect — YouTube serves these to cloud IPs
+    if (html.includes('consent.youtube.com') || html.includes('before you continue')) {
+      return { transcript: null, provider: 'watch_page', reason: 'consent_wall' }
+    }
+
     const playerResponse = extractPlayerResponse(html)
     const status = playerResponse?.playabilityStatus?.status
     const tracks = playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? []
+
     if (!tracks.length) {
-      return {
-        transcript: null,
-        provider: 'watch_page',
-        reason: status === 'LOGIN_REQUIRED' ? 'login_required' : 'no_caption_tracks',
-      }
+      const reason =
+        status === 'LOGIN_REQUIRED' ? 'login_required'
+        : status === 'AGE_CHECK_REQUIRED' ? 'login_required'
+        : !playerResponse ? 'player_response_missing'
+        : 'no_caption_tracks'
+      return { transcript: null, provider: 'watch_page', reason }
     }
 
+    // Prefer the video's native language (non-ASR first), then any track
     const preferred =
-      tracks.find((t) => t.languageCode === 'en') ??
-      tracks.find((t) => t.languageCode?.startsWith('en')) ??
+      tracks.find((t) => !t.kind && t.languageCode === 'es') ??
+      tracks.find((t) => !t.kind && t.languageCode?.startsWith('es')) ??
+      tracks.find((t) => !t.kind && t.languageCode === 'en') ??
       tracks.find((t) => !t.kind) ??
+      tracks.find((t) => t.languageCode === 'es') ??
       tracks[0]
+
     if (!preferred?.baseUrl) {
       return { transcript: null, provider: 'watch_page', reason: 'caption_track_no_base_url' }
     }
@@ -229,11 +250,9 @@ async function fetchFromWatchPage(videoId: string): Promise<YouTubeTranscriptRes
     const captionUrl = preferred.baseUrl.includes('fmt=')
       ? preferred.baseUrl
       : `${preferred.baseUrl}&fmt=srv3`
+
     const capRes = await fetch(captionUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
+      headers: YT_BROWSER_HEADERS,
       signal: AbortSignal.timeout(20_000),
     })
     if (!capRes.ok) {
@@ -255,7 +274,7 @@ async function fetchFromWatchPage(videoId: string): Promise<YouTubeTranscriptRes
 }
 
 /**
- * Get a YouTube transcript using Apify if available, else scrape watch page.
+ * Get a YouTube transcript using Apify if available, then watch page scrape.
  * Returns transcript=null if both providers fail.
  */
 export async function getYouTubeTranscript(videoId: string): Promise<YouTubeTranscriptResult> {
@@ -265,14 +284,19 @@ export async function getYouTubeTranscript(videoId: string): Promise<YouTubeTran
   const watchResult = await fetchFromWatchPage(videoId)
   if (watchResult.transcript) return watchResult
 
-  // Prefer the more meaningful failure reason for the caller.
-  const preferred =
-    watchResult.reason === 'login_required' || watchResult.reason === 'no_caption_tracks'
-      ? watchResult
-      : apifyResult.reason
-        ? apifyResult
-        : watchResult
-  return { transcript: null, provider: preferred.provider, reason: preferred.reason }
+  // Log intermediate failures to help diagnose issues in production
+  console.warn(
+    `[transcript] YouTube ${videoId} failed — apify: ${apifyResult.reason} | watch: ${watchResult.reason}`,
+  )
+
+  // Surface the most specific reason: prefer Apify's reason over watch_page's
+  // login_required (which is often just bot detection, not a real login wall).
+  const reason =
+    apifyResult.reason && apifyResult.reason !== 'apify_no_token' && apifyResult.reason !== 'apify_empty'
+      ? apifyResult.reason
+      : watchResult.reason ?? 'unknown'
+
+  return { transcript: null, provider: watchResult.provider, reason }
 }
 
 /**
