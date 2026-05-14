@@ -100,7 +100,6 @@ Visual verification — all routes
 - [ ] /tareas      kanban renders, drag works
 - [ ] /transcript  URL form renders; paste YouTube link returns transcript + summary; history list shows past items
 - [ ] /content-research  channel input + timeframe; results grid renders with AI analysis chips; history works
-- [ ] /video-feed  empty state shows connect form; after connect, posts grid renders ranked with AI summaries
 - [ ] /tiktok      loads, ComingSoonBanner renderiza con título + 4 chips de features
 - [ ] /youtube     loads, tabs (Dashboard, Videos, Audiencia) renderizan
 - [ ] /pending-approval  PENDING user lands here, sign-out works
@@ -108,7 +107,8 @@ Visual verification — all routes
 - [ ] /admin/users (SUPER_ADMIN) table + filter + approve + access modal work
 - [ ] /admin/clients (SUPER_ADMIN) table + create/edit/delete flows work
 - [ ] /discovery   SUPER_ADMIN ve 40 preguntas + autosave on blur; otros → 404
-- [ ] Sidebar      TikTok + Ads aparecen correctamente; ClientSwitcher visible
+- [ ] Sidebar      secciones: ANALYTICS, CREAR, INVESTIGACIÓN, IA, ADMIN
+- [ ] Sidebar      Ads aparece dentro de ANALYTICS; Video Feed eliminado del nav
 - [ ] Sidebar      grupo ADMIN aparece solo para SUPER_ADMIN
 - [ ] `npm run check:brand` passes
 ```

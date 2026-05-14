@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { getDashboardStats } from '@/lib/mock-data/dashboard'
+import { Camera } from 'lucide-react'
 import type { Period } from '@/lib/types'
 import { GreetingBlock } from './GreetingBlock'
 import { StatGrid } from './StatGrid'
 import { PerformanceCharts } from './PerformanceCharts'
 import { QuickSummarySidebar } from './QuickSummarySidebar'
+import { useInstagramDataContext } from '@/components/instagram/InstagramDataContext'
+import { getDashboardStats } from '@/lib/mock-data/dashboard'
+import Link from 'next/link'
 
 const PERIODS: { label: string; value: Period }[] = [
   { label: '7d',  value: 7  },
@@ -18,8 +21,8 @@ const PERIODS: { label: string; value: Period }[] = [
 
 export function HomeContent() {
   const [period, setPeriod] = useState<Period>(30)
-  const s = getDashboardStats(period)
   const prefersReduced = useReducedMotion()
+  const { hasRealData } = useInstagramDataContext()
 
   const fadeUp = (i: number) => ({
     initial: prefersReduced ? {} : { opacity: 0, y: 14 },
@@ -37,7 +40,6 @@ export function HomeContent() {
   }>({ produccion: 0, programado: 0, ideasCount: 0, loaded: false })
 
   useEffect(() => {
-    // Try to read creator name from ICP API
     fetch('/api/bases/icp')
       .then((r) => r.ok ? r.json() : null)
       .then((row) => {
@@ -69,6 +71,9 @@ export function HomeContent() {
 
     loadContentStats()
   }, [])
+
+  // Sección de rendimiento: solo muestra datos reales o estado vacío
+  const s = hasRealData ? getDashboardStats(period) : null
 
   return (
     <div className="page-shell flex flex-col gap-7" style={{ minHeight: '100%' }}>
@@ -110,14 +115,46 @@ export function HomeContent() {
         </div>
       </motion.div>
 
-      <motion.div {...fadeUp(2)}>
-        <StatGrid stats={s} />
-      </motion.div>
-
-      <motion.div {...fadeUp(3)} className="flex flex-col xl:flex-row gap-6" style={{ alignItems: 'stretch' }}>
-        <PerformanceCharts stats={s} />
-        <QuickSummarySidebar stats={s} />
-      </motion.div>
+      {s ? (
+        <>
+          <motion.div {...fadeUp(2)}>
+            <StatGrid stats={s} />
+          </motion.div>
+          <motion.div {...fadeUp(3)} className="flex flex-col xl:flex-row gap-6" style={{ alignItems: 'stretch' }}>
+            <PerformanceCharts stats={s} />
+            <QuickSummarySidebar stats={s} />
+          </motion.div>
+        </>
+      ) : (
+        <motion.div {...fadeUp(2)}>
+          <div
+            className="rounded-2xl p-10 flex flex-col items-center justify-center text-center gap-4"
+            style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+          >
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center"
+              style={{ backgroundColor: 'var(--muted)' }}
+            >
+              <Camera size={22} style={{ color: 'var(--muted-foreground)' }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
+                Sin datos de Instagram
+              </p>
+              <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+                Conectá tu cuenta y sincronizá para ver tu rendimiento aquí.
+              </p>
+            </div>
+            <Link
+              href="/instagram"
+              className="text-xs font-semibold px-4 py-2 rounded-lg"
+              style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+            >
+              Ir a Instagram →
+            </Link>
+          </div>
+        </motion.div>
+      )}
     </div>
   )
 }
