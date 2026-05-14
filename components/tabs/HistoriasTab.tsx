@@ -1,49 +1,38 @@
 'use client'
 
-import { STORIES } from '@/lib/mock-data/historias'
 import { formatK } from '@/lib/utils/formatters'
-import { Eye, MessageSquare, MousePointer, LogOut } from 'lucide-react'
+import { Eye, MessageSquare, MousePointer, LogOut, BookImage } from 'lucide-react'
 import { useInstagramDataContext } from '@/components/instagram/InstagramDataContext'
-import { DemoDataPill } from '@/components/instagram/InstagramSyncBanner'
+import { EmptyState } from '@/components/shared/EmptyState'
 
 export function HistoriasTab() {
   const { hasRealData, stories } = useInstagramDataContext()
 
-  interface StoryItem {
-    id: string
-    thumbnailUrl?: string | null
-    publishedAt: string | null
-    reach: number
-    replies: number
-    stickerTaps: number
-    exits: number
-    completionRate: number
+  if (!hasRealData || stories.length === 0) {
+    return (
+      <EmptyState
+        icon={BookImage}
+        title="Sin historias sincronizadas"
+        description={
+          !hasRealData
+            ? 'Conectá tu cuenta de Instagram y sincronizá para ver tus historias.'
+            : 'No se encontraron historias recientes en tu cuenta sincronizada.'
+        }
+      />
+    )
   }
 
-  const source: StoryItem[] =
-    hasRealData && stories.length > 0
-      ? stories.map(s => ({
-          id: s.id,
-          thumbnailUrl: s.thumbnailUrl,
-          publishedAt: s.publishedAt ? s.publishedAt.slice(0, 10) : s.syncedAt.slice(0, 10),
-          reach: s.reach,
-          replies: s.replies,
-          stickerTaps: s.stickerTaps,
-          exits: s.exits,
-          completionRate: s.completionRate,
-        }))
-      : STORIES.map(s => ({
-          id: s.id,
-          thumbnailUrl: null,
-          publishedAt: s.publishedAt,
-          reach: s.reach,
-          replies: s.replies,
-          stickerTaps: s.stickerTaps,
-          exits: s.exits,
-          completionRate: s.completionRate,
-        }))
+  const source = stories.map(s => ({
+    id: s.id,
+    thumbnailUrl: s.thumbnailUrl,
+    publishedAt: s.publishedAt ? s.publishedAt.slice(0, 10) : s.syncedAt.slice(0, 10),
+    reach: s.reach,
+    replies: s.replies,
+    stickerTaps: s.stickerTaps,
+    exits: s.exits,
+    completionRate: s.completionRate,
+  }))
 
-  const usingMock = !hasRealData || stories.length === 0
   const totalReach = source.reduce((s, h) => s + h.reach, 0)
   const avgCompletion = source.length > 0
     ? Math.round(source.reduce((s, h) => s + h.completionRate, 0) / source.length)
@@ -52,11 +41,6 @@ export function HistoriasTab() {
   return (
     <div className="flex gap-6">
       <div className="flex-1">
-        {usingMock && (
-          <div className="flex items-center justify-end mb-4">
-            <DemoDataPill />
-          </div>
-        )}
         <div className="grid grid-cols-4 gap-3 mb-6">
           {[
             { label: 'ALCANCE TOTAL', value: formatK(totalReach), icon: <Eye size={14} /> },
@@ -84,7 +68,7 @@ export function HistoriasTab() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={story.thumbnailUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-3xl">📖</span>
+                  <BookImage size={28} style={{ color: 'var(--muted-foreground)' }} />
                 )}
               </div>
               <div className="p-3 space-y-1.5">

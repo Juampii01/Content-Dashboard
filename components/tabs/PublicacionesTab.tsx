@@ -1,76 +1,65 @@
 'use client'
 
-import { POSTS } from '@/lib/mock-data/publicaciones'
 import { formatK, formatPercent } from '@/lib/utils/formatters'
-import { Eye, Heart, Bookmark, MessageCircle } from 'lucide-react'
+import { Eye, Heart, Bookmark, MessageCircle, Image } from 'lucide-react'
 import { useInstagramDataContext } from '@/components/instagram/InstagramDataContext'
-import { DemoDataPill } from '@/components/instagram/InstagramSyncBanner'
+import { EmptyState } from '@/components/shared/EmptyState'
 
 export function PublicacionesTab() {
   const { hasRealData, reels, summary } = useInstagramDataContext()
 
-  // Photos and carousels have no videoUrl; videos/reels do.
-  const realPosts = hasRealData ? reels.filter(r => !r.videoUrl) : null
-  const followers = summary?.latestSnapshot?.followers ?? 0
-
-  interface PostItem {
-    id: string
-    thumbnailUrl: string | null
-    caption: string
-    publishedAt: string
-    reach: number
-    likes: number
-    saves: number
-    comments: number
-    engagementRate: number
+  if (!hasRealData) {
+    return (
+      <EmptyState
+        icon={Image}
+        title="Sin publicaciones sincronizadas"
+        description="Conectá tu cuenta de Instagram y sincronizá para ver tus fotos y carruseles."
+      />
+    )
   }
 
-  const source: PostItem[] = realPosts
-    ? realPosts.map(r => {
-        const likes = r.likesCount
-        const saves = r.savesCount ?? 0
-        const comments = r.commentsCount
-        const reach = r.reachCount ?? 0
-        const engagementRate =
-          followers > 0
-            ? Math.round(((likes + saves + comments) / followers) * 1000) / 10
-            : 0
-        return {
-          id: r.id,
-          thumbnailUrl: r.thumbnailUrl,
-          caption: r.caption ?? '',
-          publishedAt: (r.publishedAt ?? r.syncedAt).slice(0, 10),
-          reach,
-          likes,
-          saves,
-          comments,
-          engagementRate,
-        }
-      })
-    : POSTS.map(p => ({
-        id: p.id,
-        thumbnailUrl: null,
-        caption: p.caption,
-        publishedAt: p.publishedAt,
-        reach: p.reach,
-        likes: p.likes,
-        saves: p.saves,
-        comments: p.comments,
-        engagementRate: p.engagementRate,
-      }))
+  const followers = summary?.latestSnapshot?.followers ?? 0
+  const realPosts = reels.filter(r => !r.videoUrl)
+
+  const source = realPosts.map(r => {
+    const likes = r.likesCount
+    const saves = r.savesCount ?? 0
+    const comments = r.commentsCount
+    const reach = r.reachCount ?? 0
+    const engagementRate =
+      followers > 0
+        ? Math.round(((likes + saves + comments) / followers) * 1000) / 10
+        : 0
+    return {
+      id: r.id,
+      thumbnailUrl: r.thumbnailUrl,
+      caption: r.caption ?? '',
+      publishedAt: (r.publishedAt ?? r.syncedAt).slice(0, 10),
+      reach,
+      likes,
+      saves,
+      comments,
+      engagementRate,
+    }
+  })
 
   const totalReach = source.reduce((s, p) => s + p.reach, 0)
   const avgEng = source.length > 0
     ? (source.reduce((s, p) => s + p.engagementRate, 0) / source.length).toFixed(1)
     : '0.0'
 
+  if (source.length === 0) {
+    return (
+      <EmptyState
+        icon={Image}
+        title="Sin publicaciones"
+        description="No se encontraron fotos ni carruseles en tu cuenta de Instagram sincronizada."
+      />
+    )
+  }
+
   return (
     <div>
-      {!hasRealData && (
-        <div className="flex items-center justify-end mb-4">
-          <DemoDataPill />
-        </div>
-      )}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {[
           { label: 'PUBLICACIONES', value: source.length.toString() },
@@ -95,7 +84,7 @@ export function PublicacionesTab() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={post.thumbnailUrl} alt="" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-4xl">🖼</span>
+                <Image size={32} style={{ color: 'var(--muted-foreground)' }} />
               )}
             </div>
             <div className="p-3">

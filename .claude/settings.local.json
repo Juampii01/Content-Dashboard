@@ -49,7 +49,14 @@
       "Bash(git -C /Users/juanpabloacostacaminos/Documents/Proyectos/3-servicio-premium/Content-Dashboard fetch origin)",
       "Bash(git -C /Users/juanpabloacostacaminos/Documents/Proyectos/3-servicio-premium/Content-Dashboard log --oneline origin/main -5)",
       "Bash(npx vercel *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git fetch *)",
+      "Bash(git rebase *)",
+      "Bash(git remote *)",
+      "Bash(git config *)",
+      "Bash(rm \"/Users/juanpabloacostacaminos/Documents/Proyectos/3-servicio-premium/Content-Dashboard/.git/refs/heads/main 2\")",
+      "Bash(git -C /Users/juanpabloacostacaminos/Documents/Proyectos/3-servicio-premium/Content-Dashboard fetch origin main)",
+      "Bash(git stash *)"
     ]
   }
 }
