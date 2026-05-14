@@ -177,6 +177,7 @@ export async function POST(): Promise<NextResponse> {
             syncedAt: new Date(),
           },
           update: {
+            clientId,
             updatedBy: userId,
             shortcode: u.shortcode,
             url: u.url,
