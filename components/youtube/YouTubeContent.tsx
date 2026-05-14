@@ -2,11 +2,12 @@
 
 import dynamic from 'next/dynamic'
 import { Suspense, useState } from 'react'
-import { Loader2, RefreshCw, Play } from 'lucide-react'
+import { Loader2, RefreshCw, Play, LogOut } from 'lucide-react'
 import { TimeFilter } from '@/components/layout/TimeFilter'
 import { YouTubeTabNav, useYouTubeTab } from './YouTubeTabNav'
 import { ConnectButton } from '@/components/shared/ConnectButton'
 import { useYouTubeChannelSummary, triggerYouTubeSync } from '@/hooks/useYouTubeData'
+import { useSocialConnection } from '@/hooks/useSocialConnection'
 import { PageHeader } from '@/components/ui/PageHeader'
 
 const YouTubeDashboardTab = dynamic(
@@ -25,6 +26,15 @@ const YouTubeAudienciaTab = dynamic(
 export function YouTubeContent() {
   const [tab] = useYouTubeTab()
   const { data: summary, loading, refresh } = useYouTubeChannelSummary()
+  const { disconnect: disconnectYT } = useSocialConnection('youtube')
+  const [disconnecting, setDisconnecting] = useState(false)
+
+  async function handleDisconnect() {
+    setDisconnecting(true)
+    await disconnectYT()
+    await refresh()
+    setDisconnecting(false)
+  }
   const [syncing, setSyncing] = useState(false)
 
   const connected = summary?.connected ?? false
@@ -50,19 +60,33 @@ export function YouTubeContent() {
           <>
             <TimeFilter />
             {connected && (
-              <button
-                type="button"
-                onClick={handleSync}
-                disabled={syncing}
-                className="btn btn-secondary"
-              >
-                {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                {syncing ? 'Sincronizando...' : hasData ? 'Sincronizar' : 'Sincronizar ahora'}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleSync}
+                  disabled={syncing || disconnecting}
+                  className="btn btn-secondary"
+                >
+                  {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                  {syncing ? 'Sincronizando...' : 'Sincronizar'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleDisconnect()}
+                  disabled={disconnecting || syncing}
+                  className="btn btn-secondary"
+                  style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                >
+                  {disconnecting ? <Loader2 size={14} className="animate-spin" /> : <LogOut size={14} />}
+                  {disconnecting ? 'Desconectando...' : 'Desconectar'}
+                </button>
+              </>
             )}
-            <Suspense fallback={null}>
-              <ConnectButton platform="youtube" labels={{ connected: 'YouTube conectado' }} />
-            </Suspense>
+            {!connected && (
+              <Suspense fallback={null}>
+                <ConnectButton platform="youtube" labels={{ disconnected: 'Conectar YouTube' }} />
+              </Suspense>
+            )}
           </>
         }
       />
