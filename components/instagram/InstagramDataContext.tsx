@@ -1,13 +1,14 @@
 'use client'
 
 import { createContext, useContext } from 'react'
-import type { InstagramAccountSummary, UserReelRow } from '@/hooks/useInstagramData'
+import type { InstagramAccountSummary, UserReelRow, StoryRow } from '@/hooks/useInstagramData'
 
 export interface InstagramDataContextValue {
   connected: boolean
   hasRealData: boolean
   summary: InstagramAccountSummary | null
   reels: UserReelRow[]
+  stories: StoryRow[]
   loading: boolean
 }
 
@@ -16,6 +17,7 @@ const InstagramDataContext = createContext<InstagramDataContextValue>({
   hasRealData: false,
   summary: null,
   reels: [],
+  stories: [],
   loading: true,
 })
 

@@ -21,7 +21,7 @@ const DemografiaTab    = dynamic(() => import('@/components/tabs/DemografiaTab')
 
 export function InstagramContent() {
   const [tab] = useTab()
-  const { summary, reels, loading, syncing, sync } = useInstagramData()
+  const { summary, reels, stories, loading, syncing, sync } = useInstagramData()
 
   const ctxValue: InstagramDataContextValue = useMemo(
     () => ({
@@ -29,9 +29,10 @@ export function InstagramContent() {
       hasRealData: (summary?.connected ?? false) && !summary?.tokenExpired && reels.length > 0,
       summary,
       reels,
+      stories,
       loading,
     }),
-    [summary, reels, loading],
+    [summary, reels, stories, loading],
   )
 
   return (

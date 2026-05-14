@@ -41,7 +41,15 @@
       "Bash(gh api *)",
       "Bash(unset DATABASE_URL)",
       "Bash(echo \"exit: $?\")",
-      "Bash(npx jest *)"
+      "Bash(npx jest *)",
+      "Bash(grep -rn \"instagram\\\\|Instagram\\\\|sync\" /Users/juanpabloacostacaminos/Documents/Proyectos/3-servicio-premium/Content-Dashboard/.claire/worktrees/elegant-banzai-9d9a6e/app/api 2>/dev/null | head -5; grep -rn \"instagramSync\\\\|/api/instagram\" /Users/juanpabloacostacaminos/Documents/Proyectos/3-servicio-premium/Content-Dashboard/.claude/worktrees/elegant-banzai-9d9a6e/hooks --include=\"*.ts\" -l 2>/dev/null)",
+      "Bash(cd /Users/juanpabloacostacaminos/Documents/Proyectos/3-servicio-premium/Content-Dashboard && npx tsc --noEmit --project tsconfig.json 2>&1 | grep -E \"error TS|warning|\\\\.ts\\\\\\(\" | head -30)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git -C /Users/juanpabloacostacaminos/Documents/Proyectos/3-servicio-premium/Content-Dashboard fetch origin)",
+      "Bash(git -C /Users/juanpabloacostacaminos/Documents/Proyectos/3-servicio-premium/Content-Dashboard log --oneline origin/main -5)",
+      "Bash(npx vercel *)",
+      "Bash(git push *)"
     ]
   }
 }

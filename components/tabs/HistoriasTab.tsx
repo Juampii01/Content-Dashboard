@@ -3,20 +3,66 @@
 import { STORIES } from '@/lib/mock-data/historias'
 import { formatK } from '@/lib/utils/formatters'
 import { Eye, MessageSquare, MousePointer, LogOut } from 'lucide-react'
+import { useInstagramDataContext } from '@/components/instagram/InstagramDataContext'
+import { DemoDataPill } from '@/components/instagram/InstagramSyncBanner'
 
 export function HistoriasTab() {
-  const totalReach = STORIES.reduce((s, h) => s + h.reach, 0)
-  const avgCompletion = Math.round(STORIES.reduce((s, h) => s + h.completionRate, 0) / STORIES.length)
+  const { hasRealData, stories } = useInstagramDataContext()
+
+  interface StoryItem {
+    id: string
+    thumbnailUrl?: string | null
+    publishedAt: string | null
+    reach: number
+    replies: number
+    stickerTaps: number
+    exits: number
+    completionRate: number
+  }
+
+  const source: StoryItem[] =
+    hasRealData && stories.length > 0
+      ? stories.map(s => ({
+          id: s.id,
+          thumbnailUrl: s.thumbnailUrl,
+          publishedAt: s.publishedAt ? s.publishedAt.slice(0, 10) : s.syncedAt.slice(0, 10),
+          reach: s.reach,
+          replies: s.replies,
+          stickerTaps: s.stickerTaps,
+          exits: s.exits,
+          completionRate: s.completionRate,
+        }))
+      : STORIES.map(s => ({
+          id: s.id,
+          thumbnailUrl: null,
+          publishedAt: s.publishedAt,
+          reach: s.reach,
+          replies: s.replies,
+          stickerTaps: s.stickerTaps,
+          exits: s.exits,
+          completionRate: s.completionRate,
+        }))
+
+  const usingMock = !hasRealData || stories.length === 0
+  const totalReach = source.reduce((s, h) => s + h.reach, 0)
+  const avgCompletion = source.length > 0
+    ? Math.round(source.reduce((s, h) => s + h.completionRate, 0) / source.length)
+    : 0
 
   return (
     <div className="flex gap-6">
       <div className="flex-1">
+        {usingMock && (
+          <div className="flex items-center justify-end mb-4">
+            <DemoDataPill />
+          </div>
+        )}
         <div className="grid grid-cols-4 gap-3 mb-6">
           {[
             { label: 'ALCANCE TOTAL', value: formatK(totalReach), icon: <Eye size={14} /> },
-            { label: 'HISTORIAS', value: STORIES.length.toString(), icon: null },
+            { label: 'HISTORIAS', value: source.length.toString(), icon: null },
             { label: 'TASA COMPLETACIÓN', value: `${avgCompletion}%`, icon: null },
-            { label: 'REPLIES TOTALES', value: formatK(STORIES.reduce((s, h) => s + h.replies, 0)), icon: <MessageSquare size={14} /> },
+            { label: 'REPLIES TOTALES', value: formatK(source.reduce((s, h) => s + h.replies, 0)), icon: <MessageSquare size={14} /> },
           ].map(m => (
             <div key={m.label} className="rounded-xl p-4" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
               <div className="flex items-center gap-2 mb-2">
@@ -29,12 +75,17 @@ export function HistoriasTab() {
         </div>
 
         <div className="grid grid-cols-4 gap-4">
-          {STORIES.map(story => (
+          {source.map(story => (
             <div key={story.id} className="rounded-xl overflow-hidden"
               style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
-              <div className="aspect-[9/16] max-h-40 flex items-center justify-center"
+              <div className="aspect-[9/16] max-h-40 flex items-center justify-center overflow-hidden"
                 style={{ backgroundColor: 'var(--muted)' }}>
-                <span className="text-3xl">📖</span>
+                {story.thumbnailUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={story.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-3xl">📖</span>
+                )}
               </div>
               <div className="p-3 space-y-1.5">
                 <p className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{story.publishedAt}</p>
@@ -52,7 +103,7 @@ export function HistoriasTab() {
                     <LogOut size={10} />{story.exits}
                   </div>
                 </div>
-                <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--accent)' }}>
+                <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
                   <div className="h-full rounded-full" style={{ width: `${story.completionRate}%`, backgroundColor: 'var(--accent)' }} />
                 </div>
                 <p className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{story.completionRate}% completado</p>

@@ -247,6 +247,41 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
   }
 
+  // 6b. Sync stories
+  const storiesUrl =
+    `${GRAPH}/me/stories?fields=id,media_url,thumbnail_url,timestamp` +
+    `&access_token=${encodeURIComponent(accessToken)}`
+  const storiesRes = await graphGet<unknown>(storiesUrl)
+  let storiesSynced = 0
+  if (storiesRes.ok) {
+    const storiesData = storiesRes.data as {
+      data?: Array<{ id: string; media_url?: string; thumbnail_url?: string; timestamp?: string }>
+    }
+    const storiesList = storiesData.data ?? []
+
+    await Promise.allSettled(
+      storiesList.map(async (s) => {
+        await db.story.upsert({
+          where: { instagramId: s.id },
+          create: {
+            clientId,
+            createdBy: userId,
+            updatedBy: userId,
+            instagramId: s.id,
+            thumbnailUrl: s.thumbnail_url ?? s.media_url ?? null,
+            publishedAt: s.timestamp ? new Date(s.timestamp) : null,
+          },
+          update: {
+            updatedBy: userId,
+            thumbnailUrl: s.thumbnail_url ?? s.media_url ?? null,
+            publishedAt: s.timestamp ? new Date(s.timestamp) : null,
+          },
+        })
+        storiesSynced++
+      }),
+    )
+  }
+
   // 7. Fetch account info
   const accountUrl =
     `${GRAPH}/me` +
@@ -311,6 +346,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   return NextResponse.json({
     ok: true,
-    synced: { reels: reelsSynced, snapshot: snapshotWritten, insights: insightsSynced },
+    synced: { reels: reelsSynced, snapshot: snapshotWritten, insights: insightsSynced, stories: storiesSynced },
   })
 }

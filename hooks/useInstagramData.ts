@@ -9,7 +9,16 @@ export interface InstagramAccountSummary {
   accountPic?: string | null
   expiresAt?: string | null
   tokenExpired?: boolean
-  latestSnapshot?: { date: string; followers: number; posts: number } | null
+  latestSnapshot?: {
+    date: string
+    followers: number
+    posts: number
+    impressions: number
+    reach: number
+    profileVisits: number
+    newFollowers: number
+    engagementRate: number
+  } | null
   reelCount?: number
 }
 
@@ -24,6 +33,30 @@ export interface UserReelRow {
   likesCount: number
   commentsCount: number
   viewsCount: number
+  durationSec: number | null
+  viewsOrganic: number
+  viewsPaid: number
+  savesCount: number
+  sharesCount: number
+  reachCount: number
+  impressions: number
+  organicPercent: number
+  multiplier: number
+  isAd: boolean
+  isTrialReel: boolean
+  publishedAt: string | null
+  syncedAt: string
+}
+
+export interface StoryRow {
+  id: string
+  thumbnailUrl: string | null
+  reach: number
+  impressions: number
+  replies: number
+  stickerTaps: number
+  exits: number
+  completionRate: number
   publishedAt: string | null
   syncedAt: string
 }
@@ -31,6 +64,7 @@ export interface UserReelRow {
 interface UseInstagramDataReturn {
   summary: InstagramAccountSummary | null
   reels: UserReelRow[]
+  stories: StoryRow[]
   loading: boolean
   syncing: boolean
   sync: () => Promise<void>
@@ -44,15 +78,17 @@ interface UseInstagramDataReturn {
 export function useInstagramData(): UseInstagramDataReturn {
   const [summary, setSummary] = useState<InstagramAccountSummary | null>(null)
   const [reels, setReels] = useState<UserReelRow[]>([])
+  const [stories, setStories] = useState<StoryRow[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
 
   const refresh = useCallback(async () => {
     setLoading(true)
     try {
-      const [sumRes, reelsRes] = await Promise.all([
+      const [sumRes, reelsRes, storiesRes] = await Promise.all([
         fetch('/api/instagram/account-summary'),
         fetch('/api/instagram/reels'),
+        fetch('/api/instagram/stories'),
       ])
       if (sumRes.ok) {
         setSummary((await sumRes.json()) as InstagramAccountSummary)
@@ -62,6 +98,12 @@ export function useInstagramData(): UseInstagramDataReturn {
         setReels(json.reels ?? [])
       } else {
         setReels([])
+      }
+      if (storiesRes.ok) {
+        const json = (await storiesRes.json()) as { stories?: StoryRow[] }
+        setStories(json.stories ?? [])
+      } else {
+        setStories([])
       }
     } catch {
       // keep previous state
@@ -109,5 +151,5 @@ export function useInstagramData(): UseInstagramDataReturn {
     }
   }, [refresh])
 
-  return { summary, reels, loading, syncing, sync, refresh }
+  return { summary, reels, stories, loading, syncing, sync, refresh }
 }
