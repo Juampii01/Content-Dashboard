@@ -92,20 +92,32 @@ export function HomeContent() {
     loadIgStats()
   }, [])
 
-  // Merge real data over mock base where available
+  // Build stats from real data only — zero out fields we can't get from API
   const base = getDashboardStats(period)
-  const s: DashboardStats = igReal?.hasData
-    ? {
-        ...base,
-        likes: igReal.likes,
-        comments: igReal.comments,
-        bestReelViews: igReal.bestReelViews,
-        profileGrowth: igReal.followers ?? base.profileGrowth,
-        growthLast30: igReal.followers ?? base.growthLast30,
-      }
-    : base
-
   const hasPartialReal = igReal?.hasData ?? false
+  const s: DashboardStats = {
+    ...base,
+    impressions: 0,
+    avgDailyReach: 0,
+    impressionsChange: 0,
+    profileConversionRate: 0,
+    profileVisits: 0,
+    newFollowers: 0,
+    conversionChange: 0,
+    saves: 0,
+    trafficOrganic: 0,
+    trafficPaid: 0,
+    viewsGoalPct: 0,
+    followersGoalPct: 0,
+    chartData: [],
+    interactionsData: [],
+    likes: igReal?.likes ?? 0,
+    comments: igReal?.comments ?? 0,
+    bestReelViews: igReal?.bestReelViews ?? 0,
+    profileGrowth: igReal?.followers ?? 0,
+    growthLast30: igReal?.followers ?? 0,
+    engagementRate: 0,
+  }
 
   return (
     <div className="page-shell flex flex-col gap-7" style={{ minHeight: '100%' }}>
@@ -143,7 +155,7 @@ export function HomeContent() {
                 border: '1px solid color-mix(in srgb, var(--success) 30%, transparent)',
               }}
             >
-              Likes y comentarios reales · Alcance estimado
+              Datos reales
             </span>
           )}
         </div>
