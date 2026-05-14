@@ -15,11 +15,20 @@ export function ReelCard({ reel }: Props) {
       style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
 
       {/* Thumbnail */}
-      <div className="relative aspect-[9/16] max-h-52 w-full flex items-center justify-center"
+      <div className="relative aspect-[9/16] max-h-52 w-full flex items-center justify-center overflow-hidden"
         style={{ backgroundColor: 'var(--muted)' }}>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-4xl">🎬</span>
-        </div>
+        {reel.thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={reel.thumbnail}
+            alt={reel.title}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-4xl">🎬</span>
+          </div>
+        )}
         {/* Top badges */}
         <div className="absolute top-2 left-2">
           <MetricBadge multiplier={reel.multiplier} isAd={reel.isAd} />
