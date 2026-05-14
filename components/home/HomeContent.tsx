@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { getDashboardStats } from '@/lib/mock-data/dashboard'
 import type { Period, DashboardStats } from '@/lib/types'
@@ -37,11 +37,9 @@ export function HomeContent() {
     produccion: number; programado: number; ideasCount: number; loaded: boolean
   }>({ produccion: 0, programado: 0, ideasCount: 0, loaded: false })
 
-  // Real Instagram stats (overlay on mock base)
-  const [igReal, setIgReal] = useState<{
-    likes: number; comments: number; followers: number | null
-    bestReelViews: number; hasData: boolean
-  } | null>(null)
+  // Raw Instagram data — recomputed per-period via useMemo below
+  const [igReels, setIgReels] = useState<UserReelRow[]>([])
+  const [igSummary, setIgSummary] = useState<InstagramAccountSummary | null>(null)
 
   useEffect(() => {
     fetch('/api/bases/icp')
@@ -79,18 +77,29 @@ export function HomeContent() {
         ])
         const reels: UserReelRow[] = reelsRes.ok ? ((await reelsRes.json()) as { reels: UserReelRow[] }).reels ?? [] : []
         const summary: InstagramAccountSummary | null = sumRes.ok ? (await sumRes.json()) as InstagramAccountSummary : null
-        if (!summary?.connected || summary?.tokenExpired || reels.length === 0) return
-        const likes = reels.reduce((s, r) => s + r.likesCount, 0)
-        const comments = reels.reduce((s, r) => s + r.commentsCount, 0)
-        const bestReelViews = Math.max(...reels.map(r => r.likesCount))
-        const followers = summary?.latestSnapshot?.followers ?? null
-        setIgReal({ likes, comments, followers, bestReelViews, hasData: true })
+        if (!summary?.connected || summary?.tokenExpired) return
+        setIgReels(reels)
+        setIgSummary(summary)
       } catch {}
     }
 
     loadContentStats()
     loadIgStats()
   }, [])
+
+  // Recompute stats whenever the period selector changes
+  const igReal = useMemo(() => {
+    if (!igSummary?.connected || igSummary?.tokenExpired || igReels.length === 0) return null
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - period)
+    const inPeriod = igReels.filter(r => r.publishedAt ? new Date(r.publishedAt) >= cutoff : true)
+    if (inPeriod.length === 0) return { likes: 0, comments: 0, followers: igSummary?.latestSnapshot?.followers ?? null, bestReelViews: 0, hasData: true }
+    const likes = inPeriod.reduce((s, r) => s + r.likesCount, 0)
+    const comments = inPeriod.reduce((s, r) => s + r.commentsCount, 0)
+    const bestReelViews = Math.max(...inPeriod.map(r => r.likesCount))
+    const followers = igSummary?.latestSnapshot?.followers ?? null
+    return { likes, comments, followers, bestReelViews, hasData: true }
+  }, [igReels, igSummary, period])
 
   // Build stats from real data only — zero out fields we can't get from API
   const base = getDashboardStats(period)
