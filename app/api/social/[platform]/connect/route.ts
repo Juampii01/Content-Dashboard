@@ -26,18 +26,19 @@ function buildOAuthUrl(platform: Platform, state: string): string | null {
   const redirect = callbackUrl(platform)
 
   if (platform === 'instagram') {
-    const clientId = process.env.META_APP_ID
+    // New Instagram API (api.instagram.com) — uses INSTAGRAM_APP_ID.
+    // instagram_business_manage_insights requires App Review for production;
+    // works immediately for testers in Development mode.
+    const clientId = process.env.INSTAGRAM_APP_ID
     if (!clientId) return null
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirect,
-      // NOTE: only scopes available without Meta App Review. `instagram_manage_insights`
-      // and `pages_read_engagement` require review and will 400 during OAuth otherwise.
-      scope: 'instagram_basic,pages_show_list',
+      scope: 'instagram_business_basic,instagram_business_manage_insights',
       state,
       response_type: 'code',
     })
-    return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`
+    return `https://api.instagram.com/oauth/authorize?${params.toString()}`
   }
 
   if (platform === 'youtube') {

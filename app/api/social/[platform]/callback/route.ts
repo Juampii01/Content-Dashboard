@@ -31,24 +31,29 @@ interface ProfileResult {
   accountPic?: string
 }
 
-// ─── Instagram (Meta Graph API) ───────────────────────────────────────────────
+// ─── Instagram (new Instagram API — api.instagram.com) ───────────────────────
+// Uses INSTAGRAM_APP_ID / INSTAGRAM_APP_SECRET (separate from the Facebook app).
+// Flow: short-lived token via api.instagram.com → long-lived token via
+// graph.instagram.com ig_exchange_token → profile via graph.instagram.com.
+// No Facebook Pages required — token is scoped to the Instagram user directly.
 
 async function exchangeInstagram(
   code: string,
   redirectUri: string,
 ): Promise<{ token: TokenResult; profile: ProfileResult }> {
-  const clientId = process.env.META_APP_ID!
-  const clientSecret = process.env.META_APP_SECRET!
+  const clientId = process.env.INSTAGRAM_APP_ID!
+  const clientSecret = process.env.INSTAGRAM_APP_SECRET!
 
-  // 1. Short-lived token
-  const shortRes = await fetch('https://graph.facebook.com/v19.0/oauth/access_token', {
+  // 1. Short-lived Instagram user token
+  const shortRes = await fetch('https://api.instagram.com/oauth/access_token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       client_id: clientId,
       client_secret: clientSecret,
-      code,
+      grant_type: 'authorization_code',
       redirect_uri: redirectUri,
+      code,
     }),
     signal: AbortSignal.timeout(10_000),
   })
@@ -57,17 +62,16 @@ async function exchangeInstagram(
     console.error('[instagram/callback] short-lived token error:', shortRes.status, text.slice(0, 200))
     throw new Error(`Instagram token exchange failed: ${shortRes.status}`)
   }
-  const shortData = (await shortRes.json()) as { access_token: string }
+  const shortData = (await shortRes.json()) as { access_token: string; user_id: number }
 
-  // 2. Long-lived token
+  // 2. Exchange for long-lived token (60-day expiry, refreshable)
   const longParams = new URLSearchParams({
-    grant_type: 'fb_exchange_token',
-    client_id: clientId,
+    grant_type: 'ig_exchange_token',
     client_secret: clientSecret,
-    fb_exchange_token: shortData.access_token,
+    access_token: shortData.access_token,
   })
   const longRes = await fetch(
-    `https://graph.facebook.com/v19.0/oauth/access_token?${longParams.toString()}`,
+    `https://graph.instagram.com/access_token?${longParams.toString()}`,
     { signal: AbortSignal.timeout(10_000) },
   )
   if (!longRes.ok) {
@@ -77,63 +81,11 @@ async function exchangeInstagram(
   }
   const longData = (await longRes.json()) as { access_token: string; expires_in?: number }
   const accessToken = longData.access_token
-  const expiresAt = longData.expires_in
-    ? new Date(Date.now() + longData.expires_in * 1000)
-    : undefined
 
-  // 3. Fetch pages to find Instagram business account
-  const pagesRes = await fetch(
-    `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`,
-    { signal: AbortSignal.timeout(10_000) },
-  )
-  if (!pagesRes.ok) {
-    const text = await pagesRes.text()
-    console.error('[instagram/callback] pages fetch error:', pagesRes.status, text.slice(0, 200))
-    throw new Error(`Instagram pages fetch failed: ${pagesRes.status}`)
-  }
-  const pagesData = (await pagesRes.json()) as {
-    data: Array<{ id: string; access_token: string }>
-  }
-
-  if (!pagesData.data?.length) {
-    throw new Error('No Facebook Pages found — connect a Page with a linked Instagram Business account')
-  }
-
-  // Probe all pages in parallel for a linked IG business account.
-  // Previously: serial `for (await fetch)` loop — O(N) latency growing with
-  // the number of FB pages on the user's account. Now: Promise.all (safe
-  // since `/${pageId}?fields=instagram_business_account` is idempotent) +
-  // take the first page that returns a linked IG id.
-  const pageProbes = await Promise.all(
-    pagesData.data.map(async (page) => {
-      try {
-        const res = await fetch(
-          `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
-          { signal: AbortSignal.timeout(10_000) },
-        )
-        if (!res.ok) return null
-        const data = (await res.json()) as {
-          instagram_business_account?: { id: string }
-        }
-        if (data.instagram_business_account?.id) {
-          return { igId: data.instagram_business_account.id, pageToken: page.access_token }
-        }
-        return null
-      } catch {
-        return null
-      }
-    }),
-  )
-
-  const match = pageProbes.find((r): r is { igId: string; pageToken: string } => r !== null)
-  if (!match) {
-    throw new Error('No Instagram Business Account linked to any Facebook Page')
-  }
-  const { igId, pageToken } = match
-
-  // 4. Fetch IG profile (followers_count omitted — requires instagram_manage_insights scope)
+  // 3. Fetch Instagram user profile
+  const igUserId = String(shortData.user_id)
   const profileRes = await fetch(
-    `https://graph.facebook.com/v19.0/${igId}?fields=name,username,profile_picture_url&access_token=${pageToken}`,
+    `https://graph.instagram.com/me?fields=username,name,profile_picture_url&access_token=${accessToken}`,
     { signal: AbortSignal.timeout(10_000) },
   )
   if (!profileRes.ok) {
@@ -142,21 +94,17 @@ async function exchangeInstagram(
     throw new Error(`Instagram profile fetch failed: ${profileRes.status}`)
   }
   const profileData = (await profileRes.json()) as {
-    id: string
+    id?: string
     name?: string
     username?: string
     profile_picture_url?: string
   }
 
-  // Store the PAGE access token as the primary accessToken (needed for IG Graph calls
-   // on the IG business account). The user long-lived token is kept in refreshToken so
-   // we can re-derive page tokens later if needed. Schema has no dedicated page-token
-   // column, so we reuse refreshToken (semantically: "parent" token).
   return {
-    token: { accessToken: pageToken, refreshToken: accessToken, expiresAt },
+    token: { accessToken },
     profile: {
-      accountId: igId,
-      accountName: profileData.username ?? profileData.name ?? igId,
+      accountId: igUserId,
+      accountName: profileData.username ?? profileData.name ?? igUserId,
       accountPic: profileData.profile_picture_url,
     },
   }
