@@ -159,6 +159,7 @@ export async function POST(): Promise<NextResponse> {
             const hasValidChannelId = typeof videoChannelId === 'string' && videoChannelId.trim().length > 0
             const resolvedChannelId = hasValidChannelId ? videoChannelId : channelId
             const updateData: {
+              clientId: string
               updatedBy: string
               title: string
               description: string
@@ -174,6 +175,7 @@ export async function POST(): Promise<NextResponse> {
               syncedAt: Date
               channelId?: string
             } = {
+              clientId,
               updatedBy: userId,
               title: data.title,
               description: data.description,

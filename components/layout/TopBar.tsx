@@ -1,6 +1,7 @@
 'use client'
 
 import { useContext, useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Eye, Users, TrendingUp, Menu } from 'lucide-react'
 import { formatM, formatPercent } from '@/lib/utils/formatters'
 import { ThemeToggle } from './ThemeToggle'
@@ -16,6 +17,7 @@ const EMPTY = '—'
 
 export function TopBar() {
   const { open: openMobileSidebar } = useContext(MobileSidebarContext)
+  const pathname = usePathname()
   const [stats, setStats] = useState<GlobalStats | null>(null)
   const [loaded, setLoaded] = useState(false)
 
@@ -35,7 +37,7 @@ export function TopBar() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [pathname])
 
   // Until the fetch resolves we show the same dash placeholders so the
   // pills don't flash mock numbers during hydration.
