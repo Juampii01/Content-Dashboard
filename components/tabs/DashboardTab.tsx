@@ -18,11 +18,19 @@ export function DashboardTab() {
   const s = getDashboardStats(period)
   const { hasRealData, reels: realReels, summary } = useInstagramDataContext()
 
+  const snapshot = summary?.latestSnapshot ?? null
+
   const reelSource = hasRealData ? realReels.map(userReelToView) : REELS
   const bestReel = [...reelSource].sort((a, b) => b.views - a.views)[0] ?? REELS[0]
   const totalLikes = hasRealData ? reelSource.reduce((sum, r) => sum + r.likes, 0) : s.likes
   const totalComments = hasRealData ? reelSource.reduce((sum, r) => sum + r.comments, 0) : s.comments
-  const followersReal = summary?.latestSnapshot?.followers ?? null
+  const followersReal = snapshot?.followers ?? null
+
+  const displayImpressions = hasRealData && snapshot ? snapshot.impressions : s.impressions
+  const displayAvgDailyReach = hasRealData && snapshot ? Math.round(snapshot.reach / 30) : s.avgDailyReach
+  const displayEngagementRate = hasRealData && snapshot ? snapshot.engagementRate : s.profileConversionRate
+  const displayProfileVisits = hasRealData && snapshot ? snapshot.profileVisits : s.profileVisits
+  const displayNewFollowers = hasRealData && snapshot ? snapshot.newFollowers : s.newFollowers
 
   return (
     <div className="space-y-5">
@@ -36,16 +44,16 @@ export function DashboardTab() {
         <div className="col-span-2" style={{ minHeight: 280 }}>
           <VisitasChart
             data={s.chartData}
-            impressions={s.impressions}
-            avgDailyReach={s.avgDailyReach}
+            impressions={displayImpressions}
+            avgDailyReach={displayAvgDailyReach}
             change={s.impressionsChange}
           />
         </div>
         <div className="flex flex-col gap-4">
           <StatCard
             label="CONVERSIÓN DE PERFIL"
-            value={formatPercent(s.profileConversionRate)}
-            sub={`${formatK(s.profileVisits)} visitas → ${formatK(s.newFollowers)} seguidores`}
+            value={formatPercent(displayEngagementRate)}
+            sub={`${formatK(displayProfileVisits)} visitas → ${formatK(displayNewFollowers)} seguidores`}
             trend={`+${s.conversionChange}% vs período anterior`}
             trendUp
             icon={<TrendingUp size={16} />}

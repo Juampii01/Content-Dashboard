@@ -19,6 +19,11 @@ interface Response {
     date: string
     followers: number
     posts: number
+    impressions: number
+    reach: number
+    profileVisits: number
+    newFollowers: number
+    engagementRate: number
   } | null
   reelCount?: number
 }
@@ -55,6 +60,11 @@ export async function GET(): Promise<NextResponse<Response>> {
           date: snapshot.date.toISOString(),
           followers: snapshot.followers,
           posts: snapshot.posts,
+          impressions: snapshot.impressions,
+          reach: snapshot.reach,
+          profileVisits: snapshot.profileVisits,
+          newFollowers: snapshot.newFollowers,
+          engagementRate: snapshot.engagementRate,
         }
       : null,
     reelCount,
