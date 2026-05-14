@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { getDashboardStats } from '@/lib/mock-data/dashboard'
-import type { Period } from '@/lib/types'
+import type { Period, DashboardStats } from '@/lib/types'
 import { GreetingBlock } from './GreetingBlock'
 import { StatGrid } from './StatGrid'
 import { PerformanceCharts } from './PerformanceCharts'
 import { QuickSummarySidebar } from './QuickSummarySidebar'
+import type { UserReelRow } from '@/hooks/useInstagramData'
+import type { InstagramAccountSummary } from '@/hooks/useInstagramData'
 
 const PERIODS: { label: string; value: Period }[] = [
   { label: '7d',  value: 7  },
@@ -18,7 +20,6 @@ const PERIODS: { label: string; value: Period }[] = [
 
 export function HomeContent() {
   const [period, setPeriod] = useState<Period>(30)
-  const s = getDashboardStats(period)
   const prefersReduced = useReducedMotion()
 
   const fadeUp = (i: number) => ({
@@ -36,14 +37,17 @@ export function HomeContent() {
     produccion: number; programado: number; ideasCount: number; loaded: boolean
   }>({ produccion: 0, programado: 0, ideasCount: 0, loaded: false })
 
+  // Real Instagram stats (overlay on mock base)
+  const [igReal, setIgReal] = useState<{
+    likes: number; comments: number; followers: number | null
+    bestReelViews: number; hasData: boolean
+  } | null>(null)
+
   useEffect(() => {
-    // Try to read creator name from ICP API
     fetch('/api/bases/icp')
       .then((r) => r.ok ? r.json() : null)
       .then((row) => {
-        if (row?.nombre && typeof row.nombre === 'string') {
-          setIcpName(row.nombre.trim())
-        }
+        if (row?.nombre && typeof row.nombre === 'string') setIcpName(row.nombre.trim())
       })
       .catch(() => {})
 
@@ -67,8 +71,41 @@ export function HomeContent() {
       setClientData({ produccion, programado, ideasCount, loaded: true })
     }
 
+    const loadIgStats = async () => {
+      try {
+        const [reelsRes, sumRes] = await Promise.all([
+          fetch('/api/instagram/reels'),
+          fetch('/api/instagram/account-summary'),
+        ])
+        const reels: UserReelRow[] = reelsRes.ok ? ((await reelsRes.json()) as { reels: UserReelRow[] }).reels ?? [] : []
+        const summary: InstagramAccountSummary | null = sumRes.ok ? (await sumRes.json()) as InstagramAccountSummary : null
+        if (reels.length === 0) return
+        const likes = reels.reduce((s, r) => s + r.likesCount, 0)
+        const comments = reels.reduce((s, r) => s + r.commentsCount, 0)
+        const bestReelViews = Math.max(...reels.map(r => r.likesCount))
+        const followers = summary?.latestSnapshot?.followers ?? null
+        setIgReal({ likes, comments, followers, bestReelViews, hasData: true })
+      } catch {}
+    }
+
     loadContentStats()
+    loadIgStats()
   }, [])
+
+  // Merge real data over mock base where available
+  const base = getDashboardStats(period)
+  const s: DashboardStats = igReal?.hasData
+    ? {
+        ...base,
+        likes: igReal.likes,
+        comments: igReal.comments,
+        bestReelViews: igReal.bestReelViews,
+        profileGrowth: igReal.followers ?? base.profileGrowth,
+        growthLast30: igReal.followers ?? base.growthLast30,
+      }
+    : base
+
+  const hasPartialReal = igReal?.hasData ?? false
 
   return (
     <div className="page-shell flex flex-col gap-7" style={{ minHeight: '100%' }}>
@@ -83,7 +120,33 @@ export function HomeContent() {
       </motion.div>
 
       <motion.div {...fadeUp(1)} className="flex items-center justify-between">
-        <p className="text-eyebrow">Rendimiento Instagram</p>
+        <div className="flex items-center gap-3">
+          <p className="text-eyebrow">Rendimiento Instagram</p>
+          {!hasPartialReal && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase"
+              style={{
+                backgroundColor: 'var(--muted)',
+                color: 'var(--muted-foreground)',
+                border: '1px dashed var(--border)',
+              }}
+            >
+              Demo
+            </span>
+          )}
+          {hasPartialReal && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide"
+              style={{
+                backgroundColor: 'color-mix(in srgb, var(--success) 12%, transparent)',
+                color: 'var(--success)',
+                border: '1px solid color-mix(in srgb, var(--success) 30%, transparent)',
+              }}
+            >
+              Likes y comentarios reales · Alcance estimado
+            </span>
+          )}
+        </div>
         <div className="relative flex items-center gap-1 p-1 rounded-xl"
           style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}>
           {PERIODS.map(({ label, value }) => (
