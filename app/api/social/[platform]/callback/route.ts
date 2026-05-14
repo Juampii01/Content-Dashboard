@@ -65,14 +65,14 @@ async function exchangeInstagram(
   const shortData = (await shortRes.json()) as { access_token: string; user_id: number }
 
   // 2. Exchange for long-lived token (60-day expiry, refreshable)
+  // New Instagram API uses graph.instagram.com, not graph.facebook.com
   const longParams = new URLSearchParams({
     grant_type: 'ig_exchange_token',
-    client_id: clientId,
     client_secret: clientSecret,
     access_token: shortData.access_token,
   })
   const longRes = await fetch(
-    `https://graph.facebook.com/v21.0/oauth/access_token?${longParams.toString()}`,
+    `https://graph.instagram.com/access_token?${longParams.toString()}`,
     { signal: AbortSignal.timeout(10_000) },
   )
   if (!longRes.ok) {
@@ -89,7 +89,7 @@ async function exchangeInstagram(
   // 3. Fetch Instagram user profile
   const igUserId = String(shortData.user_id)
   const profileRes = await fetch(
-    `https://graph.facebook.com/v21.0/${igUserId}?fields=username,name,profile_picture_url&access_token=${accessToken}`,
+    `https://graph.instagram.com/me?fields=username,name,profile_picture_url&access_token=${accessToken}`,
     { signal: AbortSignal.timeout(10_000) },
   )
   if (!profileRes.ok) {

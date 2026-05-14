@@ -32,7 +32,7 @@ import { checkRateLimit } from '@/lib/utils/ratelimit'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const GRAPH = 'https://graph.facebook.com/v21.0'
+const GRAPH = 'https://graph.instagram.com'
 
 interface GraphErrorInfo {
   status: number
