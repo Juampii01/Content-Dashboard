@@ -99,7 +99,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // 3. Fetch latest media (25)
   const mediaUrl =
-    `${GRAPH}/${igId}/media` +
+    `${GRAPH}/me/media` +
     `?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode` +
     `&limit=25&access_token=${encodeURIComponent(accessToken)}`
 
@@ -249,7 +249,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // 7. Fetch account info
   const accountUrl =
-    `${GRAPH}/${igId}` +
+    `${GRAPH}/me` +
     `?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count` +
     `&access_token=${encodeURIComponent(accessToken)}`
   const accountRes = await graphGet<unknown>(accountUrl)
