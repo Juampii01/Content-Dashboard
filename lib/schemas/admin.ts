@@ -9,6 +9,7 @@ export const UpdateUserSchema = z.object({
   role: UserRoleSchema.optional(),
   clientId: z.string().cuid().nullable().optional(),
   displayName: z.string().min(1).max(120).optional(),
+  themeKey: z.enum(['eternity', 'govbidder']).optional(),
 })
 
 // slug — lowercase letters, digits, hyphens

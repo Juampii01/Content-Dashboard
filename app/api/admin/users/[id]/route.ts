@@ -57,6 +57,17 @@ export async function PATCH(
   if (parsed.data.clientId !== undefined) updateData.clientId = parsed.data.clientId
   if (parsed.data.displayName !== undefined) updateData.displayName = parsed.data.displayName
 
+  // themeKey → find or create a client with that theme and assign it
+  if (parsed.data.themeKey !== undefined) {
+    const slug = `theme-${parsed.data.themeKey}`
+    const themeClient = await db.client.upsert({
+      where: { slug },
+      create: { name: parsed.data.themeKey, slug, themeKey: parsed.data.themeKey },
+      update: {},
+    })
+    updateData.clientId = themeClient.id
+  }
+
   try {
     const updated = await db.profile.update({
       where: { id },

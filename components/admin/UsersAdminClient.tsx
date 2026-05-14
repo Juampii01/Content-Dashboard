@@ -1,12 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Loader2, Settings } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { logClientError } from '@/lib/client-errors'
-import { ClientAccessModal } from './ClientAccessModal'
 
 type UserRole = 'ADMIN' | 'TEAM' | 'SETTER' | 'CLIENT'
+
+type ThemeKey = 'eternity' | 'govbidder'
 
 type User = {
   id: string
@@ -14,11 +15,14 @@ type User = {
   displayName: string | null
   role: UserRole
   clientId: string | null
-  clientName: string | null
+  themeKey: string | null
   createdAt: string
 }
 
-type ClientOpt = { id: string; name: string; slug: string }
+const THEME_OPTIONS: { value: ThemeKey; label: string; description: string }[] = [
+  { value: 'eternity',  label: 'Eternity',  description: 'Dark · Brand rojo' },
+  { value: 'govbidder', label: 'GovBidder', description: 'Light · Azul gobierno' },
+]
 
 const ROLE_FILTERS: { key: 'ALL' | UserRole; label: string }[] = [
   { key: 'ALL',    label: 'Todos'   },
@@ -45,11 +49,9 @@ function roleChipStyle(role: UserRole): { bg: string; fg: string } {
 }
 
 export function UsersAdminClient() {
-  const [users, setUsers]       = useState<User[] | null>(null)
-  const [clients, setClients]   = useState<ClientOpt[]>([])
-  const [filter, setFilter]     = useState<'ALL' | UserRole>('ALL')
-  const [busyId, setBusyId]     = useState<string | null>(null)
-  const [modalUser, setModalUser] = useState<User | null>(null)
+  const [users, setUsers]   = useState<User[] | null>(null)
+  const [filter, setFilter] = useState<'ALL' | UserRole>('ALL')
+  const [busyId, setBusyId] = useState<string | null>(null)
 
   const loadUsers = useCallback(async () => {
     try {
@@ -62,37 +64,27 @@ export function UsersAdminClient() {
     }
   }, [])
 
-  const loadClients = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/clients')
-      if (!res.ok) return
-      const data = await res.json()
-      setClients(data.clients.map((c: ClientOpt) => ({ id: c.id, name: c.name, slug: c.slug })))
-    } catch { /* non-critical */ }
-  }, [])
-
   useEffect(() => {
     loadUsers()
-    loadClients()
-  }, [loadUsers, loadClients])
+  }, [loadUsers])
 
-  async function setRole(user: User, role: UserRole) {
+  async function patchUser(userId: string, body: Record<string, unknown>, successMsg: string) {
     if (busyId) return
-    setBusyId(user.id)
+    setBusyId(userId)
     try {
-      const res = await fetch(`/api/admin/users/${user.id}`, {
+      const res = await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
+        body: JSON.stringify(body),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => null)
         throw new Error(data?.error ?? `Error ${res.status}`)
       }
-      toast.success('Rol actualizado')
+      toast.success(successMsg)
       await loadUsers()
     } catch (err) {
-      logClientError(err, 'UsersAdminClient:setRole')
+      logClientError(err, 'UsersAdminClient:patch')
     } finally {
       setBusyId(null)
     }
@@ -139,8 +131,8 @@ export function UsersAdminClient() {
           <div className="col-span-3">Email</div>
           <div className="col-span-2">Nombre</div>
           <div className="col-span-2">Rol</div>
-          <div className="col-span-3">Cliente</div>
-          <div className="col-span-2 text-right">Acciones</div>
+          <div className="col-span-3">Tema</div>
+          <div className="col-span-2"></div>
         </div>
 
         {users === null && (
@@ -173,7 +165,7 @@ export function UsersAdminClient() {
               <div className="col-span-2">
                 <select
                   value={u.role}
-                  onChange={(e) => setRole(u, e.target.value as UserRole)}
+                  onChange={(e) => patchUser(u.id, { role: e.target.value }, 'Rol actualizado')}
                   disabled={isBusy}
                   className="text-[11px] font-medium px-2 py-1 rounded-lg outline-none"
                   style={{
@@ -188,51 +180,30 @@ export function UsersAdminClient() {
                 </select>
               </div>
               <div className="col-span-3">
-                {u.clientName ? (
-                  <span
-                    className="px-2 py-0.5 rounded-full text-[10px]"
-                    style={{
-                      backgroundColor: 'var(--muted)',
-                      color: 'var(--foreground)',
-                      border: '1px solid var(--border)',
-                    }}
-                  >
-                    {u.clientName}
-                  </span>
-                ) : (
-                  <span style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>—</span>
-                )}
-              </div>
-              <div className="col-span-2 flex items-center justify-end gap-1.5">
-                {isBusy && <Loader2 size={12} className="animate-spin" style={{ color: 'var(--muted-foreground)' }} />}
-                <button
-                  onClick={() => setModalUser(u)}
-                  className="px-2.5 py-1 rounded-lg text-[11px] transition-opacity hover:opacity-80"
+                <select
+                  value={u.themeKey ?? 'eternity'}
+                  onChange={(e) => patchUser(u.id, { themeKey: e.target.value }, 'Tema actualizado')}
+                  disabled={isBusy}
+                  className="text-[11px] px-2 py-1 rounded-lg outline-none"
                   style={{
                     backgroundColor: 'var(--muted)',
                     color: 'var(--foreground)',
                     border: '1px solid var(--border)',
                   }}
-                  title="Asignar cliente"
                 >
-                  <span className="flex items-center gap-1">
-                    <Settings size={11} /> Cliente
-                  </span>
-                </button>
+                  {THEME_OPTIONS.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-span-2 flex items-center justify-end">
+                {isBusy && <Loader2 size={12} className="animate-spin" style={{ color: 'var(--muted-foreground)' }} />}
               </div>
             </div>
           )
         })}
       </div>
 
-      {modalUser && (
-        <ClientAccessModal
-          user={modalUser}
-          allClients={clients}
-          onClose={() => setModalUser(null)}
-          onChanged={async () => { await loadUsers(); setModalUser(null) }}
-        />
-      )}
     </>
   )
 }

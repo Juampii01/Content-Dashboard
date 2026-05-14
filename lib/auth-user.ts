@@ -95,9 +95,8 @@ export async function requireSuperAdmin(): Promise<{
 /**
  * Resolves the authenticated user and their assigned client workspace.
  * Reads clientId directly from profile — no cookie, no ClientAccess table.
- * Throws:
- *  - UnauthorizedError (401) if no session or no profile
- *  - ForbiddenError (403) if profile has no clientId assigned yet
+ * If the user has no clientId yet, auto-creates a personal workspace and assigns it.
+ * Throws UnauthorizedError (401) if no session or no profile.
  */
 export async function requireActiveClient(): Promise<{
   userId: string
@@ -107,18 +106,28 @@ export async function requireActiveClient(): Promise<{
 
   const profile = await db.profile.findUnique({
     where: { id: userId },
-    select: { role: true, clientId: true },
+    select: { role: true, clientId: true, email: true, displayName: true },
   })
 
   if (!profile) {
     throw new UnauthorizedError()
   }
 
-  if (!profile.clientId) {
-    throw new ForbiddenError('NO_CLIENT_ASSIGNED')
+  if (profile.clientId) {
+    return { userId, clientId: profile.clientId }
   }
 
-  return { userId, clientId: profile.clientId }
+  // Auto-create a personal workspace so the user can use the app immediately.
+  const slug = `personal-${userId.slice(0, 8)}`
+  const name = profile.displayName ?? profile.email?.split('@')[0] ?? 'Personal'
+  const client = await db.client.upsert({
+    where: { slug },
+    create: { name, slug },
+    update: {},
+  })
+  await db.profile.update({ where: { id: userId }, data: { clientId: client.id } })
+
+  return { userId, clientId: client.id }
 }
 
 /**
