@@ -52,24 +52,38 @@ interface ResearchRow {
 // `formatDate` (lib/utils/formatDate) handles locale + Intl options.
 const dateOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }
 
-function VideoCard({ video, platform }: { video: ResearchVideo; platform: Platform }) {
+function VideoCard({ video, platform, rank }: { video: ResearchVideo; platform: Platform; rank: number }) {
+  const [thumbError, setThumbError] = useState(false)
+  const showImage = !!video.thumbnail && !thumbError
+
   return (
     <div
       className="rounded-xl overflow-hidden card-lift"
       style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
     >
-      {video.thumbnail && (
-        <div className="relative aspect-video w-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
+      <div className="relative aspect-video w-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
+        {showImage ? (
           <Image
-            src={video.thumbnail}
+            src={video.thumbnail!}
             alt=""
             fill
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 100vw"
             className="object-cover"
-            unoptimized={platform === 'instagram'}
+            unoptimized
+            onError={() => setThumbError(true)}
           />
-        </div>
-      )}
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <PlatformBadge platform={platform} variant="icon" size={28} />
+          </div>
+        )}
+        <span
+          className="absolute top-2 left-2 text-[11px] font-bold px-2 py-0.5 rounded-full"
+          style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+        >
+          #{rank}
+        </span>
+      </div>
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
           <PlatformBadge platform={platform} variant="icon" size={14} />
@@ -141,7 +155,7 @@ function ResearchPanel({ row }: { row: ResearchRow }) {
             {row.channelName ?? row.channelUrl}
           </h3>
           <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-            Top 5 de los últimos {row.timeframeDays} días · {formatDate(row.createdAt, dateOpts)}
+            Top 5 por vistas · últimos {row.timeframeDays} días · {formatDate(row.createdAt, dateOpts)}
           </p>
         </div>
         <a
@@ -156,8 +170,8 @@ function ResearchPanel({ row }: { row: ResearchRow }) {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {row.videos.map((v) => (
-          <VideoCard key={v.videoId} video={v} platform={row.platform} />
+        {row.videos.map((v, i) => (
+          <VideoCard key={v.videoId} video={v} platform={row.platform} rank={i + 1} />
         ))}
       </div>
     </div>

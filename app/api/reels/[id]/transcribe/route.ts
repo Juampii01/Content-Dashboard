@@ -17,7 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { transcribeFromUrl } from '@/lib/groq/transcribe'
+import { transcribeFromUrl } from '@/lib/assemblyai/transcribe'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
 import { checkRateLimit } from '@/lib/utils/ratelimit'
 import type { TranscribeResponse, TranscriptionDTO } from '@/lib/types/competidores'
