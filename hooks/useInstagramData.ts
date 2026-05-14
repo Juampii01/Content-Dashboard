@@ -39,12 +39,11 @@ interface UseInstagramDataReturn {
 }
 
 /**
- * Loads the active client's Instagram connection summary + UserReel list.
+ * Loads Instagram connection summary + UserReel list for the active client.
  *
- * Once real data is loaded it is never cleared by a failed re-fetch — the hook
- * tracks the "last known good" state and only updates it when new valid data
- * arrives. This prevents the flash-then-disappear pattern caused by Strict Mode
- * double-effects or transient network errors.
+ * Uses a request counter so only the latest in-flight refresh commits its
+ * result to state — concurrent calls from React Strict Mode double-effects
+ * are silently discarded instead of causing a flash-then-disappear.
  */
 export function useInstagramData(): UseInstagramDataReturn {
   const [summary, setSummary] = useState<InstagramAccountSummary | null>(null)
@@ -53,51 +52,34 @@ export function useInstagramData(): UseInstagramDataReturn {
   const [hasLoaded, setHasLoaded] = useState(false)
   const [syncing, setSyncing] = useState(false)
 
-  // Track whether we already have valid data so subsequent refreshes never
-  // blank out the UI even if they return an empty or error response.
-  const hasGoodDataRef = useRef(false)
+  // Incremented on every refresh() call. If the counter has moved on by the
+  // time a fetch resolves, that response is stale and gets discarded.
+  const reqRef = useRef(0)
 
   const refresh = useCallback(async () => {
-    // Only show the full loading spinner on the very first load.
-    // After that, re-fetches run silently in the background.
-    if (!hasGoodDataRef.current) setLoading(true)
+    const seq = ++reqRef.current
+    setLoading(true)
     try {
       const [sumRes, reelsRes] = await Promise.all([
         fetch('/api/instagram/account-summary'),
         fetch('/api/instagram/reels'),
       ])
 
-      const newSummary: InstagramAccountSummary | null = sumRes.ok
-        ? ((await sumRes.json()) as InstagramAccountSummary)
-        : null
+      // Discard if a newer refresh was started while we were fetching
+      if (seq !== reqRef.current) return
 
-      const newReels: UserReelRow[] = reelsRes.ok
-        ? (((await reelsRes.json()) as { reels?: UserReelRow[] }).reels ?? [])
-        : []
-
-      // Only commit the new data if it represents a connected state with reels,
-      // OR if we have never loaded before (first load always wins).
-      const isConnected = newSummary?.connected && !newSummary?.tokenExpired
-      const hasNewReels = newReels.length > 0
-
-      if (!hasGoodDataRef.current || isConnected) {
-        if (newSummary !== null) setSummary(newSummary)
+      if (sumRes.ok) {
+        setSummary((await sumRes.json()) as InstagramAccountSummary)
       }
-
-      if (!hasGoodDataRef.current || hasNewReels) {
-        setReels(newReels)
+      if (reelsRes.ok) {
+        const json = (await reelsRes.json()) as { reels?: UserReelRow[] }
+        setReels(json.reels ?? [])
       }
-
-      if (isConnected && hasNewReels) {
-        hasGoodDataRef.current = true
-      }
-
       setHasLoaded(true)
     } catch {
-      // Network error — keep whatever state we have
-      setHasLoaded(true)
+      if (seq === reqRef.current) setHasLoaded(true)
     } finally {
-      setLoading(false)
+      if (seq === reqRef.current) setLoading(false)
     }
   }, [])
 
@@ -111,11 +93,11 @@ export function useInstagramData(): UseInstagramDataReturn {
       const res = await fetch('/api/instagram/sync', { method: 'POST' })
       if (res.status === 401) {
         const body = (await res.json().catch(() => ({}))) as { error?: string }
-        if (body.error === 'TOKEN_EXPIRED') {
-          toast.error('Tu conexión con Instagram expiró. Reconéctala para volver a sincronizar.')
-        } else {
-          toast.error('Sesión expirada. Vuelve a iniciar sesión.')
-        }
+        toast.error(
+          body.error === 'TOKEN_EXPIRED'
+            ? 'Tu conexión con Instagram expiró. Reconéctala para volver a sincronizar.'
+            : 'Sesión expirada. Vuelve a iniciar sesión.',
+        )
         return
       }
       if (res.status === 404) {
@@ -139,9 +121,6 @@ export function useInstagramData(): UseInstagramDataReturn {
       } else {
         toast.success(`Sincronizados ${data.synced?.reels ?? 0} reels de Instagram.`)
       }
-      // After sync, force a clean reload — bypass the "good data" guard so
-      // we always pick up freshly synced reels.
-      hasGoodDataRef.current = false
       await refresh()
     } catch {
       toast.error('Error de red al sincronizar Instagram.')
