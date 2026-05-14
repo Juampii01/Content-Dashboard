@@ -39,33 +39,26 @@ async function main() {
     if (error) throw error
   }
 
-  // 2) Profile as SUPER_ADMIN
+  // 2) Upsert client + profile as ADMIN
+  const client = await prisma.client.upsert({
+    where: { slug: CLIENTS[0].slug },
+    create: { name: CLIENTS[0].name, slug: CLIENTS[0].slug },
+    update: { name: CLIENTS[0].name },
+  })
+  console.log(`  ✓ Client ${CLIENTS[0].name} (${client.id})`)
+
   await prisma.profile.upsert({
     where: { id: user.id },
     create: {
       id: user.id,
       email: user.email ?? null,
       displayName: DISPLAY_NAME,
-      globalRole: 'SUPER_ADMIN',
+      role: 'ADMIN',
+      clientId: client.id,
     },
-    update: { globalRole: 'SUPER_ADMIN', email: user.email ?? null, displayName: DISPLAY_NAME },
+    update: { role: 'ADMIN', email: user.email ?? null, displayName: DISPLAY_NAME, clientId: client.id },
   })
-  console.log('Profile upserted as SUPER_ADMIN')
-
-  // 3) Clients + access
-  for (const c of CLIENTS) {
-    const client = await prisma.client.upsert({
-      where: { slug: c.slug },
-      create: { name: c.name, slug: c.slug },
-      update: { name: c.name },
-    })
-    await prisma.clientAccess.upsert({
-      where: { userId_clientId: { userId: user.id, clientId: client.id } },
-      create: { userId: user.id, clientId: client.id, roleInClient: 'ACCESS' },
-      update: {},
-    })
-    console.log(`  ✓ Client ${c.name} (${client.id}) + access`)
-  }
+  console.log('Profile upserted as ADMIN')
 
   await prisma.$disconnect()
   console.log('\nDone. Sign in with:')

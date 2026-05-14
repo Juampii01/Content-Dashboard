@@ -1,12 +1,15 @@
 /**
- * POST /api/admin/users/[id]/client-access — grant access.
- * SUPER_ADMIN only.
+ * POST /api/admin/users/[id]/client-access — assign a client to a user.
+ * Replaces the old M:N grant; now sets profile.clientId directly.
+ * ADMIN only.
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { db } from '@/lib/db'
 import { adminAuthOr401, getClientIp } from '@/lib/admin/guard'
-import { GrantClientAccessSchema } from '@/lib/schemas/admin'
 import { checkRateLimit } from '@/lib/utils/ratelimit'
+
+const BodySchema = z.object({ clientId: z.string().min(1) })
 
 export async function POST(
   req: NextRequest,
@@ -25,18 +28,18 @@ export async function POST(
   try { body = await req.json() } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
-  const parsed = GrantClientAccessSchema.safeParse(body)
+  const parsed = BodySchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
   try {
-    const access = await db.clientAccess.upsert({
-      where: { userId_clientId: { userId: id, clientId: parsed.data.clientId } },
-      create: { userId: id, clientId: parsed.data.clientId, roleInClient: 'ACCESS' },
-      update: {},
+    const updated = await db.profile.update({
+      where: { id },
+      data: { clientId: parsed.data.clientId },
+      select: { id: true, clientId: true },
     })
-    return NextResponse.json({ access })
+    return NextResponse.json({ ok: true, profile: updated })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)
     console.error('[admin/client-access/POST] error:', message)

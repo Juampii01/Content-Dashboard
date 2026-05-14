@@ -10,7 +10,7 @@ import { PasswordView } from './settings/PasswordView'
 interface SettingsModalProps {
   open: boolean
   onClose: () => void
-  globalRole: 'PENDING' | 'MEMBER' | 'SUPER_ADMIN' | null
+  role: string | null
   email: string | null
   displayName?: string | null
   avatarUrl?: string | null
@@ -22,7 +22,7 @@ type View = 'menu' | 'password' | 'profile'
 export function SettingsModal({
   open,
   onClose,
-  globalRole,
+  role,
   email,
   displayName,
   avatarUrl,
@@ -87,7 +87,7 @@ export function SettingsModal({
         {view === 'menu' && (
           <SettingsMenuView
             email={email}
-            globalRole={globalRole}
+            role={role}
             onSelectProfile={() => setView('profile')}
             onSelectPassword={() => setView('password')}
             onAdminLink={onClose}

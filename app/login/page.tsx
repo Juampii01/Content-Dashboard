@@ -5,17 +5,13 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-
-type Tab = 'login' | 'register'
+import { getDefaultLandingForRole } from '@/lib/auth/permissions'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [tab, setTab] = useState<Tab>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [forgotOpen, setForgotOpen] = useState(false)
@@ -28,45 +24,29 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (error) {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    if (authError || !authData.session) {
+      setLoading(false)
       setError('Credenciales incorrectas')
-    } else {
-      router.push('/')
-      router.refresh()
+      return
     }
-  }
 
-  async function handleRegister(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden')
-      return
+    // Resolve the user's role to redirect to the correct landing page
+    try {
+      const meRes = await fetch('/api/me')
+      if (meRes.ok) {
+        const me = await meRes.json() as { role?: string }
+        const landing = getDefaultLandingForRole(me.role)
+        router.replace(landing)
+        router.refresh()
+        return
+      }
+    } catch {
+      // fall through to default redirect
     }
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
-      return
-    }
-    setLoading(true)
-    const { data, error } = await supabase.auth.signUp({ email, password })
     setLoading(false)
-    if (error) {
-      setError(error.message)
-      return
-    }
-    void fetch('/api/auth/notify-signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, userId: data.user?.id }),
-    }).catch(() => {})
-    router.push('/pending-approval')
-  }
-
-  function switchTab(t: Tab) {
-    setTab(t)
-    setError('')
+    router.replace('/')
+    router.refresh()
   }
 
   async function handleForgotPassword(e: React.FormEvent) {
@@ -189,204 +169,90 @@ export default function LoginPage() {
             className="text-[28px] font-bold leading-tight tracking-tight"
             style={{ color: 'var(--foreground)' }}
           >
-            {tab === 'login' ? 'Entra a tu cuenta' : 'Crea tu cuenta'}
+            Entra a tu cuenta
           </h1>
           <p
             className="mt-2 text-sm"
             style={{ color: 'var(--muted-foreground, #9A8F89)' }}
           >
-            {tab === 'login'
-              ? 'Bienvenido de vuelta. Por favor, ingresa tus datos.'
-              : 'Regístrate para solicitar acceso al dashboard.'}
+            Bienvenido de vuelta. Por favor, ingresa tus datos.
           </p>
 
-          {tab === 'login' ? (
-            <form onSubmit={handleLogin} className="mt-6 space-y-5">
-              <div>
-                <label className="mb-2 block text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                  Email
-                </label>
+          <form onSubmit={handleLogin} className="mt-6 space-y-5">
+            <div>
+              <label className="mb-2 block text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                Email
+              </label>
+              <input
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors focus:border-[color:var(--accent)]"
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                Contraseña
+              </label>
+              <div className="relative">
                 <input
-                  type="email"
-                  autoComplete="email"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors focus:border-[color:var(--accent)]"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-xl px-4 py-3 pr-11 text-sm outline-none transition-colors focus:border-[color:var(--accent)]"
                   style={inputStyle}
                 />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                  Contraseña
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full rounded-xl px-4 py-3 pr-11 text-sm outline-none transition-colors focus:border-[color:var(--accent)]"
-                    style={inputStyle}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity"
-                    style={{ color: 'var(--muted-foreground, #9A8F89)' }}
-                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end text-sm">
                 <button
                   type="button"
-                  className="hover:underline"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity"
                   style={{ color: 'var(--muted-foreground, #9A8F89)' }}
-                  onClick={() => {
-                    setError('')
-                    setForgotEmail(email)
-                    setForgotOpen(true)
-                  }}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
-                  ¿Olvidaste tu contraseña?
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+            </div>
 
-              {error && <p className="text-center text-sm" style={{ color: '#ef4444' }}>{error}</p>}
-
+            <div className="flex items-center justify-end text-sm">
               <button
-                type="submit"
-                disabled={loading}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-opacity disabled:opacity-60"
-                style={{
-                  backgroundColor: 'var(--foreground)',
-                  color: '#000',
-                  boxShadow: '0 10px 30px rgba(245, 237, 227, 0.15)',
+                type="button"
+                className="hover:underline"
+                style={{ color: 'var(--muted-foreground, #9A8F89)' }}
+                onClick={() => {
+                  setError('')
+                  setForgotEmail(email)
+                  setForgotOpen(true)
                 }}
               >
-                {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
-                {loading ? 'Ingresando…' : 'Entrar'}
+                ¿Olvidaste tu contraseña?
               </button>
+            </div>
 
-              <p className="mt-4 text-center text-sm" style={{ color: 'var(--muted-foreground, #9A8F89)' }}>
-                ¿Aún no tienes cuenta?{' '}
-                <button
-                  type="button"
-                  onClick={() => switchTab('register')}
-                  className="font-semibold hover:underline"
-                  style={{ color: 'var(--foreground)' }}
-                >
-                  Regístrate
-                </button>
-              </p>
-            </form>
-          ) : (
-            <form onSubmit={handleRegister} className="mt-6 space-y-5">
-              <div>
-                <label className="mb-2 block text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                  Email
-                </label>
-                <input
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors focus:border-[color:var(--accent)]"
-                  style={inputStyle}
-                />
-              </div>
+            {error && <p className="text-center text-sm" style={{ color: '#ef4444' }}>{error}</p>}
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                  Contraseña
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full rounded-xl px-4 py-3 pr-11 text-sm outline-none transition-colors focus:border-[color:var(--accent)]"
-                    style={inputStyle}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity"
-                    style={{ color: 'var(--muted-foreground, #9A8F89)' }}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                  Confirmar contraseña
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirm ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full rounded-xl px-4 py-3 pr-11 text-sm outline-none transition-colors focus:border-[color:var(--accent)]"
-                    style={inputStyle}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity"
-                    style={{ color: 'var(--muted-foreground, #9A8F89)' }}
-                  >
-                    {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              {error && <p className="text-center text-sm" style={{ color: '#ef4444' }}>{error}</p>}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-opacity disabled:opacity-60"
-                style={{
-                  backgroundColor: 'var(--foreground)',
-                  color: '#000',
-                  boxShadow: '0 10px 30px rgba(245, 237, 227, 0.15)',
-                }}
-              >
-                {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
-                {loading ? 'Creando cuenta…' : 'Crear cuenta'}
-              </button>
-
-              <p className="mt-4 text-center text-sm" style={{ color: 'var(--muted-foreground, #9A8F89)' }}>
-                ¿Ya tienes cuenta?{' '}
-                <button
-                  type="button"
-                  onClick={() => switchTab('login')}
-                  className="font-semibold hover:underline"
-                  style={{ color: 'var(--foreground)' }}
-                >
-                  Inicia sesión
-                </button>
-              </p>
-            </form>
-          )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-opacity disabled:opacity-60"
+              style={{
+                backgroundColor: 'var(--foreground)',
+                color: '#000',
+                boxShadow: '0 10px 30px rgba(245, 237, 227, 0.15)',
+              }}
+            >
+              {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
+              {loading ? 'Ingresando…' : 'Entrar'}
+            </button>
+          </form>
         </div>
 
         {/* Footer */}
@@ -394,7 +260,7 @@ export default function LoginPage() {
           className="mt-8 text-center text-xs"
           style={{ color: 'var(--muted-foreground, #9A8F89)' }}
         >
-          Protegido por Supabase Auth · Acceso requiere aprobación
+          Protegido por Supabase Auth · Acceso gestionado por administrador
         </p>
       </div>
 

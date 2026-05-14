@@ -41,7 +41,11 @@
       "Bash(gh api *)",
       "Bash(unset DATABASE_URL)",
       "Bash(echo \"exit: $?\")",
-      "Bash(npx jest *)"
+      "Bash(npx jest *)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

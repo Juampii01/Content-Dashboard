@@ -1,17 +1,15 @@
 import { notFound, redirect } from 'next/navigation'
 import { requireProfile, UnauthorizedError } from '@/lib/auth-user'
+import { isAdmin } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * Admin layout gate.
  *
- *   Unauthenticated  → redirect to /login (user can't know admin routes exist)
- *   Authenticated, not SUPER_ADMIN → 404 real via notFound() (hides existence)
- *   SUPER_ADMIN → render children
- *
- * Prior implementation rendered a fake <NotFoundShell /> with HTTP 200, which
- * leaked the URL to link checkers / search indexes.
+ *   Unauthenticated → redirect to /login
+ *   Authenticated, not ADMIN → 404 (hides existence of admin routes)
+ *   ADMIN → render children
  */
 export default async function AdminLayout({
   children,
@@ -19,8 +17,8 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   try {
-    const { globalRole } = await requireProfile()
-    if (globalRole !== 'SUPER_ADMIN') {
+    const { role } = await requireProfile()
+    if (!isAdmin(role)) {
       notFound()
     }
   } catch (err) {

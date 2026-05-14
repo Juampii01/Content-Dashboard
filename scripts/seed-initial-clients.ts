@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { PrismaClient } from '@prisma/client'
 
-const SUPER_ADMIN_EMAIL = 'cristianortiz@astraire.com'
+const ADMIN_EMAIL = 'cristianortiz@astraire.com'
 const INITIAL_CLIENTS = [
   { name: 'Cristian', slug: 'cristian' },
   { name: 'Jose', slug: 'jose' },
@@ -22,43 +22,44 @@ async function main() {
   })
   const prisma = new PrismaClient()
 
-  console.log(`Looking up user ${SUPER_ADMIN_EMAIL}...`)
+  console.log(`Looking up user ${ADMIN_EMAIL}...`)
   const { data: list, error } = await supabase.auth.admin.listUsers({ perPage: 1000 })
   if (error) throw error
 
-  const user = list.users.find((u) => u.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase())
+  const user = list.users.find((u) => u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase())
   if (!user) {
-    console.error(`User with email ${SUPER_ADMIN_EMAIL} not found in auth.users.`)
+    console.error(`User with email ${ADMIN_EMAIL} not found in auth.users.`)
     console.error('Register first at /login, then rerun this script.')
     process.exit(1)
   }
 
-  console.log(`Found user ${user.id}. Upserting Profile as SUPER_ADMIN...`)
+  console.log('Upserting initial Clients...')
+  const firstClient = await prisma.client.upsert({
+    where: { slug: INITIAL_CLIENTS[0].slug },
+    create: { name: INITIAL_CLIENTS[0].name, slug: INITIAL_CLIENTS[0].slug },
+    update: { name: INITIAL_CLIENTS[0].name },
+  })
+  for (const c of INITIAL_CLIENTS.slice(1)) {
+    await prisma.client.upsert({
+      where: { slug: c.slug },
+      create: { name: c.name, slug: c.slug },
+      update: { name: c.name },
+    })
+    console.log(`  ✓ ${c.name}`)
+  }
+
+  console.log(`Found user ${user.id}. Upserting Profile as ADMIN...`)
   await prisma.profile.upsert({
     where: { id: user.id },
     create: {
       id: user.id,
       email: user.email ?? null,
       displayName: 'Cristian',
-      globalRole: 'SUPER_ADMIN',
+      role: 'ADMIN',
+      clientId: firstClient.id,
     },
-    update: { globalRole: 'SUPER_ADMIN', email: user.email ?? null },
+    update: { role: 'ADMIN', email: user.email ?? null, clientId: firstClient.id },
   })
-
-  console.log('Upserting initial Clients...')
-  for (const c of INITIAL_CLIENTS) {
-    const client = await prisma.client.upsert({
-      where: { slug: c.slug },
-      create: { name: c.name, slug: c.slug },
-      update: { name: c.name },
-    })
-    await prisma.clientAccess.upsert({
-      where: { userId_clientId: { userId: user.id, clientId: client.id } },
-      create: { userId: user.id, clientId: client.id, roleInClient: 'ACCESS' },
-      update: {},
-    })
-    console.log(`  ✓ ${c.name} (${client.id})`)
-  }
 
   console.log('Done.')
   await prisma.$disconnect()

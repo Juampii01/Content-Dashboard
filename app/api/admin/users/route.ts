@@ -1,6 +1,6 @@
 /**
- * GET /api/admin/users — list all users (Profile + auth.users join).
- * SUPER_ADMIN only.
+ * GET /api/admin/users — list all users (Profile + client info).
+ * ADMIN only.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
@@ -18,14 +18,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    // Pull every Profile + its access rows; decorate with auth.users email
-    // (Profile.email is cached but may lag behind).
     const profiles = await db.profile.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
-        clientAccess: {
-          include: { client: { select: { id: true, name: true, slug: true } } },
-        },
+        client: { select: { id: true, name: true, slug: true } },
       },
     })
 
@@ -44,13 +40,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       id: p.id,
       email: authEmailById.get(p.id) ?? p.email ?? null,
       displayName: p.displayName,
-      globalRole: p.globalRole,
+      role: p.role,
+      clientId: p.clientId,
+      clientName: p.client?.name ?? null,
+      clientSlug: p.client?.slug ?? null,
       createdAt: p.createdAt,
-      clientAccess: p.clientAccess.map((a) => ({
-        clientId: a.clientId,
-        clientName: a.client.name,
-        clientSlug: a.client.slug,
-      })),
     }))
 
     return NextResponse.json({ users })

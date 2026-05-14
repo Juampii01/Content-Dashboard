@@ -3,15 +3,12 @@
  */
 import { z } from 'zod'
 
-export const GlobalRoleSchema = z.enum(['PENDING', 'MEMBER', 'SUPER_ADMIN'])
+export const UserRoleSchema = z.enum(['admin', 'team', 'setter', 'client'])
 
 export const UpdateUserSchema = z.object({
-  globalRole: GlobalRoleSchema.optional(),
+  role: UserRoleSchema.optional(),
+  clientId: z.string().cuid().nullable().optional(),
   displayName: z.string().min(1).max(120).optional(),
-})
-
-export const GrantClientAccessSchema = z.object({
-  clientId: z.string().min(1),
 })
 
 // slug — lowercase letters, digits, hyphens

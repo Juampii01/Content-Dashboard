@@ -37,7 +37,6 @@ import {
   Sun,
   Moon,
   LogOut,
-  Building,
   Search as CmdSearch,
 } from 'lucide-react'
 import { useAuth } from './AuthProvider'
@@ -48,8 +47,8 @@ interface NavItem {
   href: string
   group: string
   icon: React.ElementType
-  /** Hide unless current user has this role. */
-  requiresSuperAdmin?: boolean
+  /** Hide unless current user is admin. */
+  requiresAdmin?: boolean
 }
 
 const NAV: NavItem[] = [
@@ -67,15 +66,15 @@ const NAV: NavItem[] = [
   { group: 'Contenido', label: 'Video Feed',      href: '/video-feed',        icon: Rss },
   { group: 'Performance', label: 'Ads',           href: '/ads',               icon: Megaphone },
   { group: 'IA', label: 'Eternity AI',            href: '/ai',                icon: Bot },
-  { group: 'Admin', label: 'Resumen',  href: '/admin',         icon: Shield,    requiresSuperAdmin: true },
-  { group: 'Admin', label: 'Usuarios', href: '/admin/users',   icon: UserCog,   requiresSuperAdmin: true },
-  { group: 'Admin', label: 'Clientes', href: '/admin/clients', icon: Building2, requiresSuperAdmin: true },
+  { group: 'Admin', label: 'Resumen',  href: '/admin',         icon: Shield,    requiresAdmin: true },
+  { group: 'Admin', label: 'Usuarios', href: '/admin/users',   icon: UserCog,   requiresAdmin: true },
+  { group: 'Admin', label: 'Clientes', href: '/admin/clients', icon: Building2, requiresAdmin: true },
 ]
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const router = useRouter()
-  const { profile, clients, refetch } = useAuth()
+  const { profile } = useAuth()
   const supabase = createClient()
 
   const close = useCallback(() => setOpen(false), [])
@@ -102,25 +101,6 @@ export function CommandPalette() {
     [close, router],
   )
 
-  const switchClient = useCallback(
-    async (clientId: string) => {
-      close()
-      try {
-        await fetch('/api/me/active-client', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ clientId }),
-        })
-        await refetch()
-        // Force a refresh so the layout re-resolves the theme.
-        router.refresh()
-      } catch {
-        // ignored — toast could be added here later
-      }
-    },
-    [close, refetch, router],
-  )
-
   const toggleTheme = useCallback(() => {
     close()
     const html = document.documentElement
@@ -144,8 +124,8 @@ export function CommandPalette() {
 
   if (!open) return null
 
-  const isSuperAdmin = profile?.globalRole === 'SUPER_ADMIN'
-  const visibleNav = NAV.filter((n) => !n.requiresSuperAdmin || isSuperAdmin)
+  const isUserAdmin = profile?.role === 'admin'
+  const visibleNav = NAV.filter((n) => !n.requiresAdmin || isUserAdmin)
   const grouped = visibleNav.reduce<Record<string, NavItem[]>>((acc, item) => {
     if (!acc[item.group]) acc[item.group] = []
     acc[item.group].push(item)
@@ -241,34 +221,6 @@ export function CommandPalette() {
                 })}
               </Command.Group>
             ))}
-
-            {clients.length > 1 && (
-              <Command.Group
-                heading="Cambiar cliente"
-                className="cmdk-group [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-eyebrow"
-              >
-                {clients.map((c) => (
-                  <Command.Item
-                    key={c.id}
-                    value={`switch ${c.name} ${c.slug}`}
-                    onSelect={() => void switchClient(c.id)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm aria-selected:bg-[color-mix(in_srgb,var(--accent)_10%,transparent)] aria-selected:text-[var(--accent)]"
-                    style={{ color: 'var(--foreground)' }}
-                  >
-                    <Building size={15} className="opacity-70" />
-                    <span className="flex-1">{c.name}</span>
-                    {profile?.activeClientId === c.id && (
-                      <span
-                        className="text-[10px] font-bold uppercase tracking-wider"
-                        style={{ color: 'var(--accent)' }}
-                      >
-                        activo
-                      </span>
-                    )}
-                  </Command.Item>
-                ))}
-              </Command.Group>
-            )}
 
             <Command.Group
               heading="Acciones"

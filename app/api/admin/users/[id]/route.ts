@@ -1,6 +1,6 @@
 /**
- * PATCH /api/admin/users/[id] — update a user's globalRole / displayName.
- * SUPER_ADMIN only.
+ * PATCH /api/admin/users/[id] — update role / clientId / displayName.
+ * ADMIN only.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
@@ -38,26 +38,30 @@ export async function PATCH(
     )
   }
 
-  // Guard: cannot demote the last SUPER_ADMIN.
-  if (parsed.data.globalRole && parsed.data.globalRole !== 'SUPER_ADMIN') {
-    const current = await db.profile.findUnique({ where: { id } })
-    if (current?.globalRole === 'SUPER_ADMIN') {
-      const admins = await db.profile.count({
-        where: { globalRole: 'SUPER_ADMIN' },
-      })
-      if (admins <= 1) {
+  // Guard: cannot demote the last admin
+  if (parsed.data.role && parsed.data.role !== 'admin') {
+    const current = await db.profile.findUnique({ where: { id }, select: { role: true } })
+    if (current?.role === 'ADMIN') {
+      const adminCount = await db.profile.count({ where: { role: 'ADMIN' } })
+      if (adminCount <= 1) {
         return NextResponse.json(
-          { error: 'Cannot demote the last SUPER_ADMIN' },
+          { error: 'Cannot demote the last admin' },
           { status: 400 },
         )
       }
     }
   }
 
+  const updateData: Record<string, unknown> = {}
+  if (parsed.data.role !== undefined) updateData.role = parsed.data.role.toUpperCase()
+  if (parsed.data.clientId !== undefined) updateData.clientId = parsed.data.clientId
+  if (parsed.data.displayName !== undefined) updateData.displayName = parsed.data.displayName
+
   try {
     const updated = await db.profile.update({
       where: { id },
-      data: parsed.data,
+      data: updateData,
+      select: { id: true, email: true, displayName: true, role: true, clientId: true },
     })
     return NextResponse.json({ user: updated })
   } catch (err: unknown) {

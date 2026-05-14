@@ -8,22 +8,23 @@ import { SettingsModal } from './SettingsModal'
 
 interface UserMenuProps {
   email: string | null
-  globalRole: 'PENDING' | 'MEMBER' | 'SUPER_ADMIN' | null
+  role: string | null
   displayName?: string | null
   avatarUrl?: string | null
   collapsed: boolean
   onProfileChange?: (next: { displayName: string | null; avatarUrl: string | null }) => void
 }
 
-const ROLE_LABEL: Record<NonNullable<UserMenuProps['globalRole']>, string> = {
-  PENDING: 'Pendiente',
-  MEMBER: 'Miembro',
-  SUPER_ADMIN: 'Super Admin',
+const ROLE_LABEL: Record<string, string> = {
+  admin:  'Admin',
+  team:   'Team',
+  setter: 'Setter',
+  client: 'Client',
 }
 
 export function UserMenu({
   email,
-  globalRole,
+  role,
   displayName,
   avatarUrl,
   collapsed,
@@ -72,7 +73,7 @@ export function UserMenu({
         <SettingsModal
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
-          globalRole={globalRole}
+          role={role}
           email={email}
           displayName={displayName}
           avatarUrl={avatarUrl}
@@ -106,7 +107,7 @@ export function UserMenu({
           <p className="mt-0.5 flex items-center gap-1 text-[11px] font-medium leading-tight">
             <Sparkles size={10} style={{ color: 'var(--eternity-gold, #B08A4A)' }} />
             <span style={{ color: 'var(--eternity-gold, #B08A4A)' }}>
-              {globalRole ? ROLE_LABEL[globalRole] : '—'}
+              {role ? ROLE_LABEL[role] : '—'}
             </span>
           </p>
         </div>
@@ -133,7 +134,7 @@ export function UserMenu({
       <SettingsModal
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        globalRole={globalRole}
+        role={role}
         email={email}
         displayName={displayName}
         avatarUrl={avatarUrl}

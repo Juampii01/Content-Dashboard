@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 export default async function AdminOverviewPage() {
   const [userCount, pendingCount, clientCount] = await Promise.all([
     db.profile.count(),
-    db.profile.count({ where: { globalRole: 'PENDING' } }),
+    db.profile.count({ where: { clientId: null } }),
     db.client.count(),
   ])
 
@@ -20,10 +20,10 @@ export default async function AdminOverviewPage() {
       href: '/admin/users',
     },
     {
-      label: 'Aprobaciones pendientes',
+      label: 'Sin cliente asignado',
       value: pendingCount,
       icon: Clock,
-      href: '/admin/users?filter=PENDING',
+      href: '/admin/users',
       highlight: pendingCount > 0,
     },
     {

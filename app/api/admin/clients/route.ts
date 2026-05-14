@@ -22,7 +22,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     const clients = await db.client.findMany({
       orderBy: { createdAt: 'asc' },
-      include: { _count: { select: { accesses: true } } },
+      include: { _count: { select: { profiles: true } } },
     })
     return NextResponse.json({
       clients: clients.map((c) => ({
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         name: c.name,
         slug: c.slug,
         createdAt: c.createdAt,
-        accessCount: c._count.accesses,
+        accessCount: c._count.profiles,
       })),
     })
   } catch (err: unknown) {

@@ -5,7 +5,7 @@ import { Lock, Shield, User } from 'lucide-react'
 
 interface SettingsMenuViewProps {
   email: string | null
-  globalRole: 'PENDING' | 'MEMBER' | 'SUPER_ADMIN' | null
+  role: string | null
   onSelectProfile: () => void
   onSelectPassword: () => void
   onAdminLink: () => void
@@ -13,7 +13,7 @@ interface SettingsMenuViewProps {
 
 export function SettingsMenuView({
   email,
-  globalRole,
+  role,
   onSelectProfile,
   onSelectPassword,
   onAdminLink,
@@ -49,7 +49,7 @@ export function SettingsMenuView({
         onClick={onSelectPassword}
       />
 
-      {globalRole === 'SUPER_ADMIN' && (
+      {role === 'admin' && (
         <MenuItem
           as={Link}
           href="/admin/users"

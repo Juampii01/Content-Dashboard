@@ -8,12 +8,14 @@ import {
   CheckSquare, BookOpen, Search, Kanban,
   ChevronLeft, ChevronRight, Users,
   Music, Megaphone, LogOut, Shield, UserCog, Building2,
-  FileText, Telescope, Rss,
+  FileText, Telescope, Rss, Eye,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { useAuth } from './AuthProvider'
 import { UserMenu } from './UserMenu'
+import { useEffectiveRole, setViewAsRole, useViewAsRole } from '@/lib/auth/view-as'
+import { canAccessAdminPath, isAdmin } from '@/lib/auth/permissions'
 
 interface SidebarProps {
   collapsed: boolean
@@ -25,7 +27,7 @@ interface SidebarProps {
 type NavGroup = {
   label?: string
   badge?: string
-  requiresSuperAdmin?: boolean
+  adminOnly?: boolean
   items: { label: string; href: string; icon: React.ElementType }[]
 }
 
@@ -70,7 +72,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'ADMIN',
-    requiresSuperAdmin: true,
+    adminOnly: true,
     items: [
       { label: 'Resumen', href: '/admin', icon: Shield },
       { label: 'Usuarios', href: '/admin/users', icon: UserCog },
@@ -79,29 +81,31 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ]
 
+const VIEW_AS_OPTIONS = [
+  { value: 'team',   label: 'Team' },
+  { value: 'setter', label: 'Setter' },
+  { value: 'client', label: 'Client' },
+] as const
+
 export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname()
   const supabase = createClient()
-  const { profile, clients, sessionError, setProfileFields } = useAuth()
-  const activeClientName = clients.find((c) => c.id === profile?.activeClientId)?.name ?? null
+  const { profile, sessionError, setProfileFields } = useAuth()
 
-  const globalRole = profile?.globalRole ?? null
+  const actualRole = profile?.role ?? null
+  const effectiveRole = useEffectiveRole(actualRole)
+  const viewAs = useViewAsRole()
+
+  const clientName = profile?.clientName ?? null
   const userEmail = profile?.email ?? null
   const displayName = profile?.displayName ?? null
   const avatarUrl = profile?.avatarUrl ?? null
 
-  const visibleGroups = NAV_GROUPS.filter(
-    (g) => !g.requiresSuperAdmin || globalRole === 'SUPER_ADMIN',
-  )
+  const visibleGroups = NAV_GROUPS.filter((g) => {
+    if (!g.adminOnly) return true
+    return canAccessAdminPath(effectiveRole, '/admin')
+  })
 
-  // Most-specific active href wins. Previous logic used
-  // `pathname === href || pathname.startsWith(href)` per-item, which marked
-  // BOTH `/admin` (Resumen) and `/admin/users` (Usuarios) as active when
-  // viewing `/admin/users`. Both items then rendered with
-  // `color: var(--accent-foreground)` (cream) but only one got the motion pill
-  // background — the other appeared as cream-on-cream invisible text with a
-  // visual gap in the ADMIN section. Sort all matching hrefs by length and
-  // pick the longest so only one item per render is active.
   const candidateHrefs = visibleGroups.flatMap((g) => g.items.map((i) => i.href))
   const matchingHrefs = candidateHrefs.filter(
     (h) => pathname === h || (h !== '/' && pathname.startsWith(h + '/')),
@@ -164,9 +168,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
                 className="group/logo relative w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs cursor-pointer overflow-hidden transition-transform hover:scale-105"
                 style={{ backgroundColor: 'var(--accent)' }}
               >
-                {/* Letter — fades out on hover */}
                 <span className="transition-opacity duration-150 group-hover/logo:opacity-0">E</span>
-                {/* Chevron — fades in on hover, replacing the letter */}
                 <ChevronRight
                   size={14}
                   className="absolute opacity-0 transition-opacity duration-150 group-hover/logo:opacity-100"
@@ -187,7 +189,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
                     Content Dashboard
                   </p>
                   <p className="text-[10px] leading-tight" style={{ color: 'var(--muted-foreground)' }}>
-                    {activeClientName ? `by ${activeClientName}` : 'by eternity'}
+                    {clientName ? `by ${clientName}` : 'by eternity'}
                   </p>
                 </div>
               </div>
@@ -224,7 +226,6 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
         >
           {visibleGroups.map((group, gIdx) => (
             <div key={group.label ?? gIdx}>
-              {/* Section label — fades with sidebar width */}
               {group.label && (
                 <div
                   className="flex items-center gap-2 px-2 mb-1 overflow-hidden"
@@ -257,7 +258,6 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
                 </div>
               )}
 
-              {/* Items */}
               <div className={collapsed ? 'flex flex-col items-center gap-1' : 'space-y-0.5'}>
                 {group.items.map(({ label, href, icon: Icon }) => {
                   const active = href === activeHref
@@ -269,8 +269,6 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
                       aria-label={collapsed ? label : undefined}
                       className={cn(
                         'relative flex items-center text-sm cursor-pointer',
-                        // Collapsed: fixed 40×40 square, icon centered → consistent rhythm with active pill.
-                        // Expanded: padded row with label.
                         collapsed
                           ? 'w-10 h-10 justify-center rounded-xl'
                           : 'gap-3 px-3 py-2.5 rounded-xl',
@@ -278,7 +276,6 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
                       )}
                       style={{ color: active ? 'var(--sidebar-active-fg, var(--accent-foreground))' : 'var(--muted-foreground)' }}
                     >
-                      {/* Animated background pill — slides between items via layoutId */}
                       {active && (
                         <motion.div
                           layoutId="sidebar-active-bg"
@@ -290,7 +287,6 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
                         size={collapsed ? 18 : 16}
                         style={{ color: active ? 'var(--sidebar-active-fg, var(--accent-foreground))' : 'inherit', flexShrink: 0, position: 'relative' }}
                       />
-                      {/* Label fades rather than mount/unmounts so there's no layout jump */}
                       {!collapsed && (
                         <span
                           style={{
@@ -314,7 +310,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
           ))}
         </nav>
 
-        {/* Bottom: user menu + sign out */}
+        {/* Bottom: view-as (admin only) + user menu + sign out */}
         <div className="px-2 py-3 flex-shrink-0 space-y-2" style={{ borderTop: '1px solid var(--border)' }}>
           {sessionError && !collapsed && (
             <Link
@@ -329,9 +325,52 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
               Sesión expirada — volver a entrar
             </Link>
           )}
+
+          {/* View-As toggle — solo visible para admin, solo en sidebar expandido */}
+          {isAdmin(actualRole) && !collapsed && (
+            <div
+              className="rounded-xl px-3 py-2 space-y-1.5"
+              style={{
+                backgroundColor: 'color-mix(in srgb, var(--accent) 8%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)',
+              }}
+            >
+              <div className="flex items-center gap-1.5">
+                <Eye size={11} style={{ color: 'var(--muted-foreground)' }} />
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
+                  Ver como
+                </span>
+              </div>
+              <div className="flex gap-1 flex-wrap">
+                {VIEW_AS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setViewAsRole(viewAs === opt.value ? null : opt.value)}
+                    className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer"
+                    style={viewAs === opt.value
+                      ? { backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }
+                      : { backgroundColor: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border)' }
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+                {viewAs && (
+                  <button
+                    onClick={() => setViewAsRole(null)}
+                    className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-opacity hover:opacity-70 cursor-pointer"
+                    style={{ color: 'var(--muted-foreground)' }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           <UserMenu
             email={userEmail}
-            globalRole={globalRole}
+            role={effectiveRole}
             displayName={displayName}
             avatarUrl={avatarUrl}
             collapsed={collapsed}

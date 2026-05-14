@@ -9,57 +9,40 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ─── Global roles ─────────────────────────────────────────────────────────────
-enum GlobalRole {
-  PENDING
-  MEMBER
-  SUPER_ADMIN
-}
-
-enum ClientRole {
-  ACCESS
+// ─── User roles ───────────────────────────────────────────────────────────────
+enum UserRole {
+  ADMIN
+  TEAM
+  SETTER
+  CLIENT
 }
 
 // ─── Profile: extends Supabase auth.users ─────────────────────────────────
 // Keyed by the Supabase user UUID (as string). One row per auth user.
+// clientId: FK directo al workspace asignado (null hasta que admin lo asigne).
 model Profile {
-  id                String          @id // Supabase auth user UUID
+  id                String    @id // Supabase auth user UUID
   email             String?
   displayName       String?
   avatarUrl         String?
   instagramUsername String?
   nicho             String?
-  globalRole        GlobalRole      @default(PENDING)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  clientAccess      ClientAccess[]
+  role              UserRole  @default(CLIENT)
+  clientId          String?
+  client            Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 // ─── Client (tenant workspace) ────────────────────────────────────────────
 model Client {
-  id            String           @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String
-  slug          String           @unique
-  themeKey      String           @default("eternity")
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  accesses      ClientAccess[]
-}
-
-// ─── ClientAccess: M:N between Profile and Client ─────────────────────────
-model ClientAccess {
-  id            String       @id @default(cuid())
-  userId        String
-  clientId      String
-  roleInClient  ClientRole   @default(ACCESS)
-  createdAt     DateTime     @default(now())
-
-  profile       Profile      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  client        Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, clientId])
-  @@index([userId])
-  @@index([clientId])
+  slug          String    @unique
+  themeKey      String    @default("eternity")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  profiles      Profile[]
 }
 
 // ─── Business tables ──────────────────────────────────────────────────────

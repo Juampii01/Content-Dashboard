@@ -1,6 +1,6 @@
 /**
- * DELETE /api/admin/users/[id]/client-access/[clientId] — revoke access.
- * SUPER_ADMIN only.
+ * DELETE /api/admin/users/[id]/client-access/[clientId] — remove client from user.
+ * Sets profile.clientId to null. ADMIN only.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
@@ -19,10 +19,11 @@ export async function DELETE(
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }
 
-  const { id, clientId } = await params
+  const { id } = await params
   try {
-    await db.clientAccess.delete({
-      where: { userId_clientId: { userId: id, clientId } },
+    await db.profile.update({
+      where: { id },
+      data: { clientId: null },
     }).catch(() => null)
     return NextResponse.json({ ok: true })
   } catch (err: unknown) {
