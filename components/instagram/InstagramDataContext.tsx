@@ -9,6 +9,7 @@ export interface InstagramDataContextValue {
   summary: InstagramAccountSummary | null
   reels: UserReelRow[]
   loading: boolean
+  hasLoaded: boolean
 }
 
 const InstagramDataContext = createContext<InstagramDataContextValue>({
@@ -17,6 +18,7 @@ const InstagramDataContext = createContext<InstagramDataContextValue>({
   summary: null,
   reels: [],
   loading: true,
+  hasLoaded: false,
 })
 
 export const InstagramDataProvider = InstagramDataContext.Provider

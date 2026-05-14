@@ -118,6 +118,41 @@ export async function POST(): Promise<NextResponse> {
     return NextResponse.json({ error: 'SYNC_FAILED', detail: 'invalid_media_payload' }, { status: 502 })
   }
 
+  // If the API returned 0 items, the account is likely personal (not Business/Creator).
+  // We still write the snapshot so followers show up, but we tell the client why media is empty.
+  if (mediaParsed.data.data.length === 0) {
+    // Still try to write account snapshot
+    const accountUrl2 =
+      `${GRAPH}/me` +
+      `?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count` +
+      `&access_token=${encodeURIComponent(accessToken)}`
+    const accountRes2 = await graphGet<unknown>(accountUrl2)
+    if (accountRes2.ok) {
+      const accountParsed2 = InstagramAccountSchema.safeParse(accountRes2.data)
+      if (accountParsed2.success) {
+        const snap2 = accountToSnapshot(accountParsed2.data)
+        const today2 = new Date()
+        today2.setUTCHours(0, 0, 0, 0)
+        await db.accountSnapshot.upsert({
+          where: { clientId_platform_date: { clientId, platform: 'instagram', date: today2 } },
+          create: { clientId, platform: 'instagram', createdBy: userId, updatedBy: userId, date: today2, followers: snap2.followers, posts: snap2.posts },
+          update: { updatedBy: userId, followers: snap2.followers, posts: snap2.posts },
+        }).catch(() => {})
+        if (accountParsed2.data.username && accountParsed2.data.username !== conn.accountName) {
+          await db.socialConnection.update({
+            where: { clientId_platform: { clientId, platform: 'instagram' } },
+            data: { accountName: accountParsed2.data.username, accountPic: accountParsed2.data.profile_picture_url ?? conn.accountPic, updatedBy: userId },
+          }).catch(() => {})
+        }
+      }
+    }
+    return NextResponse.json({
+      ok: true,
+      synced: { reels: 0, snapshot: true },
+      warning: 'NO_MEDIA_RETURNED',
+    })
+  }
+
   // 4. Upsert each reel in parallel (MH-04). Failures are logged per-reel so
   // one bad row doesn't abort the rest — preserves prior try/catch semantics.
   const upsertResults = await Promise.allSettled(

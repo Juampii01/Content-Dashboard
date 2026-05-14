@@ -22,7 +22,7 @@ const DemografiaTab    = dynamic(() => import('@/components/tabs/DemografiaTab')
 
 export function InstagramContent() {
   const [tab] = useTab()
-  const { summary, reels, loading, syncing, sync, refresh } = useInstagramData()
+  const { summary, reels, loading, hasLoaded, syncing, sync, refresh } = useInstagramData()
   const { disconnect } = useSocialConnection('instagram', { onConnectSuccess: () => void refresh() })
   const [disconnecting, setDisconnecting] = useState(false)
 
@@ -42,8 +42,9 @@ export function InstagramContent() {
       summary,
       reels,
       loading,
+      hasLoaded,
     }),
-    [connected, reels, loading, summary],
+    [connected, reels, loading, summary, hasLoaded],
   )
 
   return (

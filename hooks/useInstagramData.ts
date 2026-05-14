@@ -32,6 +32,7 @@ interface UseInstagramDataReturn {
   summary: InstagramAccountSummary | null
   reels: UserReelRow[]
   loading: boolean
+  hasLoaded: boolean
   syncing: boolean
   sync: () => Promise<void>
   refresh: () => Promise<void>
@@ -45,6 +46,7 @@ export function useInstagramData(): UseInstagramDataReturn {
   const [summary, setSummary] = useState<InstagramAccountSummary | null>(null)
   const [reels, setReels] = useState<UserReelRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [hasLoaded, setHasLoaded] = useState(false)
   const [syncing, setSyncing] = useState(false)
 
   const refresh = useCallback(async () => {
@@ -60,11 +62,11 @@ export function useInstagramData(): UseInstagramDataReturn {
       if (reelsRes.ok) {
         const json = (await reelsRes.json()) as { reels?: UserReelRow[] }
         setReels(json.reels ?? [])
-      } else {
-        setReels([])
       }
+      // on error: keep previous reels — never blank out visible data
+      setHasLoaded(true)
     } catch {
-      // keep previous state
+      setHasLoaded(true)
     } finally {
       setLoading(false)
     }
@@ -99,8 +101,15 @@ export function useInstagramData(): UseInstagramDataReturn {
         toast.error('No pudimos sincronizar Instagram. Inténtalo de nuevo.')
         return
       }
-      const data = (await res.json()) as { synced?: { reels: number; snapshot: boolean } }
-      toast.success(`Sincronizados ${data.synced?.reels ?? 0} reels de Instagram.`)
+      const data = (await res.json()) as { synced?: { reels: number; snapshot: boolean }; warning?: string }
+      if (data.warning === 'NO_MEDIA_RETURNED') {
+        toast.warning(
+          'Instagram no devolvió publicaciones. Asegúrate de que tu cuenta sea de tipo Creador o Empresa (Configuración → Tipo de cuenta → Cambiar a cuenta profesional).',
+          { duration: 8000 },
+        )
+      } else {
+        toast.success(`Sincronizados ${data.synced?.reels ?? 0} reels de Instagram.`)
+      }
       await refresh()
     } catch {
       toast.error('Error de red al sincronizar Instagram.')
@@ -109,5 +118,5 @@ export function useInstagramData(): UseInstagramDataReturn {
     }
   }, [refresh])
 
-  return { summary, reels, loading, syncing, sync, refresh }
+  return { summary, reels, loading, hasLoaded, syncing, sync, refresh }
 }

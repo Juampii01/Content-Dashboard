@@ -17,7 +17,7 @@ export function ReelsTab() {
   const [type, setType] = useState<ReelType>('all')
   const [traffic, setTraffic] = useState<TrafficType>('all')
 
-  const { hasRealData, reels: realReels, loading } = useInstagramDataContext()
+  const { hasRealData, reels: realReels, hasLoaded } = useInstagramDataContext()
 
   const sourceReels: Reel[] = useMemo(
     () => (hasRealData ? realReels.map(userReelToView) : []),
@@ -52,7 +52,7 @@ export function ReelsTab() {
     return list
   }, [sort, dir, type, traffic, sourceReels])
 
-  if (!loading && !hasRealData) {
+  if (hasLoaded && !hasRealData) {
     return (
       <div
         className="rounded-2xl flex flex-col items-center justify-center py-20 gap-4"

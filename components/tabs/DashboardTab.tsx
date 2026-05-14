@@ -7,9 +7,9 @@ import { useInstagramDataContext } from '@/components/instagram/InstagramDataCon
 import { userReelToView } from '@/lib/instagram/to-reel-view'
 
 export function DashboardTab() {
-  const { hasRealData, reels: realReels, summary, loading } = useInstagramDataContext()
+  const { hasRealData, reels: realReels, summary, hasLoaded } = useInstagramDataContext()
 
-  if (!loading && !hasRealData) {
+  if (hasLoaded && !hasRealData) {
     return (
       <div
         className="rounded-2xl flex flex-col items-center justify-center py-20 gap-4"
