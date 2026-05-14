@@ -49,10 +49,10 @@ function buildOAuthUrl(platform: Platform, state: string): string | null {
       client_id: clientId,
       redirect_uri: redirect,
       response_type: 'code',
-      // Only youtube.readonly — yt-analytics requires a separate API to be
-      // enabled in Google Cloud + will 400 here if missing. Add back when we
-      // wire up watch-time / CTR analytics.
-      scope: 'https://www.googleapis.com/auth/youtube.readonly',
+      scope: [
+        'https://www.googleapis.com/auth/youtube.readonly',
+        'https://www.googleapis.com/auth/yt-analytics.readonly',
+      ].join(' '),
       access_type: 'offline',
       prompt: 'consent',
       state,

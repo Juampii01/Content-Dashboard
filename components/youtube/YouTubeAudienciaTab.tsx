@@ -1,20 +1,41 @@
 'use client'
 
-/**
- * YouTube demographics (age / gender / country) renderizados con mock data
- * mientras la YouTube Analytics API real no está integrada (scope distinto
- * al Data API v3 usado en /api/youtube/sync). Cuando el cliente conecte
- * Analytics API, este tab consumirá datos reales en vez del mock.
- */
-
-import { Users, Globe2 } from 'lucide-react'
+import { Users, Globe2, Loader2 } from 'lucide-react'
 import { youtubeMockDemographics } from '@/lib/mock-data/youtube'
+import { useYouTubeDemographics } from '@/hooks/useYouTubeData'
+import { DemoDataPill } from '@/components/instagram/InstagramSyncBanner'
 
-export function YouTubeAudienciaTab() {
-  const { ageGroups, gender, topCountries } = youtubeMockDemographics
+interface Props {
+  connected: boolean
+}
+
+export function YouTubeAudienciaTab({ connected }: Props) {
+  const { data, loading } = useYouTubeDemographics(connected)
+
+  const hasReal = data?.available === true && (
+    data.ageGroups.length > 0 || data.gender.length > 0 || data.topCountries.length > 0
+  )
+
+  const ageGroups = hasReal ? data!.ageGroups : youtubeMockDemographics.ageGroups
+  const gender    = hasReal ? data!.gender    : youtubeMockDemographics.gender
+  const topCountries = hasReal ? data!.topCountries : youtubeMockDemographics.topCountries
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 size={24} className="animate-spin" style={{ color: 'var(--muted-foreground)' }} />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
+      {!hasReal && (
+        <div className="flex items-center justify-end">
+          <DemoDataPill />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Age groups */}
         <div
@@ -33,10 +54,7 @@ export function YouTubeAudienciaTab() {
           <div className="space-y-3">
             {ageGroups.map((a) => (
               <div key={a.range} className="flex items-center gap-3">
-                <span
-                  className="text-sm w-16 tabular-nums"
-                  style={{ color: 'var(--foreground)' }}
-                >
+                <span className="text-sm w-16 tabular-nums" style={{ color: 'var(--foreground)' }}>
                   {a.range}
                 </span>
                 <div
@@ -45,10 +63,7 @@ export function YouTubeAudienciaTab() {
                 >
                   <div
                     className="h-full rounded-full"
-                    style={{
-                      width: `${a.percent}%`,
-                      backgroundColor: 'var(--accent)',
-                    }}
+                    style={{ width: `${a.percent}%`, backgroundColor: 'var(--accent)' }}
                   />
                 </div>
                 <span
@@ -79,10 +94,7 @@ export function YouTubeAudienciaTab() {
           <div className="space-y-3">
             {gender.map((g) => (
               <div key={g.label} className="flex items-center gap-3">
-                <span
-                  className="text-sm w-24"
-                  style={{ color: 'var(--foreground)' }}
-                >
+                <span className="text-sm w-24" style={{ color: 'var(--foreground)' }}>
                   {g.label}
                 </span>
                 <div
@@ -91,10 +103,7 @@ export function YouTubeAudienciaTab() {
                 >
                   <div
                     className="h-full rounded-full"
-                    style={{
-                      width: `${g.percent}%`,
-                      backgroundColor: 'var(--accent)',
-                    }}
+                    style={{ width: `${g.percent}%`, backgroundColor: 'var(--accent)' }}
                   />
                 </div>
                 <span
@@ -138,10 +147,7 @@ export function YouTubeAudienciaTab() {
               >
                 <div
                   className="h-full rounded-full"
-                  style={{
-                    width: `${c.percent}%`,
-                    backgroundColor: 'var(--accent)',
-                  }}
+                  style={{ width: `${c.percent}%`, backgroundColor: 'var(--accent)' }}
                 />
               </div>
               <span
@@ -155,12 +161,11 @@ export function YouTubeAudienciaTab() {
         </div>
       </div>
 
-      <p
-        className="text-xs text-center"
-        style={{ color: 'var(--muted-foreground)' }}
-      >
-        Demografía en modo demo — se activará con datos reales cuando se integre YouTube Analytics API.
-      </p>
+      {!hasReal && connected && (
+        <p className="text-xs text-center" style={{ color: 'var(--muted-foreground)' }}>
+          Para ver datos reales, reconecta YouTube — necesitamos el permiso de YouTube Analytics.
+        </p>
+      )}
     </div>
   )
 }
