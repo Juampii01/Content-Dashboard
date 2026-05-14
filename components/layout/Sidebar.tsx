@@ -8,7 +8,7 @@ import {
   CheckSquare, BookOpen, Search, Kanban,
   ChevronLeft, ChevronRight, Users,
   Music, Megaphone, LogOut, Shield, UserCog, Building2,
-  FileText, Telescope, Rss, ClipboardList,
+  FileText, Telescope, ClipboardList,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -37,29 +37,28 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'REDES SOCIALES',
+    label: 'ANALYTICS',
     items: [
       { label: 'Instagram', href: '/instagram', icon: Camera },
       { label: 'YouTube', href: '/youtube', icon: Play },
       { label: 'TikTok', href: '/tiktok', icon: Music },
-    ],
-  },
-  {
-    label: 'CONTENIDO',
-    items: [
-      { label: 'Contenido', href: '/contenido', icon: Kanban },
-      { label: 'Bases de negocio', href: '/bases', icon: BookOpen },
-      { label: 'Analizador', href: '/analizador', icon: Search },
-      { label: 'Competidores', href: '/competidores', icon: Users },
-      { label: 'Transcript', href: '/transcript', icon: FileText },
-      { label: 'Content Research', href: '/content-research', icon: Telescope },
-      { label: 'Video Feed', href: '/video-feed', icon: Rss },
-    ],
-  },
-  {
-    label: 'ADS',
-    items: [
       { label: 'Ads', href: '/ads', icon: Megaphone },
+    ],
+  },
+  {
+    label: 'CREAR',
+    items: [
+      { label: 'Estudio', href: '/contenido', icon: Kanban },
+      { label: 'Bases del negocio', href: '/bases', icon: BookOpen },
+    ],
+  },
+  {
+    label: 'INVESTIGACIÓN',
+    items: [
+      { label: 'Competidores', href: '/competidores', icon: Users },
+      { label: 'Investigar Canal', href: '/content-research', icon: Telescope },
+      { label: 'Analizador', href: '/analizador', icon: Search },
+      { label: 'Transcript', href: '/transcript', icon: FileText },
     ],
   },
   {
