@@ -25,9 +25,18 @@ export async function GET(): Promise<NextResponse<GlobalStatsResponse | null | {
   try {
     const { clientId } = await requireActiveClient()
 
-    // Latest snapshot per platform (Instagram, YouTube, TikTok, ...)
-    const snaps = await db.accountSnapshot.findMany({
+    // Only include platforms that have an active SocialConnection
+    const connections = await db.socialConnection.findMany({
       where: { clientId },
+      select: { platform: true },
+    })
+    const connectedPlatforms = connections.map((c) => c.platform)
+
+    if (connectedPlatforms.length === 0) return NextResponse.json(null)
+
+    // Latest snapshot per connected platform only
+    const snaps = await db.accountSnapshot.findMany({
+      where: { clientId, platform: { in: connectedPlatforms } },
       orderBy: [{ platform: 'asc' }, { date: 'desc' }],
       distinct: ['platform'],
       select: { followers: true, impressions: true, engagementRate: true },

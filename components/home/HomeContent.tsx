@@ -79,7 +79,7 @@ export function HomeContent() {
         ])
         const reels: UserReelRow[] = reelsRes.ok ? ((await reelsRes.json()) as { reels: UserReelRow[] }).reels ?? [] : []
         const summary: InstagramAccountSummary | null = sumRes.ok ? (await sumRes.json()) as InstagramAccountSummary : null
-        if (reels.length === 0) return
+        if (!summary?.connected || summary?.tokenExpired || reels.length === 0) return
         const likes = reels.reduce((s, r) => s + r.likesCount, 0)
         const comments = reels.reduce((s, r) => s + r.commentsCount, 0)
         const bestReelViews = Math.max(...reels.map(r => r.likesCount))
