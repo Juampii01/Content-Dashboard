@@ -30,7 +30,7 @@ import { accountToSnapshot, mediaToUserReel } from '@/lib/instagram/transform'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const GRAPH = 'https://graph.facebook.com/v19.0'
+const GRAPH = 'https://graph.instagram.com'
 
 interface GraphErrorInfo {
   status: number
@@ -84,12 +84,11 @@ export async function POST(): Promise<NextResponse> {
     return NextResponse.json({ error: 'TOKEN_EXPIRED' }, { status: 401 })
   }
 
-  const igId = conn.accountId
   const accessToken = conn.accessToken
 
   // 3. Fetch latest media (25)
   const mediaUrl =
-    `${GRAPH}/${igId}/media` +
+    `${GRAPH}/me/media` +
     `?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode` +
     `&limit=25&access_token=${encodeURIComponent(accessToken)}`
 
@@ -166,7 +165,7 @@ export async function POST(): Promise<NextResponse> {
 
   // 5. Fetch account info
   const accountUrl =
-    `${GRAPH}/${igId}` +
+    `${GRAPH}/me` +
     `?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count` +
     `&access_token=${encodeURIComponent(accessToken)}`
   const accountRes = await graphGet<unknown>(accountUrl)
