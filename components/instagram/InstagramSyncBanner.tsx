@@ -147,27 +147,19 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCou
   // ── Connected with data ────────────────────────────────────────────────────
   return (
     <div
-      className="flex items-center justify-between gap-4 rounded-xl px-4 py-2.5 mb-4"
-      style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}
+      className="flex items-center gap-3 rounded-xl px-4 py-2.5 mb-4 text-xs"
+      style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)', color: 'var(--muted-foreground)' }}
     >
-      <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--muted-foreground)' }}>
-        <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />
-        <span>
-          {reelCount} reels sincronizados
-          {summary.latestSnapshot ? ` · ${summary.latestSnapshot.followers.toLocaleString('es-ES')} seguidores` : ''}
-          {summary.accountName ? ` · @${summary.accountName}` : ''}
-        </span>
-      </div>
-      <button
-        type="button"
-        onClick={onSync}
-        disabled={syncing}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-60"
-        style={{ backgroundColor: 'var(--card)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
-      >
-        {syncing ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-        {syncing ? 'Sincronizando…' : 'Re-sincronizar'}
-      </button>
+      <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />
+      <span>
+        {reelCount} reels sincronizados
+        {summary.latestSnapshot ? ` · ${summary.latestSnapshot.followers.toLocaleString('es-ES')} seguidores` : ''}
+        {summary.accountName ? ` · @${summary.accountName}` : ''}
+      </span>
+      {/* Sync button moved to page header — nothing extra here */}
+      {syncing && (
+        <Loader2 size={12} className="animate-spin ml-auto" style={{ color: 'var(--muted-foreground)' }} />
+      )}
     </div>
   )
 }

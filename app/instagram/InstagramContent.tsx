@@ -1,8 +1,8 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useMemo } from 'react'
-import { Camera } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Camera, RefreshCw, Loader2, LogOut } from 'lucide-react'
 import { useTab } from '@/hooks/useTab'
 import { TabNav } from '@/components/layout/TabNav'
 import { TimeFilter } from '@/components/layout/TimeFilter'
@@ -10,6 +10,7 @@ import { useInstagramData } from '@/hooks/useInstagramData'
 import { InstagramSyncBanner } from '@/components/instagram/InstagramSyncBanner'
 import { InstagramDataProvider, type InstagramDataContextValue } from '@/components/instagram/InstagramDataContext'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { useSocialConnection } from '@/hooks/useSocialConnection'
 
 const DashboardTab     = dynamic(() => import('@/components/tabs/DashboardTab').then((m) => m.DashboardTab),         { ssr: false })
 const ReelsTab         = dynamic(() => import('@/components/tabs/ReelsTab').then((m) => m.ReelsTab),                 { ssr: false })
@@ -21,17 +22,28 @@ const DemografiaTab    = dynamic(() => import('@/components/tabs/DemografiaTab')
 
 export function InstagramContent() {
   const [tab] = useTab()
-  const { summary, reels, loading, syncing, sync } = useInstagramData()
+  const { summary, reels, loading, syncing, sync, refresh } = useInstagramData()
+  const { disconnect } = useSocialConnection('instagram', { onConnectSuccess: () => void refresh() })
+  const [disconnecting, setDisconnecting] = useState(false)
+
+  const connected = !!summary?.connected && !summary.tokenExpired
+
+  async function handleDisconnect() {
+    setDisconnecting(true)
+    await disconnect()
+    await refresh()
+    setDisconnecting(false)
+  }
 
   const ctxValue: InstagramDataContextValue = useMemo(
     () => ({
-      connected: !!summary?.connected && !summary.tokenExpired,
-      hasRealData: (summary?.connected ?? false) && !summary?.tokenExpired && reels.length > 0,
+      connected,
+      hasRealData: connected && reels.length > 0,
       summary,
       reels,
       loading,
     }),
-    [summary, reels, loading],
+    [connected, reels, loading, summary],
   )
 
   return (
@@ -41,7 +53,34 @@ export function InstagramContent() {
         title="IG Intelligence"
         description="Análisis profundo de tu cuenta de Instagram."
         icon={Camera}
-        actions={<TimeFilter />}
+        actions={
+          <div className="flex items-center gap-2">
+            <TimeFilter />
+            {connected && (
+              <button
+                type="button"
+                onClick={() => void sync()}
+                disabled={syncing}
+                className="btn btn-secondary btn-sm"
+              >
+                {syncing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                {syncing ? 'Sincronizando…' : 'Sincronizar'}
+              </button>
+            )}
+            {connected && (
+              <button
+                type="button"
+                onClick={() => void handleDisconnect()}
+                disabled={disconnecting}
+                className="btn btn-secondary btn-sm"
+                style={{ color: 'var(--muted-foreground)' }}
+              >
+                {disconnecting ? <Loader2 size={13} className="animate-spin" /> : <LogOut size={13} />}
+                Desconectar
+              </button>
+            )}
+          </div>
+        }
       />
 
       {/* Connection / sync banner */}

@@ -1,6 +1,5 @@
 'use client'
 
-import { RefreshCw } from 'lucide-react'
 import { usePeriod } from '@/hooks/usePeriod'
 import type { Period } from '@/lib/types'
 
@@ -35,10 +34,6 @@ export function TimeFilter() {
           )
         })}
       </div>
-      <button type="button" className="btn btn-secondary btn-sm">
-        <RefreshCw size={13} />
-        Sincronizar
-      </button>
     </div>
   )
 }
