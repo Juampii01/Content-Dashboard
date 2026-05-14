@@ -1,68 +1,74 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Check, Loader2, Settings } from 'lucide-react'
+import { Loader2, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 import { logClientError } from '@/lib/client-errors'
 import { ClientAccessModal } from './ClientAccessModal'
 
-type GlobalRole = 'PENDING' | 'MEMBER' | 'SUPER_ADMIN'
+type UserRole = 'ADMIN' | 'TEAM' | 'SETTER' | 'CLIENT'
 
 type User = {
   id: string
   email: string | null
   displayName: string | null
-  globalRole: GlobalRole
+  role: UserRole
+  clientId: string | null
+  clientName: string | null
   createdAt: string
-  clientAccess: { clientId: string; clientName: string; clientSlug: string }[]
 }
 
 type ClientOpt = { id: string; name: string; slug: string }
 
-const ROLE_FILTERS: { key: 'ALL' | GlobalRole; label: string }[] = [
-  { key: 'ALL', label: 'Todos' },
-  { key: 'PENDING', label: 'Pendientes' },
-  { key: 'MEMBER', label: 'Miembros' },
-  { key: 'SUPER_ADMIN', label: 'Admins' },
+const ROLE_FILTERS: { key: 'ALL' | UserRole; label: string }[] = [
+  { key: 'ALL',    label: 'Todos'   },
+  { key: 'ADMIN',  label: 'Admin'   },
+  { key: 'TEAM',   label: 'Team'    },
+  { key: 'SETTER', label: 'Setter'  },
+  { key: 'CLIENT', label: 'Client'  },
 ]
 
-function roleChipColor(role: GlobalRole): { bg: string; fg: string } {
+const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
+  { value: 'ADMIN',  label: 'Admin'  },
+  { value: 'TEAM',   label: 'Team'   },
+  { value: 'SETTER', label: 'Setter' },
+  { value: 'CLIENT', label: 'Client' },
+]
+
+function roleChipStyle(role: UserRole): { bg: string; fg: string } {
   switch (role) {
-    case 'PENDING':
-      return { bg: '#B08A4A22', fg: '#B08A4A' }
-    case 'MEMBER':
-      return { bg: 'var(--muted)', fg: 'var(--foreground)' }
-    case 'SUPER_ADMIN':
-      return { bg: 'var(--accent)', fg: 'var(--accent-foreground)' }
+    case 'ADMIN':  return { bg: 'var(--accent)',  fg: 'var(--accent-foreground)' }
+    case 'TEAM':   return { bg: 'var(--muted)',   fg: 'var(--foreground)' }
+    case 'SETTER': return { bg: 'var(--muted)',   fg: 'var(--foreground)' }
+    case 'CLIENT': return { bg: 'var(--muted)',   fg: 'var(--muted-foreground)' }
   }
 }
 
 export function UsersAdminClient() {
-  const search = useSearchParams()
-  const initialFilter = (search.get('filter') as 'ALL' | GlobalRole | null) ?? 'ALL'
-  const [users, setUsers] = useState<User[] | null>(null)
-  const [clients, setClients] = useState<ClientOpt[]>([])
-  const [filter, setFilter] = useState<'ALL' | GlobalRole>(
-    ROLE_FILTERS.some((r) => r.key === initialFilter) ? initialFilter : 'ALL',
-  )
-  const [busyId, setBusyId] = useState<string | null>(null)
+  const [users, setUsers]       = useState<User[] | null>(null)
+  const [clients, setClients]   = useState<ClientOpt[]>([])
+  const [filter, setFilter]     = useState<'ALL' | UserRole>('ALL')
+  const [busyId, setBusyId]     = useState<string | null>(null)
   const [modalUser, setModalUser] = useState<User | null>(null)
 
   const loadUsers = useCallback(async () => {
-    const res = await fetch('/api/admin/users')
-    if (!res.ok) return
-    const data = await res.json()
-    setUsers(data.users)
+    try {
+      const res = await fetch('/api/admin/users')
+      if (!res.ok) throw new Error(`${res.status}`)
+      const data = await res.json()
+      setUsers(data.users)
+    } catch (err) {
+      logClientError(err, 'UsersAdminClient:loadUsers')
+    }
   }, [])
 
   const loadClients = useCallback(async () => {
-    const res = await fetch('/api/admin/clients')
-    if (!res.ok) return
-    const data = await res.json()
-    setClients(data.clients.map((c: { id: string; name: string; slug: string }) => ({
-      id: c.id, name: c.name, slug: c.slug,
-    })))
+    try {
+      const res = await fetch('/api/admin/clients')
+      if (!res.ok) return
+      const data = await res.json()
+      setClients(data.clients.map((c: ClientOpt) => ({ id: c.id, name: c.name, slug: c.slug })))
+    } catch { /* non-critical */ }
   }, [])
 
   useEffect(() => {
@@ -70,23 +76,23 @@ export function UsersAdminClient() {
     loadClients()
   }, [loadUsers, loadClients])
 
-  async function setRole(user: User, globalRole: GlobalRole) {
+  async function setRole(user: User, role: UserRole) {
     if (busyId) return
     setBusyId(user.id)
     try {
       const res = await fetch(`/api/admin/users/${user.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ globalRole }),
+        body: JSON.stringify({ role }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => null)
         throw new Error(data?.error ?? `Error ${res.status}`)
       }
-      toast.success(`Rol actualizado`)
+      toast.success('Rol actualizado')
       await loadUsers()
     } catch (err) {
-      logClientError(err, 'UsersAdminClient:changeRole')
+      logClientError(err, 'UsersAdminClient:setRole')
     } finally {
       setBusyId(null)
     }
@@ -95,7 +101,7 @@ export function UsersAdminClient() {
   const filtered = useMemo(() => {
     if (!users) return []
     if (filter === 'ALL') return users
-    return users.filter((u) => u.globalRole === filter)
+    return users.filter((u) => u.role === filter)
   }, [users, filter])
 
   return (
@@ -133,13 +139,13 @@ export function UsersAdminClient() {
           <div className="col-span-3">Email</div>
           <div className="col-span-2">Nombre</div>
           <div className="col-span-2">Rol</div>
-          <div className="col-span-3">Clientes</div>
+          <div className="col-span-3">Cliente</div>
           <div className="col-span-2 text-right">Acciones</div>
         </div>
 
         {users === null && (
-          <div className="px-4 py-8 text-xs text-center" style={{ color: 'var(--muted-foreground)' }}>
-            Cargando…
+          <div className="px-4 py-8 text-xs text-center flex items-center justify-center gap-2" style={{ color: 'var(--muted-foreground)' }}>
+            <Loader2 size={13} className="animate-spin" /> Cargando…
           </div>
         )}
 
@@ -150,7 +156,7 @@ export function UsersAdminClient() {
         )}
 
         {filtered.map((u) => {
-          const role = roleChipColor(u.globalRole)
+          const chip = roleChipStyle(u.role)
           const isBusy = busyId === u.id
           return (
             <div
@@ -166,57 +172,39 @@ export function UsersAdminClient() {
               </div>
               <div className="col-span-2">
                 <select
-                  value={u.globalRole}
-                  onChange={(e) => setRole(u, e.target.value as GlobalRole)}
+                  value={u.role}
+                  onChange={(e) => setRole(u, e.target.value as UserRole)}
                   disabled={isBusy}
                   className="text-[11px] font-medium px-2 py-1 rounded-lg outline-none"
                   style={{
-                    backgroundColor: role.bg,
-                    color: role.fg,
+                    backgroundColor: chip.bg,
+                    color: chip.fg,
                     border: '1px solid var(--border)',
                   }}
                 >
-                  <option value="PENDING">PENDING</option>
-                  <option value="MEMBER">MEMBER</option>
-                  <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+                  {ROLE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
                 </select>
               </div>
-              <div className="col-span-3 flex flex-wrap gap-1">
-                {u.clientAccess.length === 0 ? (
-                  <span style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>—</span>
+              <div className="col-span-3">
+                {u.clientName ? (
+                  <span
+                    className="px-2 py-0.5 rounded-full text-[10px]"
+                    style={{
+                      backgroundColor: 'var(--muted)',
+                      color: 'var(--foreground)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    {u.clientName}
+                  </span>
                 ) : (
-                  u.clientAccess.map((a) => (
-                    <span
-                      key={a.clientId}
-                      className="px-2 py-0.5 rounded-full text-[10px]"
-                      style={{
-                        backgroundColor: 'var(--muted)',
-                        color: 'var(--foreground)',
-                        border: '1px solid var(--border)',
-                      }}
-                    >
-                      {a.clientName}
-                    </span>
-                  ))
+                  <span style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>—</span>
                 )}
               </div>
               <div className="col-span-2 flex items-center justify-end gap-1.5">
-                {u.globalRole === 'PENDING' && (
-                  <button
-                    onClick={() => setRole(u, 'MEMBER')}
-                    disabled={isBusy}
-                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
-                    style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
-                  >
-                    {isBusy ? (
-                      <Loader2 size={11} className="animate-spin" />
-                    ) : (
-                      <span className="flex items-center gap-1">
-                        <Check size={11} /> Aprobar
-                      </span>
-                    )}
-                  </button>
-                )}
+                {isBusy && <Loader2 size={12} className="animate-spin" style={{ color: 'var(--muted-foreground)' }} />}
                 <button
                   onClick={() => setModalUser(u)}
                   className="px-2.5 py-1 rounded-lg text-[11px] transition-opacity hover:opacity-80"
@@ -225,10 +213,10 @@ export function UsersAdminClient() {
                     color: 'var(--foreground)',
                     border: '1px solid var(--border)',
                   }}
-                  title="Gestionar acceso"
+                  title="Asignar cliente"
                 >
                   <span className="flex items-center gap-1">
-                    <Settings size={11} /> Acceso
+                    <Settings size={11} /> Cliente
                   </span>
                 </button>
               </div>
@@ -242,7 +230,7 @@ export function UsersAdminClient() {
           user={modalUser}
           allClients={clients}
           onClose={() => setModalUser(null)}
-          onChanged={loadUsers}
+          onChanged={async () => { await loadUsers(); setModalUser(null) }}
         />
       )}
     </>
