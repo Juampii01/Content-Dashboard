@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useState } from 'react'
 import { Eye, Heart, Bookmark, MessageCircle, Share2, ExternalLink, Clock } from 'lucide-react'
 import type { Reel } from '@/lib/types'
 import { MetricBadge } from '@/components/shared/MetricBadge'
@@ -9,6 +12,8 @@ interface Props {
 }
 
 export function ReelCard({ reel }: Props) {
+  const [imgFailed, setImgFailed] = useState(false)
+
   return (
     <Link href={`/instagram/reels/${reel.id}`}
       className="block rounded-xl overflow-hidden transition-all duration-150 hover:scale-[1.01]"
@@ -17,9 +22,18 @@ export function ReelCard({ reel }: Props) {
       {/* Thumbnail */}
       <div className="relative aspect-[9/16] max-h-52 w-full flex items-center justify-center"
         style={{ backgroundColor: 'var(--muted)' }}>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-4xl">🎬</span>
-        </div>
+        {reel.thumbnail && !imgFailed ? (
+          <img
+            src={reel.thumbnail}
+            alt=""
+            onError={() => setImgFailed(true)}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-4xl">🎬</span>
+          </div>
+        )}
         {/* Top badges */}
         <div className="absolute top-2 left-2">
           <MetricBadge multiplier={reel.multiplier} isAd={reel.isAd} />
