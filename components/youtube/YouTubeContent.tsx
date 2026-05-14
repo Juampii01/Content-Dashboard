@@ -111,7 +111,7 @@ export function YouTubeContent() {
       {/* Content */}
       {tab === 'dashboard' && <YouTubeDashboardTab connected={connected} hasData={hasData} />}
       {tab === 'videos'    && <YouTubeVideosTab    connected={connected} hasData={hasData} />}
-      {tab === 'audiencia' && <YouTubeAudienciaTab />}
+      {tab === 'audiencia' && <YouTubeAudienciaTab connected={connected} />}
     </div>
   )
 }

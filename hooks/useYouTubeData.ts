@@ -223,6 +223,55 @@ export function useYouTubeSnapshots(enabled: boolean, limit = 90) {
   return { snapshots, loading, refresh }
 }
 
+export interface YouTubeDemographicsData {
+  available: boolean
+  ageGroups: Array<{ range: string; percent: number }>
+  gender: Array<{ label: string; percent: number }>
+  topCountries: Array<{ country: string; percent: number }>
+}
+
+export function useYouTubeDemographics(enabled: boolean) {
+  const [data, setData] = useState<YouTubeDemographicsData | null>(null)
+  const [loading, setLoading] = useState(enabled)
+  const abortRef = useRef<AbortController | null>(null)
+
+  const refresh = useCallback(async () => {
+    if (!enabled) return
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    setLoading(true)
+    try {
+      const res = await fetch('/api/youtube/demographics', { signal: controller.signal })
+      if (controller.signal.aborted) return
+      if (res.ok) {
+        setData((await res.json()) as YouTubeDemographicsData)
+      } else {
+        setData({ available: false, ageGroups: [], gender: [], topCountries: [] })
+      }
+    } catch (err) {
+      if (isAbortError(err)) return
+      setData({ available: false, ageGroups: [], gender: [], topCountries: [] })
+    } finally {
+      if (!controller.signal.aborted) setLoading(false)
+    }
+  }, [enabled])
+
+  useEffect(() => {
+    if (enabled) {
+      void refresh()
+    } else {
+      setData(null)
+      setLoading(false)
+    }
+    return () => {
+      abortRef.current?.abort()
+    }
+  }, [enabled, refresh])
+
+  return { data, loading, refresh }
+}
+
 export async function triggerYouTubeSync(): Promise<boolean> {
   try {
     const res = await fetch('/api/youtube/sync', { method: 'POST' })
