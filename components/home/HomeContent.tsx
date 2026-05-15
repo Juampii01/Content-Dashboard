@@ -96,7 +96,7 @@ export function HomeContent() {
     if (inPeriod.length === 0) return { likes: 0, comments: 0, followers: igSummary?.latestSnapshot?.followers ?? null, bestReelViews: 0, hasData: true }
     const likes = inPeriod.reduce((s, r) => s + r.likesCount, 0)
     const comments = inPeriod.reduce((s, r) => s + r.commentsCount, 0)
-    const bestReelViews = Math.max(...inPeriod.map(r => r.likesCount))
+    const bestReelViews = Math.max(...inPeriod.map(r => r.viewsCount))
     const followers = igSummary?.latestSnapshot?.followers ?? null
     return { likes, comments, followers, bestReelViews, hasData: true }
   }, [igReels, igSummary, period])

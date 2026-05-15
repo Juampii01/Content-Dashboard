@@ -77,6 +77,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
     const task = await db.task.findUnique({ where: { id } })
+    if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     return NextResponse.json({ task })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)

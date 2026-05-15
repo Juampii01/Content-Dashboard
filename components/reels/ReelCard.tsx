@@ -69,7 +69,7 @@ export function ReelCard({ reel }: Props) {
 
       {/* Organic bar */}
       <div className="px-3 py-1">
-        <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--accent)' }}>
+        <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
           <div className="h-full rounded-full transition-all"
             style={{ width: `${reel.organicPercent}%`, backgroundColor: 'var(--accent)' }} />
         </div>
