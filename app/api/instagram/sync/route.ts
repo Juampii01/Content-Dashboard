@@ -201,6 +201,15 @@ export async function POST(): Promise<NextResponse> {
   )
   const reelsSynced = upsertResults.filter((r) => r.status === 'fulfilled').length
 
+  // Aggregate views + engagement across ALL stored reels for this client so the
+  // TopBar can show real numbers (AccountSnapshot.impressions / engagementRate).
+  const allReels = await db.userReel.findMany({
+    where: { clientId },
+    select: { viewsCount: true, likesCount: true, commentsCount: true },
+  })
+  const totalViews = allReels.reduce((s, r) => s + r.viewsCount, 0)
+  const totalInteractions = allReels.reduce((s, r) => s + r.likesCount + r.commentsCount, 0)
+
   // 5. Fetch account info
   const accountUrl =
     `${GRAPH}/me` +
@@ -213,6 +222,9 @@ export async function POST(): Promise<NextResponse> {
     const accountParsed = InstagramAccountSchema.safeParse(accountRes.data)
     if (accountParsed.success) {
       const snap = accountToSnapshot(accountParsed.data)
+      const engagementRate = snap.followers > 0
+        ? (totalInteractions / snap.followers) * 100
+        : 0
       // Normalise to midnight UTC so @@unique([clientId, platform, date]) collapses repeated syncs per day.
       // Scoped by platform='instagram' so YouTube sync can write its own row for the same day without collision.
       const today = new Date()
@@ -230,11 +242,15 @@ export async function POST(): Promise<NextResponse> {
             date: today,
             followers: snap.followers,
             posts: snap.posts,
+            impressions: totalViews,
+            engagementRate,
           },
           update: {
             updatedBy: userId,
             followers: snap.followers,
             posts: snap.posts,
+            impressions: totalViews,
+            engagementRate,
           },
         })
         snapshotWritten = true
