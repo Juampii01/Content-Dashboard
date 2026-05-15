@@ -15,7 +15,7 @@ interface ChipListSectionProps {
 const COLORS: Record<string, string> = {
   problemas: 'var(--accent)',
   dolores:   '#C49A6C',
-  deseos:    '#B08A4A',
+  deseos:    'var(--warning)',
   keywords:  '#5C4B50',
 }
 

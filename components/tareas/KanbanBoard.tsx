@@ -27,8 +27,8 @@ import { toast } from 'sonner'
 
 const COLUMNS: { id: TaskColumnId; label: string; color: string }[] = [
   { id: 'por-hacer', label: 'Por hacer', color: '#6B7280' },
-  { id: 'en-proceso', label: 'En proceso', color: '#B08A4A' },
-  { id: 'listo', label: 'Listo', color: '#10B981' },
+  { id: 'en-proceso', label: 'En proceso', color: 'var(--warning)' },
+  { id: 'listo', label: 'Listo', color: 'var(--success)' },
 ]
 
 // ─── API shape → UI Task ───────────────────────────────────────────────────

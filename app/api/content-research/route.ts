@@ -41,6 +41,7 @@ import {
   extractInstagramUsername,
 } from '@/lib/instagram/profile-fetch'
 import { analyzeRankedItems } from '@/lib/claude/analyze-videos-batch'
+import { getYouTubeTranscript, extractYouTubeId } from '@/lib/youtube/transcript-fetch'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -57,6 +58,7 @@ interface ResearchVideo {
   comments: number
   duration: string
   publishedAt: string | null
+  transcript: string | null
   analysis: string | null
 }
 
@@ -179,8 +181,22 @@ export async function POST(req: NextRequest) {
         comments: v.comments,
         duration: v.duration,
         publishedAt: v.publishedAt,
+        transcript: null,
         analysis: null,
       }))
+      // Best-effort transcript fetch — YouTube caption tracks only, no Groq (free, fast).
+      const transcripts = await Promise.allSettled(
+        videos.map(async (v) => {
+          const vid = extractYouTubeId(v.videoUrl)
+          if (!vid) return null
+          const r = await getYouTubeTranscript(vid)
+          return r.transcript
+        }),
+      )
+      videos.forEach((v, i) => {
+        const r = transcripts[i]
+        v.transcript = (r?.status === 'fulfilled' ? r.value : null) ?? null
+      })
     } else if (extractInstagramUsername(channelUrl)) {
       platform = 'instagram'
       const ig = await fetchInstagramProfilePosts(channelUrl)
@@ -207,6 +223,7 @@ export async function POST(req: NextRequest) {
           ? `${Math.floor(p.videoDuration / 60)}:${String(Math.round(p.videoDuration % 60)).padStart(2, '0')}`
           : '—',
         publishedAt: p.timestamp,
+        transcript: null,
         analysis: null,
       }))
     } else {
@@ -237,6 +254,7 @@ export async function POST(req: NextRequest) {
         title: v.title,
         views: v.views,
         comments: v.comments,
+        transcript: v.transcript ?? undefined,
       })),
     )
     videos.forEach((v) => {

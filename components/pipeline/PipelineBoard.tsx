@@ -16,9 +16,9 @@ import { toast } from 'sonner'
 
 const COLUMNS: { id: UnifiedStatus; label: string; color: string }[] = [
   { id: 'drafts',      label: 'Drafts',       color: '#5C4B50' },
-  { id: 'en-proceso',  label: 'En proceso',   color: '#B08A4A' },
+  { id: 'en-proceso',  label: 'En proceso',   color: 'var(--warning)' },
   { id: 'programado',  label: 'Programado',   color: 'var(--accent)' },
-  { id: 'publicado',   label: 'Publicado',    color: '#10B981' },
+  { id: 'publicado',   label: 'Publicado',    color: 'var(--success)' },
 ]
 
 // ─── API helpers ──────────────────────────────────────────────────────────
@@ -259,7 +259,7 @@ export function PipelineBoard() {
         </div>
         <button onClick={() => setModal({ open: true, item: null })}
           className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium hover:opacity-90"
-          style={{ backgroundColor: 'var(--accent)', color: '#fff' }}>
+          style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}>
           <Plus size={15} /> Nuevo contenido
         </button>
       </div>

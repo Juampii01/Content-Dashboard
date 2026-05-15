@@ -61,9 +61,9 @@ export function GreetingBlock({
   }, [])
 
   const pills = [
-    { label: 'En producción', value: pipelineProduccion, icon: GitBranch,      color: '#B08A4A',      hint: 'piezas activas' },
+    { label: 'En producción', value: pipelineProduccion, icon: GitBranch,      color: 'var(--warning)',      hint: 'piezas activas' },
     { label: 'Programados',   value: pipelineProgramado,  icon: CalendarCheck,  color: 'var(--accent)', hint: 'listos para publicar' },
-    { label: 'Ideas guardadas', value: ideasCount,        icon: Lightbulb,      color: '#9B7DB0',      hint: 'en el baúl' },
+    { label: 'Ideas guardadas', value: ideasCount,        icon: Lightbulb,      color: 'var(--chart-purple)',      hint: 'en el baúl' },
   ]
 
   return (
@@ -72,7 +72,7 @@ export function GreetingBlock({
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
             <span suppressHydrationWarning>{greeting ? `${greeting}, ${name || 'Creador'}` : `Hola, ${name || 'Creador'}`}</span>
-            <Hand className="h-5 w-5" style={{ color: '#B08A4A' }} />
+            <Hand className="h-5 w-5" style={{ color: 'var(--warning)' }} />
           </h1>
           <p className="text-xs mt-0.5 min-h-[1em]" style={{ color: 'var(--muted-foreground)' }} suppressHydrationWarning>
             {date}
@@ -82,7 +82,7 @@ export function GreetingBlock({
           className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl max-w-sm"
           style={{ backgroundColor: '#8E1F2F11', border: '1px solid #8E1F2F33' }}
         >
-          <Lightbulb size={13} style={{ color: '#B08A4A', flexShrink: 0 }} />
+          <Lightbulb size={13} style={{ color: 'var(--warning)', flexShrink: 0 }} />
           <p className="text-xs italic leading-relaxed min-h-[1.2em]" style={{ color: 'var(--muted-foreground)' }} suppressHydrationWarning>
             {quote && <>&ldquo;{quote}&rdquo;</>}
           </p>

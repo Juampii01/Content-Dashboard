@@ -143,7 +143,7 @@ export function PipelineModal({ item, defaultStatus = 'drafts', onSave, onDelete
                   className="flex-1 text-xs py-1.5 rounded-lg font-medium transition-all"
                   style={{
                     backgroundColor: type === t ? 'var(--accent)' : 'var(--muted)',
-                    color: type === t ? '#fff' : 'var(--muted-foreground)',
+                    color: type === t ? 'var(--accent-foreground)' : 'var(--muted-foreground)',
                     border: type === t ? '1px solid var(--accent)' : '1px solid var(--border)',
                   }}
                 >
@@ -311,7 +311,7 @@ export function PipelineModal({ item, defaultStatus = 'drafts', onSave, onDelete
           {item && onDelete ? (
             <button onClick={() => { onDelete(item.id); onClose() }}
               className="text-xs px-3 py-1.5 rounded-lg hover:opacity-80"
-              style={{ color: '#E05252', backgroundColor: '#E0525218' }}>
+              style={{ color: 'var(--destructive)', backgroundColor: 'color-mix(in srgb, var(--destructive) 10%, transparent)' }}>
               Eliminar
             </button>
           ) : <span />}
@@ -321,7 +321,7 @@ export function PipelineModal({ item, defaultStatus = 'drafts', onSave, onDelete
             </button>
             <button onClick={handleSubmit} disabled={!title.trim()}
               className="text-xs px-4 py-1.5 rounded-lg font-medium disabled:opacity-40"
-              style={{ backgroundColor: 'var(--accent)', color: '#fff' }}>
+              style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}>
               {item ? 'Guardar' : 'Crear'}
             </button>
           </div>

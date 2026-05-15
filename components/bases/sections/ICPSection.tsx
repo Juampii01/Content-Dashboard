@@ -132,7 +132,7 @@ export function ICPSection() {
       {data.updatedAt && (
         <div className="flex items-center gap-2">
           <span className="text-[11px] px-2.5 py-1 rounded-full font-medium"
-            style={{ backgroundColor: '#B08A4A22', color: '#B08A4A', border: '1px solid #B08A4A44' }}>
+            style={{ backgroundColor: 'color-mix(in srgb, var(--warning) 13%, transparent)', color: 'var(--warning)', border: '1px solid color-mix(in srgb, var(--warning) 27%, transparent)' }}>
             Actualizado: {formatDate(data.updatedAt)}
           </span>
         </div>
@@ -169,7 +169,7 @@ export function ICPSection() {
 
         <div className="space-y-4">
           {chipGroup('Dolores', 'dolores', 'var(--accent)', 'Ej: No sabe de dónde vienen clientes')}
-          {chipGroup('Deseos', 'deseos', '#B08A4A', 'Ej: Clientes predecibles')}
+          {chipGroup('Deseos', 'deseos', 'var(--warning)', 'Ej: Clientes predecibles')}
           {chipGroup('Creencias / Objeciones', 'creencias', '#7A6060', 'Ej: Los ads no funcionan en mi nicho')}
         </div>
       </div>

@@ -25,7 +25,7 @@ const PLATFORMS: Record<SocialPlatform, PlatformConfig> = {
   instagram: {
     label: 'Instagram',
     icon: Camera,
-    iconColor: '#E1306C',
+    iconColor: 'var(--platform-instagram)',
     description: 'Vincula tu cuenta de Instagram para sincronizar métricas en tiempo real.',
     steps: [
       'Conecta tu cuenta de Meta Business',
@@ -51,7 +51,7 @@ const PLATFORMS: Record<SocialPlatform, PlatformConfig> = {
   youtube: {
     label: 'YouTube',
     icon: Play,
-    iconColor: '#FF0000',
+    iconColor: 'var(--platform-youtube)',
     description: 'Vincula tu canal de YouTube para sincronizar métricas en tiempo real.',
     steps: [
       'Conecta tu cuenta de Google / YouTube Studio',
@@ -120,8 +120,8 @@ function DisconnectedView({
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{
-              backgroundColor: `${cfg.iconColor}18`,
-              border: `1px solid ${cfg.iconColor}30`,
+              backgroundColor: `color-mix(in srgb, ${cfg.iconColor} 9%, transparent)`,
+              border: `1px solid color-mix(in srgb, ${cfg.iconColor} 19%, transparent)`,
             }}
           >
             <Icon size={20} style={{ color: cfg.iconColor }} />
@@ -231,8 +231,8 @@ function ConnectedView({
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{
-                backgroundColor: `${cfg.iconColor}18`,
-                border: `1px solid ${cfg.iconColor}30`,
+                backgroundColor: `color-mix(in srgb, ${cfg.iconColor} 9%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${cfg.iconColor} 19%, transparent)`,
               }}
             >
               <Icon size={20} style={{ color: cfg.iconColor }} />
@@ -298,8 +298,8 @@ function ConnectedView({
           onClick={handleDisconnect}
           className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
           style={{
-            color: '#dc2626',
-            border: '1px solid #dc2626',
+            color: 'var(--destructive)',
+            border: '1px solid var(--destructive)',
             backgroundColor: 'transparent',
           }}
         >

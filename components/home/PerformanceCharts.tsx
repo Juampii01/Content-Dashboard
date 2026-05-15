@@ -43,7 +43,7 @@ export function PerformanceCharts({ stats: s }: PerformanceChartsProps) {
             Alcance &amp; Visibilidad
           </p>
           <div className="flex items-center gap-4">
-            {[{ label: 'Impresiones', color: 'var(--accent)' }, { label: 'Alcance', color: '#B08A4A' }].map(({ label, color }) => (
+            {[{ label: 'Impresiones', color: 'var(--accent)' }, { label: 'Alcance', color: 'var(--warning)' }].map(({ label, color }) => (
               <div key={label} className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
                 <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{label}</span>
@@ -59,8 +59,8 @@ export function PerformanceCharts({ stats: s }: PerformanceChartsProps) {
                 <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="gReach" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="#B08A4A" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#B08A4A" stopOpacity={0} />
+                <stop offset="5%"  stopColor="var(--warning)" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="var(--warning)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -73,7 +73,7 @@ export function PerformanceCharts({ stats: s }: PerformanceChartsProps) {
             <Area type="monotone" dataKey="impressions" name="Impresiones"
               stroke="var(--accent)" strokeWidth={2} fill="url(#gImpr)" dot={false} />
             <Area type="monotone" dataKey="reach" name="Alcance"
-              stroke="#B08A4A" strokeWidth={2} fill="url(#gReach)" dot={false} />
+              stroke="var(--warning)" strokeWidth={2} fill="url(#gReach)" dot={false} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -84,8 +84,8 @@ export function PerformanceCharts({ stats: s }: PerformanceChartsProps) {
           <div className="flex items-center gap-4">
             {[
               { label: 'Me Gusta',    color: 'var(--accent)' },
-              { label: 'Guardados',   color: '#B08A4A' },
-              { label: 'Comentarios', color: '#9B7DB0' },
+              { label: 'Guardados',   color: 'var(--warning)' },
+              { label: 'Comentarios', color: 'var(--chart-purple)' },
             ].map(({ label, color }) => (
               <div key={label} className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
@@ -105,8 +105,8 @@ export function PerformanceCharts({ stats: s }: PerformanceChartsProps) {
               axisLine={false} tickLine={false} tickFormatter={fmt} />
             <Tooltip content={<ChartTooltip />} />
             <Bar dataKey="likes"    name="Me Gusta"    fill="var(--accent)" radius={[3,3,0,0]} />
-            <Bar dataKey="saves"    name="Guardados"   fill="#B08A4A"       radius={[3,3,0,0]} />
-            <Bar dataKey="comments" name="Comentarios" fill="#9B7DB0"       radius={[3,3,0,0]} />
+            <Bar dataKey="saves"    name="Guardados"   fill="var(--warning)"        radius={[3,3,0,0]} />
+            <Bar dataKey="comments" name="Comentarios" fill="var(--chart-purple)"  radius={[3,3,0,0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

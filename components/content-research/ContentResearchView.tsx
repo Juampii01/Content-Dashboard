@@ -13,6 +13,7 @@ import {
   MessageCircle,
   Telescope,
   Inbox,
+  FileText,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -34,6 +35,7 @@ interface ResearchVideo {
   comments: number
   duration: string
   publishedAt: string | null
+  transcript: string | null
   analysis: string | null
 }
 
@@ -53,6 +55,7 @@ interface ResearchRow {
 const dateOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }
 
 function VideoCard({ video, platform }: { video: ResearchVideo; platform: Platform }) {
+  const [showTranscript, setShowTranscript] = useState(false)
   return (
     <div
       className="rounded-xl overflow-hidden card-lift"
@@ -111,6 +114,33 @@ function VideoCard({ video, platform }: { video: ResearchVideo; platform: Platfo
               </span>
             </div>
             {video.analysis}
+          </div>
+        )}
+
+        {video.transcript && (
+          <div className="mb-3">
+            <button
+              type="button"
+              onClick={() => setShowTranscript((v) => !v)}
+              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider hover:opacity-70 cursor-pointer"
+              style={{ color: 'var(--muted-foreground)' }}
+            >
+              <FileText size={10} />
+              {showTranscript ? 'Ocultar transcript' : 'Ver transcript'}
+            </button>
+            {showTranscript && (
+              <div
+                className="mt-2 rounded-lg p-3 text-xs leading-relaxed max-h-48 overflow-y-auto"
+                style={{
+                  backgroundColor: 'var(--muted)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--muted-foreground)',
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {video.transcript}
+              </div>
+            )}
           </div>
         )}
 

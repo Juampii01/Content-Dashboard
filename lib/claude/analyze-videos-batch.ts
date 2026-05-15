@@ -16,6 +16,7 @@ export interface AnalyzableItem {
   views: number
   likes?: number
   comments?: number
+  transcript?: string
 }
 
 export async function analyzeRankedItems(
@@ -37,7 +38,10 @@ export async function analyzeRankedItems(
     .map(
       (p, i) =>
         `${i + 1}. "${p.title.slice(0, 100)}" — ${p.views.toLocaleString()} views` +
-        (p.comments ? `, ${p.comments.toLocaleString()} comentarios` : ''),
+        (p.comments ? `, ${p.comments.toLocaleString()} comentarios` : '') +
+        (p.transcript
+          ? `\nTranscript (${p.transcript.length} chars): ${p.transcript.slice(0, 400)}`
+          : ''),
     )
     .join('\n')
 

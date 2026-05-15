@@ -79,9 +79,9 @@ export function YouTubeContent() {
         >
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: '#FF000018', border: '1px solid #FF000030' }}
+            style={{ backgroundColor: 'color-mix(in srgb, var(--platform-youtube) 9%, transparent)', border: '1px solid color-mix(in srgb, var(--platform-youtube) 19%, transparent)' }}
           >
-            <Play size={18} style={{ color: '#FF0000' }} />
+            <Play size={18} style={{ color: 'var(--platform-youtube)' }} />
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
@@ -97,9 +97,9 @@ export function YouTubeContent() {
       {!loading && needsReconnect && (
         <div
           className="rounded-xl p-5 mb-5"
-          style={{ backgroundColor: '#dc262614', border: '1px solid #dc2626' }}
+          style={{ backgroundColor: 'color-mix(in srgb, var(--destructive) 8%, transparent)', border: '1px solid var(--destructive)' }}
         >
-          <p className="text-sm font-semibold" style={{ color: '#dc2626' }}>
+          <p className="text-sm font-semibold" style={{ color: 'var(--destructive)' }}>
             Tu conexión con YouTube expiró.
           </p>
           <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)' }}>
