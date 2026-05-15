@@ -18,6 +18,7 @@ export interface UserReelUpsert {
   caption: string | null
   likesCount: number
   commentsCount: number
+  viewsCount: number
   publishedAt: Date | null
 }
 
@@ -42,6 +43,7 @@ export function mediaToUserReel(m: InstagramMedia): UserReelUpsert {
     caption: m.caption ?? null,
     likesCount: m.like_count ?? 0,
     commentsCount: m.comments_count ?? 0,
+    viewsCount: m.video_views ?? 0,
     publishedAt: m.timestamp ? new Date(m.timestamp) : null,
   }
 }
