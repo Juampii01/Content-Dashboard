@@ -20,7 +20,7 @@
 | `/transcript`  | `app/transcript/page.tsx` → `TranscriptView`    | Paste a YouTube/Instagram URL → transcript + AI summary (Apify + Groq + Claude). History scoped to active client. |
 | `/content-research` | `app/content-research/page.tsx` → `ContentResearchView` | Channel-level research — top 5 videos in a timeframe with AI analysis (YouTube via Data API, Instagram via Apify). |
 | `/video-feed`  | `app/video-feed/page.tsx` → `VideoFeedView`     | Connect own Instagram → last 30 days ranked by engagement, AI analysis per post. Singleton per (client, platform). |
-| `/tiktok`      | `app/tiktok/page.tsx` → `TikTokContent`         | TikTok analytics — `ComingSoonBanner` placeholder hasta wirear TikTok Display API |
+| `/tiktok`      | `app/tiktok/page.tsx` → `TikTokContent`         | TikTok analytics — 2 tabs (Dashboard, Videos) + ConnectButton + sync |
 | `/youtube`     | `app/youtube/page.tsx` → `YouTubeContent`       | YouTube analytics — 3 tabs (Dashboard, Videos, Audiencia) + ConnectButton |
 | `/pending-approval` | `app/pending-approval/page.tsx`            | Landing for PENDING users — shown until a SUPER_ADMIN approves them |
 | `/admin`       | `app/admin/page.tsx`                            | Admin overview — counters (users, pendientes, clientes). SUPER_ADMIN only |
@@ -28,6 +28,12 @@
 | `/admin/clients` | `app/admin/clients/page.tsx` → `ClientsAdminClient` | Tenant management — create / edit / delete clients. SUPER_ADMIN only |
 
 API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `youtube/*`, `admin/*`, `me/*`) and are not user-facing.
+
+### TikTok APIs
+
+- `POST /api/tiktok/sync` — pull account stats + last 60 videos (3 pages × 20), upsert `AccountSnapshot` (platform='tiktok') + `TikTokVideo`. Rate-limited 5/min. Handles token refresh automatically.
+- `GET  /api/tiktok/videos?limit=&cursor=` — paginated list of stored TikTok videos for the active client
+- `GET  /api/tiktok/account-summary` — connection state + token-expired flag + latest snapshot + videos count
 
 ### YouTube APIs
 
@@ -93,7 +99,7 @@ Visual verification — all routes
 - [ ] /transcript  URL form renders; paste YouTube link returns transcript + summary; history list shows past items
 - [ ] /content-research  channel input + timeframe; results grid renders with AI analysis chips; history works
 - [ ] /video-feed  empty state shows connect form; after connect, posts grid renders ranked with AI summaries
-- [ ] /tiktok      loads, ComingSoonBanner renderiza con título + 4 chips de features
+- [ ] /tiktok      loads, tabs (Dashboard, Videos) renderizan; ConnectButton visible; sync funciona tras conectar
 - [ ] /youtube     loads, tabs (Dashboard, Videos, Audiencia) renderizan
 - [ ] /pending-approval  PENDING user lands here, sign-out works
 - [ ] /admin       (SUPER_ADMIN) overview cards render; non-admin sees 404
