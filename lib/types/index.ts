@@ -1,4 +1,4 @@
-export type Period = 7 | 14 | 30 | 90
+export type Period = 0 | 7 | 14 | 30 | 90
 
 export type Tab =
   | 'dashboard'

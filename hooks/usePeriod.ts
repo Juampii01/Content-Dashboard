@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import type { Period } from '@/lib/types'
 
-const VALID_PERIODS: Period[] = [7, 14, 30, 90]
+const VALID_PERIODS: Period[] = [0, 7, 14, 30, 90]
 
 export function usePeriod(): [Period, (p: Period) => void] {
   const searchParams = useSearchParams()

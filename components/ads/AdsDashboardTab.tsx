@@ -1,8 +1,9 @@
 'use client'
 
 import { DollarSign, Eye, MousePointer, TrendingUp, ShoppingCart, Percent } from 'lucide-react'
-import { useAdsAccountSummary } from '@/hooks/useAdsData'
+import { useAdsAccountSummary, useMonthlyInsights } from '@/hooks/useAdsData'
 import { formatK } from '@/lib/utils/formatters'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface KPICardProps {
   label: string
@@ -55,8 +56,16 @@ interface Props {
   hasData: boolean
 }
 
+function formatMonthLabel(yearMonth: string): string {
+  // yearMonth = "YYYY-MM"
+  const [year, month] = yearMonth.split('-')
+  const date = new Date(Number(year), Number(month) - 1, 1)
+  return date.toLocaleDateString('es', { month: 'short' })
+}
+
 export function AdsDashboardTab({ connected, hasData }: Props) {
   const { data: summary, loading } = useAdsAccountSummary()
+  const { data: monthlyData } = useMonthlyInsights()
   const stats = summary?.stats ?? null
 
   if (!connected && !loading) {
@@ -167,6 +176,56 @@ export function AdsDashboardTab({ connected, hasData }: Props) {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Monthly spend chart */}
+      <div
+        className="rounded-xl p-5"
+        style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+      >
+        <p
+          className="text-xs font-semibold tracking-widest uppercase mb-4"
+          style={{ color: 'var(--muted-foreground)' }}
+        >
+          GASTO MENSUAL
+        </p>
+        {monthlyData.length === 0 ? (
+          <p className="text-sm text-center py-6" style={{ color: 'var(--muted-foreground)' }}>
+            Sin datos mensuales aún — sincronizá para ver el historial.
+          </p>
+        ) : (
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={monthlyData.map(d => ({ ...d, monthLabel: formatMonthLabel(d.month) }))} barSize={28}>
+              <XAxis
+                dataKey="monthLabel"
+                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => `$${v}`}
+                width={52}
+              />
+              <Tooltip
+                formatter={(value: unknown) =>
+                  new Intl.NumberFormat('es', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(Number(value ?? 0))
+                }
+                labelStyle={{ color: 'var(--foreground)', fontWeight: 600 }}
+                contentStyle={{
+                  backgroundColor: 'var(--card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                }}
+                cursor={{ fill: 'color-mix(in srgb, var(--accent) 8%, transparent)' }}
+              />
+              <Bar dataKey="spend" name="Gasto (USD)" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   )

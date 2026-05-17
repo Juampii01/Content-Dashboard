@@ -3,7 +3,13 @@
 import { usePeriod } from '@/hooks/usePeriod'
 import type { Period } from '@/lib/types'
 
-const PERIODS: Period[] = [7, 14, 30, 90]
+const PERIODS: { value: Period; label: string }[] = [
+  { value: 7, label: '7d' },
+  { value: 14, label: '14d' },
+  { value: 30, label: '30d' },
+  { value: 90, label: '90d' },
+  { value: 0, label: 'Todo' },
+]
 
 export function TimeFilter() {
   const [period, setPeriod] = usePeriod()
@@ -14,13 +20,13 @@ export function TimeFilter() {
         className="flex items-center gap-0.5 p-1 rounded-xl"
         style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
       >
-        {PERIODS.map((p) => {
-          const active = period === p
+        {PERIODS.map(({ value, label }) => {
+          const active = period === value
           return (
             <button
-              key={p}
+              key={value}
               type="button"
-              onClick={() => setPeriod(p)}
+              onClick={() => setPeriod(value)}
               className="relative px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
               style={{
                 color: active ? 'var(--accent-foreground)' : 'var(--muted-foreground)',
@@ -29,7 +35,7 @@ export function TimeFilter() {
               }}
               aria-pressed={active}
             >
-              {p}d
+              {label}
             </button>
           )
         })}

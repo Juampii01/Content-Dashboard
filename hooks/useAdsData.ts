@@ -1,6 +1,26 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+
+// ─── useMonthlyInsights ───────────────────────────────────────────────────────
+
+export function useMonthlyInsights() {
+  const [data, setData] = useState<{ month: string; spend: number; impressions: number; clicks: number }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/ads/monthly-insights')
+      .then(r => r.ok ? r.json() : { months: [] })
+      .then((d: { months?: { month: string; spend: number; impressions: number; clicks: number }[] }) => {
+        if (!cancelled) { setData(d.months ?? []); setLoading(false) }
+      })
+      .catch(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  return { data, loading }
+}
 import { toast } from 'sonner'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

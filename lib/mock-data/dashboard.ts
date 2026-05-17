@@ -34,6 +34,17 @@ function generateInteractionsData(days: number) {
 }
 
 const stats: Record<Period, DashboardStats> = {
+  0: {
+    impressions: 12000000, avgDailyReach: 45600, impressionsChange: 0,
+    profileConversionRate: 18.5, profileVisits: 580000, newFollowers: 98400, conversionChange: 0,
+    profileGrowth: 98400, growthLast30: 7900,
+    trafficOrganic: 21, trafficPaid: 79,
+    likes: 240000, saves: 270000, comments: 120000,
+    engagementRate: 5.1, bestReelViews: 284000,
+    viewsGoalPct: 100, followersGoalPct: 100,
+    chartData: generateChartData(90),
+    interactionsData: generateInteractionsData(90),
+  },
   7: {
     impressions: 312000, avgDailyReach: 8200, impressionsChange: 12.1,
     profileConversionRate: 14.8, profileVisits: 10200, newFollowers: 1510, conversionChange: 18.2,
