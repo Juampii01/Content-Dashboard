@@ -1,166 +1,79 @@
 'use client'
 
 /**
- * YouTube demographics (age / gender / country) renderizados con mock data
- * mientras la YouTube Analytics API real no está integrada (scope distinto
- * al Data API v3 usado en /api/youtube/sync). Cuando el cliente conecte
- * Analytics API, este tab consumirá datos reales en vez del mock.
+ * YouTubeAudienciaTab
+ *
+ * Demographics (age / gender / country) require the YouTube Analytics API
+ * with the `yt-analytics.readonly` scope — separate from the `youtube.readonly`
+ * scope used in the current sync flow. Until that scope is added and approved
+ * in Google Cloud, this tab shows an honest placeholder instead of fake data.
  */
 
-import { Users, Globe2 } from 'lucide-react'
-import { youtubeMockDemographics } from '@/lib/mock-data/youtube'
+import { Users, Globe2, BarChart3 } from 'lucide-react'
+
+function ComingSoonCard({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: React.ElementType
+  title: string
+  description: string
+}) {
+  return (
+    <div
+      className="rounded-xl p-6 flex flex-col items-center gap-3 text-center"
+      style={{ backgroundColor: 'var(--card)', border: '1px dashed var(--border)' }}
+    >
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center"
+        style={{ backgroundColor: 'var(--muted)' }}
+      >
+        <Icon size={18} style={{ color: 'var(--muted-foreground)' }} />
+      </div>
+      <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+        {title}
+      </p>
+      <p className="text-xs max-w-xs" style={{ color: 'var(--muted-foreground)' }}>
+        {description}
+      </p>
+    </div>
+  )
+}
 
 export function YouTubeAudienciaTab() {
-  const { ageGroups, gender, topCountries } = youtubeMockDemographics
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Age groups */}
-        <div
-          className="rounded-xl p-5"
-          style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Users size={16} style={{ color: 'var(--muted-foreground)' }} />
-            <p
-              className="text-xs font-semibold tracking-widest uppercase"
-              style={{ color: 'var(--muted-foreground)' }}
-            >
-              Edad
-            </p>
-          </div>
-          <div className="space-y-3">
-            {ageGroups.map((a) => (
-              <div key={a.range} className="flex items-center gap-3">
-                <span
-                  className="text-sm w-16 tabular-nums"
-                  style={{ color: 'var(--foreground)' }}
-                >
-                  {a.range}
-                </span>
-                <div
-                  className="flex-1 h-2 rounded-full overflow-hidden"
-                  style={{ backgroundColor: 'var(--muted)' }}
-                >
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${a.percent}%`,
-                      backgroundColor: 'var(--accent)',
-                    }}
-                  />
-                </div>
-                <span
-                  className="text-sm w-10 text-right tabular-nums"
-                  style={{ color: 'var(--muted-foreground)' }}
-                >
-                  {a.percent}%
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Gender */}
-        <div
-          className="rounded-xl p-5"
-          style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Users size={16} style={{ color: 'var(--muted-foreground)' }} />
-            <p
-              className="text-xs font-semibold tracking-widest uppercase"
-              style={{ color: 'var(--muted-foreground)' }}
-            >
-              Género
-            </p>
-          </div>
-          <div className="space-y-3">
-            {gender.map((g) => (
-              <div key={g.label} className="flex items-center gap-3">
-                <span
-                  className="text-sm w-24"
-                  style={{ color: 'var(--foreground)' }}
-                >
-                  {g.label}
-                </span>
-                <div
-                  className="flex-1 h-2 rounded-full overflow-hidden"
-                  style={{ backgroundColor: 'var(--muted)' }}
-                >
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${g.percent}%`,
-                      backgroundColor: 'var(--accent)',
-                    }}
-                  />
-                </div>
-                <span
-                  className="text-sm w-10 text-right tabular-nums"
-                  style={{ color: 'var(--muted-foreground)' }}
-                >
-                  {g.percent}%
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ComingSoonCard
+          icon={Users}
+          title="Distribución por edad"
+          description="Requiere habilitar YouTube Analytics API (yt-analytics.readonly) en Google Cloud y reconectar la cuenta."
+        />
+        <ComingSoonCard
+          icon={Users}
+          title="Distribución por género"
+          description="Requiere YouTube Analytics API. Los datos de género no están disponibles con el scope youtube.readonly actual."
+        />
       </div>
 
-      {/* Top countries */}
+      <ComingSoonCard
+        icon={Globe2}
+        title="Países top"
+        description="La distribución geográfica de la audiencia también requiere YouTube Analytics API."
+      />
+
       <div
-        className="rounded-xl p-5"
-        style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+        className="rounded-xl p-4 flex items-start gap-3"
+        style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}
       >
-        <div className="flex items-center gap-2 mb-4">
-          <Globe2 size={16} style={{ color: 'var(--muted-foreground)' }} />
-          <p
-            className="text-xs font-semibold tracking-widest uppercase"
-            style={{ color: 'var(--muted-foreground)' }}
-          >
-            Países top
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-          {topCountries.map((c) => (
-            <div key={c.country} className="flex items-center gap-3">
-              <span
-                className="text-sm w-32 truncate"
-                style={{ color: 'var(--foreground)' }}
-              >
-                {c.country}
-              </span>
-              <div
-                className="flex-1 h-2 rounded-full overflow-hidden"
-                style={{ backgroundColor: 'var(--muted)' }}
-              >
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${c.percent}%`,
-                    backgroundColor: 'var(--accent)',
-                  }}
-                />
-              </div>
-              <span
-                className="text-sm w-10 text-right tabular-nums"
-                style={{ color: 'var(--muted-foreground)' }}
-              >
-                {c.percent}%
-              </span>
-            </div>
-          ))}
-        </div>
+        <BarChart3 size={16} style={{ color: 'var(--muted-foreground)', flexShrink: 0, marginTop: 2 }} />
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
+          Para activar demografía real, habilitá <strong style={{ color: 'var(--foreground)' }}>YouTube Analytics API</strong> en tu
+          proyecto de Google Cloud, agregá el scope <code>yt-analytics.readonly</code> al OAuth y reconectá la cuenta desde{' '}
+          <strong style={{ color: 'var(--foreground)' }}>/youtube</strong>.
+        </p>
       </div>
-
-      <p
-        className="text-xs text-center"
-        style={{ color: 'var(--muted-foreground)' }}
-      >
-        Demografía en modo demo — se activará con datos reales cuando se integre YouTube Analytics API.
-      </p>
     </div>
   )
 }

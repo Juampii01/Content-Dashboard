@@ -6,7 +6,9 @@ import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/au
 
 export async function POST(req: NextRequest) {
   try {
-    await requireActiveClient()
+    // clientId extracted for tenant-scoping future DB writes
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { clientId: _clientId } = await requireActiveClient()
   } catch (err) {
     if (err instanceof UnauthorizedError) {
       return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })

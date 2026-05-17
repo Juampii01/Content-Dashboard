@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { getDashboardStats } from '@/lib/mock-data/dashboard'
 import type { Period, DashboardStats } from '@/lib/types'
 import { GreetingBlock } from './GreetingBlock'
 import { StatGrid } from './StatGrid'
@@ -101,11 +100,12 @@ export function HomeContent() {
     return { likes, comments, followers, bestReelViews, hasData: true }
   }, [igReels, igSummary, period])
 
-  // Build stats from real data only — zero out fields we can't get from API
-  const base = getDashboardStats(period)
+  // Build stats from real data only — fields not available from the API stay at 0
   const hasPartialReal = igReal?.hasData ?? false
   const s: DashboardStats = {
-    ...base,
+    // Instagram Graph API with instagram_business_basic scope does not expose
+    // impressions, reach, saves, profile visits or traffic breakdown —
+    // those require instagram_manage_insights (App Review). Set to 0.
     impressions: 0,
     avgDailyReach: 0,
     impressionsChange: 0,
@@ -120,6 +120,7 @@ export function HomeContent() {
     followersGoalPct: 0,
     chartData: [],
     interactionsData: [],
+    // Real data from synced UserReel rows, filtered by selected period
     likes: igReal?.likes ?? 0,
     comments: igReal?.comments ?? 0,
     bestReelViews: igReal?.bestReelViews ?? 0,
