@@ -79,7 +79,7 @@ export function AdsCampaignsTab({ connected, hasData }: Props) {
   return (
     <div className="space-y-3">
       <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-        {campaigns.length} campaña{campaigns.length === 1 ? '' : 's'} · últimos 30 días
+        {campaigns.length} campaña{campaigns.length === 1 ? '' : 's'} · todos los tiempos
       </span>
 
       <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>

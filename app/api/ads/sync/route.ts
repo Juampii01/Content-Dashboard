@@ -18,7 +18,7 @@ import { checkRateLimit } from '@/lib/utils/ratelimit'
 import { MetaAdAccountsResponseSchema, MetaCampaignsResponseSchema } from '@/lib/schemas/ads'
 
 const GRAPH = 'https://graph.facebook.com/v19.0'
-const DATE_PRESET = 'last_30d'
+const DATE_PRESET = 'lifetime'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
