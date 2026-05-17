@@ -131,32 +131,53 @@ export async function POST(): Promise<NextResponse> {
         },
       })
 
-      // 3. Fetch campaigns with 30d insights
-      const insightFields = `spend,impressions,clicks,reach,ctr,cpc,actions,action_values`
+      // 3a. Fetch campaigns (without insights — more reliable for paused/$0 campaigns)
       const campaignsUrl =
         `${GRAPH}/${acct.id}/campaigns` +
-        `?fields=id,name,status,objective,insights.date_preset(${DATE_PRESET}){${insightFields}}` +
+        `?fields=id,name,status,objective` +
         `&limit=50&access_token=${encodeURIComponent(accessToken)}`
 
       const campaignsRes = await fetch(campaignsUrl, { signal: AbortSignal.timeout(15_000) })
       if (!campaignsRes.ok) {
-        console.warn('[ads/sync] campaigns fetch failed for', acct.id, campaignsRes.status)
+        const errText = await campaignsRes.text()
+        console.warn('[ads/sync] campaigns fetch failed for', acct.id, campaignsRes.status, errText.slice(0, 200))
         continue
       }
 
       const campaignsRaw = await campaignsRes.json()
       const campaignsParsed = MetaCampaignsResponseSchema.safeParse(campaignsRaw)
       if (!campaignsParsed.success) {
-        console.warn('[ads/sync] campaigns shape drift for', acct.id)
+        console.warn('[ads/sync] campaigns shape drift for', acct.id, JSON.stringify(campaignsRaw).slice(0, 200))
         continue
       }
 
       const campaigns = campaignsParsed.data.data ?? []
+
+      // 3b. Fetch insights separately (lifetime) — may return empty for $0 campaigns
+      const insightFields = `spend,impressions,clicks,reach,ctr,cpc,actions,action_values`
+      const insightsUrl =
+        `${GRAPH}/${acct.id}/insights` +
+        `?level=campaign&fields=campaign_id,${insightFields}` +
+        `&date_preset=${DATE_PRESET}&limit=50&access_token=${encodeURIComponent(accessToken)}`
+
+      type InsightRow = { campaign_id: string; spend?: string; impressions?: string; clicks?: string; reach?: string; ctr?: string; cpc?: string; actions?: Array<{ action_type: string; value: string }>; action_values?: Array<{ action_type: string; value: string }> }
+      const insightsMap = new Map<string, InsightRow>()
+      try {
+        const insightsRes = await fetch(insightsUrl, { signal: AbortSignal.timeout(15_000) })
+        if (insightsRes.ok) {
+          const insightsRaw = await insightsRes.json() as { data?: InsightRow[] }
+          for (const row of insightsRaw.data ?? []) {
+            if (row.campaign_id) insightsMap.set(row.campaign_id, row)
+          }
+        }
+      } catch (err) {
+        console.warn('[ads/sync] insights fetch failed for', acct.id, err)
+      }
       const syncedAt = new Date()
 
       const results = await Promise.allSettled(
         campaigns.map((c) => {
-          const insights = c.insights?.data?.[0]
+          const insights = insightsMap.get(c.id)
           const spend = parseNum(insights?.spend)
           const impressions = Math.round(parseNum(insights?.impressions))
           const clicks = Math.round(parseNum(insights?.clicks))
