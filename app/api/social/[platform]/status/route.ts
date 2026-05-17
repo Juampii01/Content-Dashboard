@@ -12,7 +12,7 @@ import { getActiveClientId, getUserIdOrNull } from '@/lib/auth-user'
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
-const PlatformSchema = z.enum(['instagram', 'tiktok', 'youtube'])
+const PlatformSchema = z.enum(['instagram', 'tiktok', 'youtube', 'meta-ads'])
 
 // ─── Response type ────────────────────────────────────────────────────────────
 

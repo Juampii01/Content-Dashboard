@@ -1,6 +1,6 @@
 'use client'
 
-import { LayoutDashboard, Film, BookOpen, Grid3X3, Swords, BookMarked, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, Film, Grid3X3, Swords, BookMarked } from 'lucide-react'
 import { useTab } from '@/hooks/useTab'
 import type { Tab } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -8,11 +8,9 @@ import { cn } from '@/lib/utils'
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'dashboard',             label: 'Dashboard',          icon: LayoutDashboard },
   { id: 'reels',                 label: 'Reels',               icon: Film },
-  { id: 'historias',             label: 'Historias',           icon: BookOpen },
   { id: 'publicaciones',         label: 'Publicaciones',       icon: Grid3X3 },
   { id: 'competencia',           label: 'Competencia',         icon: Swords },
   { id: 'referencias',           label: 'Referencias',         icon: BookMarked },
-  { id: 'demografia',            label: 'Demografía',          icon: BarChart2 },
 ]
 
 export function TabNav() {

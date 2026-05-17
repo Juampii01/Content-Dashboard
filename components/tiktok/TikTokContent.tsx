@@ -44,7 +44,7 @@ export function TikTokContent() {
         icon={Music}
         actions={
           <>
-            <TimeFilter />
+            {hasData && <TimeFilter />}
             {connected && (
               <button
                 type="button"
