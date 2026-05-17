@@ -21,9 +21,23 @@ export function TopBar() {
   const [stats, setStats] = useState<GlobalStats | null>(null)
   const [loaded, setLoaded] = useState(false)
 
+  // Map route → platform param so the TopBar shows platform-specific stats
+  const platformParam = pathname.startsWith('/instagram')
+    ? 'instagram'
+    : pathname.startsWith('/youtube')
+    ? 'youtube'
+    : pathname.startsWith('/tiktok')
+    ? 'tiktok'
+    : pathname.startsWith('/ads')
+    ? 'meta-ads'
+    : null
+
   useEffect(() => {
     let cancelled = false
-    fetch('/api/me/global-stats')
+    const url = platformParam
+      ? `/api/me/global-stats?platform=${platformParam}`
+      : '/api/me/global-stats'
+    fetch(url)
       .then((r) => (r.ok ? (r.json() as Promise<GlobalStats | null>) : null))
       .then((data) => {
         if (cancelled) return
@@ -37,7 +51,7 @@ export function TopBar() {
     return () => {
       cancelled = true
     }
-  }, [pathname])
+  }, [pathname, platformParam])
 
   // Until the fetch resolves we show the same dash placeholders so the
   // pills don't flash mock numbers during hydration.

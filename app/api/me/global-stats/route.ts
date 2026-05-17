@@ -11,7 +11,7 @@
  * Replaces `lib/mock-data/global.ts` which served identical-looking but
  * invented stats to the TopBar.
  */
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
 
@@ -21,13 +21,19 @@ export interface GlobalStatsResponse {
   engagementRate: number
 }
 
-export async function GET(): Promise<NextResponse<GlobalStatsResponse | null | { error: string }>> {
+const VALID_PLATFORMS = ['instagram', 'youtube', 'tiktok', 'meta-ads'] as const
+
+export async function GET(req: NextRequest): Promise<NextResponse<GlobalStatsResponse | null | { error: string }>> {
   try {
     const { clientId } = await requireActiveClient()
 
+    // Optional ?platform= filter for platform-specific TopBar stats
+    const platformParam = req.nextUrl.searchParams.get('platform')
+    const filterPlatform = (VALID_PLATFORMS as readonly string[]).includes(platformParam ?? '') ? platformParam : null
+
     // Only include platforms that have an active SocialConnection
     const connections = await db.socialConnection.findMany({
-      where: { clientId },
+      where: { clientId, ...(filterPlatform ? { platform: filterPlatform } : {}) },
       select: { platform: true },
     })
     const connectedPlatforms = connections.map((c) => c.platform)
