@@ -14,7 +14,7 @@ import { cleanupExpiredStates } from '@/lib/utils/cleanup-oauth-states'
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
-const PlatformSchema = z.enum(['instagram', 'tiktok', 'youtube'])
+const PlatformSchema = z.enum(['instagram', 'tiktok', 'youtube', 'meta-ads'])
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -182,6 +182,52 @@ async function exchangeYouTube(
   }
 }
 
+// ─── Meta Ads (Facebook Marketing API) ───────────────────────────────────────
+// Uses FACEBOOK_APP_ID / FACEBOOK_APP_SECRET (falls back to INSTAGRAM_APP_ID/SECRET).
+// Fetches the first accessible ad account name for display purposes.
+
+async function exchangeMetaAds(
+  code: string,
+  redirectUri: string,
+): Promise<{ token: TokenResult; profile: ProfileResult }> {
+  const clientId = process.env.FACEBOOK_APP_ID ?? process.env.INSTAGRAM_APP_ID ?? ''
+  const clientSecret = process.env.FACEBOOK_APP_SECRET ?? process.env.INSTAGRAM_APP_SECRET ?? ''
+
+  // 1. Exchange code for long-lived token
+  const tokenRes = await fetch(
+    `https://graph.facebook.com/v19.0/oauth/access_token?` +
+    new URLSearchParams({ client_id: clientId, client_secret: clientSecret, redirect_uri: redirectUri, code }).toString(),
+    { signal: AbortSignal.timeout(10_000) },
+  )
+  if (!tokenRes.ok) {
+    const text = await tokenRes.text()
+    console.error('[meta-ads/callback] token exchange error:', tokenRes.status, text.slice(0, 200))
+    throw new Error(`Meta Ads token exchange failed: ${tokenRes.status}`)
+  }
+  const tokenData = (await tokenRes.json()) as { access_token: string; expires_in?: number }
+  const accessToken = tokenData.access_token
+
+  // 2. Fetch the user's ad accounts to get the first account name
+  const meRes = await fetch(
+    `https://graph.facebook.com/v19.0/me?fields=id,name&access_token=${accessToken}`,
+    { signal: AbortSignal.timeout(10_000) },
+  )
+  const meData = meRes.ok
+    ? ((await meRes.json()) as { id?: string; name?: string })
+    : { id: 'unknown', name: 'Meta Ads' }
+
+  return {
+    token: {
+      accessToken,
+      expiresAt: tokenData.expires_in ? new Date(Date.now() + tokenData.expires_in * 1000) : undefined,
+    },
+    profile: {
+      accountId: meData.id ?? 'unknown',
+      accountName: meData.name ?? 'Meta Ads',
+    },
+  }
+}
+
 // ─── TikTok (TikTok for Developers v2) ───────────────────────────────────────
 
 async function exchangeTikTok(
@@ -342,6 +388,8 @@ export async function GET(
       exchange = await exchangeInstagram(code, redirectUri)
     } else if (platform === 'youtube') {
       exchange = await exchangeYouTube(code, redirectUri)
+    } else if (platform === 'meta-ads') {
+      exchange = await exchangeMetaAds(code, redirectUri)
     } else {
       exchange = await exchangeTikTok(code, redirectUri)
     }

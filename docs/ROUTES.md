@@ -7,7 +7,7 @@
 | Route          | Component file                                  | Purpose                                                          |
 | -------------- | ----------------------------------------------- | ---------------------------------------------------------------- |
 | `/`            | `app/page.tsx` → `components/home/HomeContent`  | Home / overview dashboard                                        |
-| `/ads`         | `app/ads/page.tsx` → `AdsContent`               | Ads dashboard — `ComingSoonBanner` placeholder hasta wirear Meta + TikTok Ads APIs |
+| `/ads`         | `app/ads/page.tsx` → `AdsContent`               | Ads dashboard — Meta Ads: 2 tabs (Overview, Campañas) + ConnectButton + sync |
 | `/ai`          | `app/ai/page.tsx` → `EternityAIContent`         | Eternity AI — streaming chat grounded on workspace data          |
 | `/analizador`  | `app/analizador/page.tsx` → `AnalizadorContent` | Content analyzer (uses `app/api/analizador`)                     |
 | `/bases`       | `app/bases/page.tsx` → `BasesContent`           | Knowledge bases / source library                                 |
@@ -28,6 +28,12 @@
 | `/admin/clients` | `app/admin/clients/page.tsx` → `ClientsAdminClient` | Tenant management — create / edit / delete clients. SUPER_ADMIN only |
 
 API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `youtube/*`, `admin/*`, `me/*`) and are not user-facing.
+
+### Ads APIs
+
+- `POST /api/ads/sync` — pull Meta Ads accounts + campaigns with 30d insights, upsert `AdAccount` + `AdCampaign`. Rate-limited 5/min.
+- `GET  /api/ads/campaigns?platform=meta&limit=&cursor=` — paginated campaign list ordered by spend desc
+- `GET  /api/ads/account-summary` — connection state + aggregated stats + campaigns count
 
 ### TikTok APIs
 
@@ -86,7 +92,7 @@ API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `yo
 ```
 Visual verification — all routes
 - [ ] /            home renders, no console errors
-- [ ] /ads         loads, ComingSoonBanner renderiza con título + 4 chips de features
+- [ ] /ads         loads, tabs (Overview, Campañas) renderizan; ConnectButton Meta Ads visible; sync funciona tras conectar
 - [ ] /ai          Eternity chat renders; nueva conversación, streaming, historial funcionan
 - [ ] /analizador  loads, brand accents correct
 - [ ] /bases       loads, brand accents correct

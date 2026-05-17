@@ -264,7 +264,7 @@ export async function POST(): Promise<NextResponse> {
               syncedAt,
             },
           })
-          .catch((err) => {
+          .catch((err: unknown) => {
             console.error('[tiktok/sync] upsert failed for', v.videoId, err)
             throw err
           }),

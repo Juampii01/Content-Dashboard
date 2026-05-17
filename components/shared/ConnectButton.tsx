@@ -40,9 +40,9 @@ export function ConnectButton({ platform, labels }: Props) {
           type="button"
           onClick={() => setOpen(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
-          style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid #16a34a' }}
+          style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--success)' }}
         >
-          <Check size={14} style={{ color: '#16a34a' }} />
+          <Check size={14} style={{ color: 'var(--success)' }} />
           {labelConnected}
         </button>
       ) : (

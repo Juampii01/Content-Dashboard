@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 
-export type SocialPlatform = 'instagram' | 'tiktok' | 'youtube'
+export type SocialPlatform = 'instagram' | 'tiktok' | 'youtube' | 'meta-ads'
 
 interface SocialStatus {
   connected: boolean

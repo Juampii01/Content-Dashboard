@@ -585,6 +585,56 @@ model TranscriptHistory {
   @@index([clientId, createdAt])
 }
 
+// AdAccount: a connected advertising account (Meta Ads or TikTok Ads).
+// One row per (clientId, platform, accountId). Campaigns belong to an account.
+model AdAccount {
+  id          String       @id @default(cuid())
+  clientId    String
+  createdBy   String?
+  updatedBy   String?
+  platform    String       // 'meta'
+  accountId   String       // platform's account id (e.g. "act_123456")
+  accountName String       @default("")
+  currency    String       @default("USD")
+  syncedAt    DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  campaigns   AdCampaign[]
+
+  @@unique([clientId, platform, accountId])
+  @@index([clientId, platform])
+}
+
+// AdCampaign: snapshot of one campaign's metrics from the last sync.
+// Metrics are overwritten on each sync — not time-series.
+model AdCampaign {
+  id           String    @id @default(cuid())
+  clientId     String
+  adAccountId  String
+  adAccount    AdAccount @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  platform     String    // 'meta'
+  campaignId   String    @unique  // platform's campaign id
+  name         String    @default("")
+  status       String    @default("UNKNOWN")
+  objective    String    @default("")
+  spend        Float     @default(0)
+  impressions  Int       @default(0)
+  clicks       Int       @default(0)
+  reach        Int       @default(0)
+  ctr          Float     @default(0)
+  cpc          Float     @default(0)
+  roas         Float     @default(0)
+  conversions  Int       @default(0)
+  datePreset   String    @default("last_30d")
+  syncedAt     DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([clientId, platform])
+  @@index([adAccountId])
+  @@index([clientId, spend])
+}
+
 // IncomeRecord: /ventas — one income entry, optionally tied to a reel.
 model IncomeRecord {
   id          String   @id @default(cuid())

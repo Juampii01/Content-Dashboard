@@ -38,7 +38,7 @@ const PLATFORMS: Record<SocialPlatform, PlatformConfig> = {
   tiktok: {
     label: 'TikTok',
     icon: Music,
-    iconColor: '#010101',
+    iconColor: 'var(--platform-tiktok)',
     description: 'Vincula tu cuenta de TikTok para sincronizar métricas en tiempo real.',
     steps: [
       'Conecta tu cuenta de TikTok for Business',
@@ -60,6 +60,19 @@ const PLATFORMS: Record<SocialPlatform, PlatformConfig> = {
       'Los datos se actualizarán cada 24 h',
     ],
     apiNote: 'Requiere YouTube Data API v3 habilitada en Google Cloud.',
+  },
+  'meta-ads': {
+    label: 'Meta Ads',
+    icon: Play,
+    iconColor: 'var(--platform-meta)',
+    description: 'Vincula tu cuenta de Meta Ads para sincronizar campañas e insights.',
+    steps: [
+      'Autoriza el acceso con tu cuenta de Facebook',
+      'Otorga el permiso ads_read',
+      'Selecciona la cuenta publicitaria',
+      'Las campañas se sincronizarán con el botón Sincronizar',
+    ],
+    apiNote: 'Requiere que tu app de Meta tenga ads_read aprobado para producción.',
   },
 }
 
@@ -244,9 +257,9 @@ function ConnectedView({
           <span
             className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full"
             style={{
-              color: '#16a34a',
-              border: '1px solid #16a34a',
-              backgroundColor: '#16a34a14',
+              color: 'var(--success)',
+              border: '1px solid color-mix(in srgb, var(--success) 40%, transparent)',
+              backgroundColor: 'color-mix(in srgb, var(--success) 10%, transparent)',
             }}
           >
             <CheckCircle2 size={12} />

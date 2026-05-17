@@ -12,7 +12,7 @@ import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/au
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
-const PlatformSchema = z.enum(['instagram', 'tiktok', 'youtube'])
+const PlatformSchema = z.enum(['instagram', 'tiktok', 'youtube', 'meta-ads'])
 type Platform = z.infer<typeof PlatformSchema>
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -57,6 +57,19 @@ function buildOAuthUrl(platform: Platform, state: string): string | null {
       state,
     })
     return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+  }
+
+  if (platform === 'meta-ads') {
+    const clientId = process.env.FACEBOOK_APP_ID ?? process.env.INSTAGRAM_APP_ID
+    if (!clientId) return null
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirect,
+      scope: 'ads_read',
+      state,
+      response_type: 'code',
+    })
+    return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`
   }
 
   if (platform === 'tiktok') {
