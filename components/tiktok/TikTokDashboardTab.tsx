@@ -69,7 +69,7 @@ export function TikTokDashboardTab({ connected, hasData }: Props) {
     )
   }
 
-  if (connected && !hasData && !loading) {
+  if (connected && !snapshot && !loading) {
     return (
       <div
         className="rounded-xl p-8 text-center"
