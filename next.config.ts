@@ -79,6 +79,10 @@ const nextConfig: NextConfig = {
             // Deny access to sensitive browser APIs not used by this dashboard.
             value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
           },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
         ],
       },
     ]

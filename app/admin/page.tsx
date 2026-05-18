@@ -1,11 +1,22 @@
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { Users, Clock, Building2, Shield } from 'lucide-react'
 import { db } from '@/lib/db'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { requireProfile } from '@/lib/auth-user'
+import { isAdmin } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminOverviewPage() {
+  // Second line of defence — layout gate alone is insufficient
+  try {
+    const { role } = await requireProfile()
+    if (!isAdmin(role)) notFound()
+  } catch {
+    notFound()
+  }
+
   const [userCount, pendingCount, clientCount] = await Promise.all([
     db.profile.count(),
     db.profile.count({ where: { clientId: null } }),

@@ -11,8 +11,8 @@
  */
 import { Resend } from 'resend'
 
-export const FROM_EMAIL = 'onboarding@resend.dev'
-export const SUPER_ADMIN_EMAIL = 'cristianortiz@astraire.com'
+export const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev'
+export const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL ?? 'cristianortiz@astraire.com'
 
 let cachedResend: Resend | null = null
 
