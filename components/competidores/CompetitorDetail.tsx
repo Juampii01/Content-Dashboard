@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { RefreshCw, Trash2, Users, Loader2, AlertCircle, RefreshCcw } from 'lucide-react'
+import { RefreshCw, Trash2, Users, Loader2, AlertCircle, RefreshCcw, ChevronLeft, Film, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import { ReelGrid } from '@/components/competidores/ReelGrid'
 import { SortControls } from '@/components/competidores/SortControls'
@@ -221,76 +221,124 @@ export function CompetitorDetail({ username }: Props) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-7xl mx-auto">
+      {/* Back button */}
+      <button
+        onClick={() => router.push('/competidores')}
+        className="flex items-center gap-1.5 mb-4 text-xs font-medium transition-all hover:opacity-70"
+        style={{ color: 'var(--muted-foreground)' }}
+      >
+        <ChevronLeft size={14} />
+        Competidores
+      </button>
+
       {/* Header */}
       <header
-        className="mb-6 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+        className="mb-6 rounded-2xl overflow-hidden"
         style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
       >
-        {/* Avatar — plain <img>: IG CDN URLs rotate frequently */}
-        {competitor.profilePicUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={competitor.profilePicUrl}
-            alt={`Avatar de @${competitor.username}`}
-            className="w-14 h-14 rounded-full object-cover flex-shrink-0"
-          />
-        ) : (
-          <InitialsAvatar username={competitor.username} />
-        )}
+        {/* Accent band */}
+        <div className="h-1.5 w-full" style={{ background: 'var(--gradient-accent)' }} />
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
-            @{competitor.username}
-          </h1>
-          {competitor.displayName && (
-            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-              {competitor.displayName}
-            </p>
-          )}
-          {competitor.followersCount != null && (
-            <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--muted-foreground)' }}>
-              <Users size={11} />
-              {competitor.followersCount.toLocaleString('es-ES')} seguidores
-            </p>
-          )}
-        </div>
+        <div className="p-5 flex flex-col sm:flex-row sm:items-center gap-5">
+          {/* Avatar */}
+          <div className="flex-shrink-0">
+            {competitor.profilePicUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={competitor.profilePicUrl}
+                alt={`Avatar de @${competitor.username}`}
+                className="w-16 h-16 rounded-2xl object-cover ring-2"
+                style={{ ['--tw-ring-color' as string]: 'var(--border)' }}
+              />
+            ) : (
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold"
+                style={{ background: 'var(--gradient-accent)', color: 'var(--accent-foreground)' }}
+              >
+                {competitor.username.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            aria-label="Refrescar reels"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:opacity-80 disabled:opacity-50"
-            style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
-          >
-            {refreshing
-              ? <Loader2 size={13} className="animate-spin" />
-              : <RefreshCw size={13} />}
-            Refrescar
-          </button>
-          <button
-            onClick={() => setDeleteOpen(true)}
-            aria-label="Eliminar competidor"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:opacity-80"
-            style={{
-              backgroundColor: 'color-mix(in srgb, var(--destructive) 10%, transparent)',
-              color: 'var(--destructive)',
-              border: '1px solid color-mix(in srgb, var(--destructive) 30%, transparent)',
-            }}
-          >
-            <Trash2 size={13} />
-            Borrar
-          </button>
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>
+                @{competitor.username}
+              </h1>
+              <a
+                href={`https://www.instagram.com/${competitor.username}/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium transition-all hover:opacity-70"
+                style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', border: '1px solid var(--border)' }}
+              >
+                <ExternalLink size={9} />
+                IG
+              </a>
+            </div>
+            {competitor.displayName && (
+              <p className="text-sm mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
+                {competitor.displayName}
+              </p>
+            )}
+            {/* Stat chips */}
+            <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+              {competitor.followersCount != null && (
+                <span
+                  className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg"
+                  style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
+                >
+                  <Users size={11} style={{ color: 'var(--muted-foreground)' }} />
+                  {competitor.followersCount.toLocaleString('es-ES')} seguidores
+                </span>
+              )}
+              <span
+                className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg"
+                style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
+              >
+                <Film size={11} style={{ color: 'var(--muted-foreground)' }} />
+                {reels.length} reels
+              </span>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              aria-label="Refrescar reels"
+              className="btn btn-secondary text-xs"
+            >
+              {refreshing
+                ? <Loader2 size={13} className="animate-spin" />
+                : <RefreshCw size={13} />}
+              Refrescar
+            </button>
+            <button
+              onClick={() => setDeleteOpen(true)}
+              aria-label="Eliminar competidor"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:opacity-80"
+              style={{
+                backgroundColor: 'color-mix(in srgb, var(--destructive) 10%, transparent)',
+                color: 'var(--destructive)',
+                border: '1px solid color-mix(in srgb, var(--destructive) 30%, transparent)',
+              }}
+            >
+              <Trash2 size={13} />
+              Borrar
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Toolbar: sort controls */}
       <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
-        <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-          {reels.length} reels
+        <p className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>
+          Ordenar por
         </p>
         <SortControls field={sortField} dir={sortDir} onChange={handleSortChange} />
       </div>

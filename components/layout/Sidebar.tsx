@@ -4,11 +4,11 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'motion/react'
 import {
-  LayoutDashboard, Camera, Play, Bot,
+  LayoutDashboard, Camera, Play,
   CheckSquare, BookOpen, Kanban,
   ChevronLeft, ChevronRight, Users,
   Music, Megaphone, LogOut, Shield, UserCog, Building2,
-  FileText, Telescope, Eye, ClipboardList,
+  FileText, Telescope, Eye,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -63,19 +63,12 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'IA',
-    items: [
-      { label: 'Eternity AI', href: '/ai', icon: Bot },
-    ],
-  },
-  {
     label: 'ADMIN',
     adminOnly: true,
     items: [
       { label: 'Resumen', href: '/admin', icon: Shield },
       { label: 'Usuarios', href: '/admin/users', icon: UserCog },
       { label: 'Temas', href: '/admin/clients', icon: Building2 },
-      { label: 'Discovery', href: '/discovery', icon: ClipboardList },
     ],
   },
 ]
