@@ -284,6 +284,7 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
         activeItem={activeItem}
         hasTabs={tabs.length > 0}
         label={label}
+        type={type}
         onUpdate={updateActive}
         onDelete={deleteItem}
       />

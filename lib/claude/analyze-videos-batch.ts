@@ -1,12 +1,11 @@
 /**
- * Claude Haiku batch analyzer for short, list-style content insights.
+ * Claude Sonnet batch analyzer for deep "¿Por qué funcionó?" content insights.
  *
  * Used by /api/content-research and /api/video-feed: given a ranked list of
- * videos/posts, ask Haiku to return a 2-sentence "why this worked / what
- * pattern" string per item — as a JSON array.
+ * videos/posts, ask Sonnet to return a structured breakdown per item explaining
+ * hook, engagement drivers, content pattern, and actionable replication tips.
  *
- * Adapted from Smart-Scale's `analyzeNewPosts`. Haiku chosen for cost
- * (these analyses are run for batches of 10-15 items per request).
+ * Adapted from Smart-Scale's `analyzeNewPosts`.
  */
 import Anthropic from '@anthropic-ai/sdk'
 
@@ -48,12 +47,22 @@ export async function analyzeRankedItems(
   try {
     const anthropic = new Anthropic({ apiKey })
     const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1200,
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2500,
       messages: [
         {
           role: 'user',
-          content: `Experto en contenido. Analizá ${ranked.length} posts de "${ownerName}". Por cada uno: 2 oraciones en español sobre por qué funcionó y qué patrón usa.\n\n${list}\n\nRespondé SOLO con un JSON array de ${ranked.length} strings. Sin markdown, sin texto antes ni después.`,
+          content: `Sos un experto en estrategia de contenido en redes sociales. Analizá estos ${ranked.length} posts de "${ownerName}" y para cada uno explicá en profundidad por qué funcionó.
+
+${list}
+
+Para cada post, respondé con exactamente este formato (usá los emojis como marcadores):
+🎣 HOOK: [cuál fue el gancho en 1 oración]
+⚡ POR QUÉ FUNCIONÓ: [2-3 oraciones explicando los drivers de engagement: qué emoción generó, por qué el algoritmo lo amplificó, qué necesidad o curiosidad resolvió]
+📐 PATRÓN: [estructura o formato de contenido utilizado, p.ej. "Tutorial paso a paso", "Storytelling personal", "Controversia controlada", "Antes/después", etc.]
+🔁 QUÉ REPLICAR: [1-2 insights accionables concretos para replicar este éxito]
+
+Respondé SOLO con un JSON array de ${ranked.length} strings, donde cada string contiene el análisis completo del post correspondiente usando exactamente el formato indicado. Sin markdown wrapper, sin texto antes ni después del JSON.`,
         },
       ],
     })
