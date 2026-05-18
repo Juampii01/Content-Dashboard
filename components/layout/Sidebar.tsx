@@ -8,14 +8,14 @@ import {
   CheckSquare, BookOpen, Kanban,
   ChevronLeft, ChevronRight, Users,
   Music, Megaphone, LogOut, Shield, UserCog,
-  FileText, Telescope, Eye,
+  FileText, Telescope,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { useAuth } from './AuthProvider'
 import { UserMenu } from './UserMenu'
-import { useEffectiveRole, setViewAsRole, useViewAsRole } from '@/lib/auth/view-as'
-import { canAccessAdminPath, isAdmin } from '@/lib/auth/permissions'
+import { useEffectiveRole } from '@/lib/auth/view-as'
+import { canAccessAdminPath } from '@/lib/auth/permissions'
 
 interface SidebarProps {
   collapsed: boolean
@@ -72,11 +72,6 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ]
 
-const VIEW_AS_OPTIONS = [
-  { value: 'team',   label: 'Team' },
-  { value: 'setter', label: 'Setter' },
-  { value: 'client', label: 'Client' },
-] as const
 
 export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname()
@@ -85,7 +80,6 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
 
   const actualRole = profile?.role ?? null
   const effectiveRole = useEffectiveRole(actualRole)
-  const viewAs = useViewAsRole()
 
   const clientName = profile?.clientName ?? null
   const userEmail = profile?.email ?? null
@@ -317,47 +311,6 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
             </Link>
           )}
 
-          {/* View-As toggle — solo visible para admin, solo en sidebar expandido */}
-          {isAdmin(actualRole) && !collapsed && (
-            <div
-              className="rounded-xl px-3 py-2 space-y-1.5"
-              style={{
-                backgroundColor: 'color-mix(in srgb, var(--accent) 8%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)',
-              }}
-            >
-              <div className="flex items-center gap-1.5">
-                <Eye size={11} style={{ color: 'var(--muted-foreground)' }} />
-                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
-                  Ver como
-                </span>
-              </div>
-              <div className="flex gap-1 flex-wrap">
-                {VIEW_AS_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setViewAsRole(viewAs === opt.value ? null : opt.value)}
-                    className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer"
-                    style={viewAs === opt.value
-                      ? { backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }
-                      : { backgroundColor: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border)' }
-                    }
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-                {viewAs && (
-                  <button
-                    onClick={() => setViewAsRole(null)}
-                    className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-opacity hover:opacity-70 cursor-pointer"
-                    style={{ color: 'var(--muted-foreground)' }}
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
 
           <UserMenu
             email={userEmail}
