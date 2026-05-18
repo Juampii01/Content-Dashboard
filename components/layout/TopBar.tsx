@@ -6,6 +6,7 @@ import { Eye, Users, TrendingUp, Menu } from 'lucide-react'
 import { formatM, formatPercent } from '@/lib/utils/formatters'
 import { ThemeToggle } from './ThemeToggle'
 import { MobileSidebarContext } from './LayoutShell'
+import { useAuth } from './AuthProvider'
 
 interface GlobalStats {
   followers: number
@@ -18,8 +19,16 @@ const EMPTY = '—'
 export function TopBar() {
   const { open: openMobileSidebar } = useContext(MobileSidebarContext)
   const pathname = usePathname()
+  const { profile } = useAuth()
   const [stats, setStats] = useState<GlobalStats | null>(null)
   const [loaded, setLoaded] = useState(false)
+
+  const initials = profile?.displayName
+    ? profile.displayName.slice(0, 2).toUpperCase()
+    : profile?.email
+    ? profile.email.slice(0, 2).toUpperCase()
+    : 'TU'
+  const displayName = profile?.displayName ?? profile?.email ?? 'Tu Cuenta'
 
   // Map route → platform param so the TopBar shows platform-specific stats
   const platformParam = pathname.startsWith('/instagram')
@@ -95,14 +104,14 @@ export function TopBar() {
                 'color-mix(in srgb, var(--background) 100%, transparent)',
             }}
           >
-            TU
+            {initials}
           </span>
           <div className="hidden sm:flex items-center gap-2">
             <span
               className="text-sm font-semibold leading-none"
               style={{ color: 'var(--foreground)' }}
             >
-              Tu Cuenta
+              {displayName}
             </span>
             <span
               className="text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-[0.12em] animate-glow-pulse"
