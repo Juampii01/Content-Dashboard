@@ -207,7 +207,10 @@ export async function POST(req: NextRequest) {
         if (!p.timestamp) return true
         return new Date(p.timestamp).getTime() >= cutoff
       })
-      const top = within
+      // If no posts fall within the window (e.g. account hasn't posted recently),
+      // fall back to the most recent posts across all time so the request doesn't fail.
+      const pool = within.length > 0 ? within : ig.posts
+      const top = pool
         .sort((a, b) => (b.videoPlayCount ?? b.likesCount ?? 0) - (a.videoPlayCount ?? a.likesCount ?? 0))
         .slice(0, 5)
       videos = top.map((p) => ({
