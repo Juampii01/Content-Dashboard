@@ -14,8 +14,8 @@ import { headers } from 'next/headers'
 import { db } from '@/lib/db'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
 import { checkRateLimit } from '@/lib/utils/ratelimit'
-
-const GRAPH = 'https://graph.facebook.com/v19.0'
+import { decryptToken } from '@/lib/crypto'
+import { META_GRAPH_BASE as GRAPH } from '@/lib/meta'
 
 interface MetaMonthlyInsightRecord {
   spend: string
@@ -82,7 +82,7 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({ months: [] })
   }
 
-  const accessToken = connection.accessToken
+  const accessToken = decryptToken(connection.accessToken)
   const monthMap = new Map<string, MonthBucket>()
 
   await Promise.allSettled(

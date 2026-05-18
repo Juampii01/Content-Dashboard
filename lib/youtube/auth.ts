@@ -8,9 +8,7 @@
 
 import { db } from '@/lib/db'
 import type { SocialConnection } from '@prisma/client'
-
-// TODO: encrypt accessToken / refreshToken at rest (currently stored raw).
-// When that lands, decrypt here before using.
+import { encryptToken, decryptToken } from '@/lib/crypto'
 
 // Expose a stable error type so callers can distinguish "user must reconnect"
 // from generic network failures.
@@ -35,7 +33,7 @@ export async function getValidAccessToken(connection: SocialConnection): Promise
   const needsRefresh = !connection.expiresAt || expiresAt - now < REFRESH_SKEW_MS
 
   if (!needsRefresh) {
-    return connection.accessToken
+    return decryptToken(connection.accessToken)
   }
 
   if (!connection.refreshToken) {
@@ -57,7 +55,7 @@ export async function getValidAccessToken(connection: SocialConnection): Promise
     body: new URLSearchParams({
       client_id: clientId,
       client_secret: clientSecret,
-      refresh_token: connection.refreshToken,
+      refresh_token: decryptToken(connection.refreshToken),
       grant_type: 'refresh_token',
     }),
     signal: AbortSignal.timeout(10_000),
@@ -91,7 +89,7 @@ export async function getValidAccessToken(connection: SocialConnection): Promise
   await db.socialConnection.update({
     where: { id: connection.id },
     data: {
-      accessToken: data.access_token,
+      accessToken: encryptToken(data.access_token),
       expiresAt: newExpiresAt,
       scopes: data.scope ?? connection.scopes,
     },

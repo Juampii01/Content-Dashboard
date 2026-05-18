@@ -14,6 +14,7 @@ import { db } from '@/lib/db'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
 import { checkRateLimit } from '@/lib/utils/ratelimit'
 import { TikTokUserInfoSchema, TikTokVideoListResponseSchema } from '@/lib/schemas/tiktok'
+import { encryptToken, decryptToken } from '@/lib/crypto'
 
 const MAX_PAGES = 3
 const VIDEOS_PER_PAGE = 20
@@ -54,7 +55,7 @@ export async function POST(): Promise<NextResponse> {
     )
   }
 
-  let accessToken = connection.accessToken
+  let accessToken = decryptToken(connection.accessToken)
 
   // ── Token refresh if expired ───────────────────────────────────────────────
   const now = new Date()
@@ -75,7 +76,7 @@ export async function POST(): Promise<NextResponse> {
         client_key: clientKey,
         client_secret: clientSecret,
         grant_type: 'refresh_token',
-        refresh_token: connection.refreshToken,
+        refresh_token: decryptToken(connection.refreshToken),
       }).toString(),
     })
 
@@ -107,9 +108,9 @@ export async function POST(): Promise<NextResponse> {
     await db.socialConnection.update({
       where: { clientId_platform: { clientId, platform: 'tiktok' } },
       data: {
-        accessToken,
+        accessToken: encryptToken(accessToken),
         ...(newExpiresAt ? { expiresAt: newExpiresAt } : {}),
-        ...(refreshJson.refresh_token ? { refreshToken: refreshJson.refresh_token } : {}),
+        ...(refreshJson.refresh_token ? { refreshToken: encryptToken(refreshJson.refresh_token) } : {}),
       },
     })
   } else if (isExpired && !connection.refreshToken) {

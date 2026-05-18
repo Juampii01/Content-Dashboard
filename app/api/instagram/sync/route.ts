@@ -27,6 +27,7 @@ import {
   InstagramMediaListSchema,
 } from '@/lib/schemas/instagram'
 import { accountToSnapshot, mediaToUserReel } from '@/lib/instagram/transform'
+import { decryptToken } from '@/lib/crypto'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -84,7 +85,7 @@ export async function POST(): Promise<NextResponse> {
     return NextResponse.json({ error: 'TOKEN_EXPIRED' }, { status: 401 })
   }
 
-  const accessToken = conn.accessToken
+  const accessToken = decryptToken(conn.accessToken)
 
   // 3. Fetch latest media (25)
   const mediaUrl =

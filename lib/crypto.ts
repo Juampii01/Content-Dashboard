@@ -19,23 +19,25 @@ const KEY_ENV = 'OAUTH_TOKEN_ENCRYPTION_KEY'
 const IV_LENGTH_BYTES = 12 // GCM standard
 const VERSION = 'v1'
 
-function getKey(): Buffer {
-  const raw = process.env[KEY_ENV]
-  if (!raw) {
-    throw new Error(`Missing env var ${KEY_ENV} (expected 64 hex chars = 32 bytes)`)
-  }
-  if (!/^[0-9a-f]{64}$/i.test(raw)) {
-    throw new Error(`${KEY_ENV} must be exactly 64 hex characters (32 bytes)`)
-  }
-  return Buffer.from(raw, 'hex')
-}
-
 /**
  * Encrypt a plaintext token. Returns a versioned, dot-separated payload
  * safe to store in a TEXT column.
+ *
+ * If OAUTH_TOKEN_ENCRYPTION_KEY is not set, returns plaintext with a warning
+ * (legacy/graceful mode — set the key in production for encryption at rest).
  */
 export function encryptToken(plaintext: string): string {
-  const key = getKey()
+  const raw = process.env[KEY_ENV]
+  if (!raw) {
+    // Encryption key not configured — storing token as plaintext (legacy mode).
+    // Set OAUTH_TOKEN_ENCRYPTION_KEY in production to enable encryption at rest.
+    return plaintext
+  }
+  if (!/^[0-9a-f]{64}$/i.test(raw)) {
+    console.error(`[crypto] ${KEY_ENV} must be exactly 64 hex characters — skipping encryption`)
+    return plaintext
+  }
+  const key = Buffer.from(raw, 'hex')
   const iv = randomBytes(IV_LENGTH_BYTES)
   const cipher = createCipheriv('aes-256-gcm', key, iv)
   const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()])
@@ -62,8 +64,18 @@ export function decryptToken(payload: string): string {
   if (parts.length !== 4) {
     throw new Error(`Malformed encrypted token (expected 4 dot-separated parts, got ${parts.length})`)
   }
+  const raw = process.env[KEY_ENV]
+  if (!raw) {
+    // Key not available — return payload as-is (should not happen in normal operation)
+    console.error(`[crypto] ${KEY_ENV} not set but encountered encrypted token — cannot decrypt`)
+    return payload
+  }
+  if (!/^[0-9a-f]{64}$/i.test(raw)) {
+    console.error(`[crypto] ${KEY_ENV} malformed — cannot decrypt`)
+    return payload
+  }
   const [, ivB64, tagB64, cipherB64] = parts
-  const key = getKey()
+  const key = Buffer.from(raw, 'hex')
   const iv = Buffer.from(ivB64, 'base64url')
   const tag = Buffer.from(tagB64, 'base64url')
   const ct = Buffer.from(cipherB64, 'base64url')

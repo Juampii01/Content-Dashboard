@@ -16,8 +16,8 @@ import { db } from '@/lib/db'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
 import { checkRateLimit } from '@/lib/utils/ratelimit'
 import { MetaAdAccountsResponseSchema, MetaCampaignsResponseSchema } from '@/lib/schemas/ads'
-
-const GRAPH = 'https://graph.facebook.com/v19.0'
+import { decryptToken } from '@/lib/crypto'
+import { META_GRAPH_BASE as GRAPH } from '@/lib/meta'
 const DATE_PRESET = 'lifetime'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ export async function POST(): Promise<NextResponse> {
     return NextResponse.json({ error: 'NOT_CONNECTED', message: 'Conecta Meta Ads antes de sincronizar.' }, { status: 404 })
   }
 
-  const accessToken = connection.accessToken
+  const accessToken = decryptToken(connection.accessToken)
 
   try {
     // 1. Fetch all ad accounts

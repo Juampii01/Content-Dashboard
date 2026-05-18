@@ -11,6 +11,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { cleanupExpiredStates } from '@/lib/utils/cleanup-oauth-states'
+import { encryptToken } from '@/lib/crypto'
+import { META_GRAPH_BASE } from '@/lib/meta'
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
@@ -195,7 +197,7 @@ async function exchangeMetaAds(
 
   // 1. Exchange code for long-lived token
   const tokenRes = await fetch(
-    `https://graph.facebook.com/v19.0/oauth/access_token?` +
+    `${META_GRAPH_BASE}/oauth/access_token?` +
     new URLSearchParams({ client_id: clientId, client_secret: clientSecret, redirect_uri: redirectUri, code }).toString(),
     { signal: AbortSignal.timeout(10_000) },
   )
@@ -209,7 +211,7 @@ async function exchangeMetaAds(
 
   // 2. Fetch the user's ad accounts to get the first account name
   const meRes = await fetch(
-    `https://graph.facebook.com/v19.0/me?fields=id,name&access_token=${accessToken}`,
+    `${META_GRAPH_BASE}/me?fields=id,name&access_token=${accessToken}`,
     { signal: AbortSignal.timeout(10_000) },
   )
   const meData = meRes.ok
@@ -416,8 +418,8 @@ export async function GET(
         accountId: profileResult.accountId,
         accountName: profileResult.accountName,
         accountPic: profileResult.accountPic,
-        accessToken: tokenResult.accessToken,
-        refreshToken: tokenResult.refreshToken,
+        accessToken: encryptToken(tokenResult.accessToken),
+        refreshToken: tokenResult.refreshToken ? encryptToken(tokenResult.refreshToken) : tokenResult.refreshToken,
         expiresAt: tokenResult.expiresAt,
         scopes: tokenResult.scopes ?? '',
       },
@@ -426,8 +428,8 @@ export async function GET(
         accountId: profileResult.accountId,
         accountName: profileResult.accountName,
         accountPic: profileResult.accountPic,
-        accessToken: tokenResult.accessToken,
-        refreshToken: tokenResult.refreshToken ?? null,
+        accessToken: encryptToken(tokenResult.accessToken),
+        refreshToken: tokenResult.refreshToken ? encryptToken(tokenResult.refreshToken) : null,
         expiresAt: tokenResult.expiresAt ?? null,
         scopes: tokenResult.scopes ?? '',
       },

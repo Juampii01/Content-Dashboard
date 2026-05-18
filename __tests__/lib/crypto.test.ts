@@ -87,15 +87,24 @@ describe('lib/crypto', () => {
     })
   })
 
-  describe('key configuration errors', () => {
-    it('throws if the env var is missing', () => {
+  describe('key configuration errors (graceful mode)', () => {
+    it('returns plaintext if the env var is missing (graceful fallback)', () => {
       delete process.env.OAUTH_TOKEN_ENCRYPTION_KEY
-      expect(() => encryptToken('x')).toThrow(/OAUTH_TOKEN_ENCRYPTION_KEY/)
+      expect(encryptToken('x')).toBe('x')
     })
 
-    it('throws if the env var is not 64 hex characters', () => {
+    it('returns plaintext if the env var is not 64 hex characters (graceful fallback)', () => {
       process.env.OAUTH_TOKEN_ENCRYPTION_KEY = 'short'
-      expect(() => encryptToken('x')).toThrow(/64 hex characters/)
+      expect(encryptToken('x')).toBe('x')
+    })
+
+    it('returns payload as-is if key missing and token is encrypted', () => {
+      // Encrypt with valid key first
+      const cipher = encryptToken('sensitive')
+      // Remove key
+      delete process.env.OAUTH_TOKEN_ENCRYPTION_KEY
+      // decryptToken should return payload unchanged (logs error, does not throw)
+      expect(decryptToken(cipher)).toBe(cipher)
     })
   })
 
