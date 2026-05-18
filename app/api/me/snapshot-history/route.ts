@@ -43,10 +43,25 @@ export async function GET(
     since.setDate(since.getDate() - days)
     since.setHours(0, 0, 0, 0)
 
+    // Only show data for platforms that currently have an active SocialConnection.
+    // If the user disconnected a platform, its historical AccountSnapshot rows
+    // should not pollute the dashboard with stale metrics.
+    const activeConnections = await db.socialConnection.findMany({
+      where: { clientId },
+      select: { platform: true },
+    })
+
+    if (activeConnections.length === 0) {
+      return NextResponse.json(EMPTY)
+    }
+
+    const activePlatforms = activeConnections.map((c) => c.platform)
+
     const snapshots = await db.accountSnapshot.findMany({
       where: {
         clientId,
         date: { gte: since },
+        platform: { in: activePlatforms },
       },
       orderBy: { date: 'asc' },
       select: {
