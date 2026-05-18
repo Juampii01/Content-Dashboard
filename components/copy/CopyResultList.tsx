@@ -26,7 +26,7 @@ export function CopyResultList({ items }: CopyResultListProps) {
         >
           <span
             className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5"
-            style={{ backgroundColor: '#8E1F2F22', color: 'var(--accent)' }}
+            style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)' }}
           >
             {i + 1}
           </span>
@@ -37,8 +37,8 @@ export function CopyResultList({ items }: CopyResultListProps) {
             onClick={() => copyItem(item)}
             className="flex-shrink-0 p-1.5 rounded-lg transition-all hover:opacity-80"
             style={{
-              backgroundColor: copied === item ? '#B08A4A22' : 'var(--muted)',
-              color: copied === item ? '#B08A4A' : 'var(--muted-foreground)',
+              backgroundColor: copied === item ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--muted)',
+              color: copied === item ? 'var(--accent)' : 'var(--muted-foreground)',
             }}
             title="Copiar"
           >

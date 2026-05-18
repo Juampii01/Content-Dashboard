@@ -76,10 +76,10 @@ export function CopyGenerator() {
       {icpSummary.filled ? (
         <div
           className="flex items-center gap-3 rounded-xl px-4 py-3"
-          style={{ backgroundColor: '#B08A4A11', border: '1px solid #B08A4A33' }}
+          style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)' }}
         >
-          <span className="text-sm" style={{ color: '#B08A4A' }}>✓</span>
-          <div className="flex-1 text-xs" style={{ color: '#B08A4A' }}>
+          <span className="text-sm" style={{ color: 'var(--accent)' }}>✓</span>
+          <div className="flex-1 text-xs" style={{ color: 'var(--accent)' }}>
             <span className="font-semibold">ICP cargado</span>
             {icpSummary.nombre && <span> · {icpSummary.nombre}</span>}
             {icpSummary.rol && <span> · {icpSummary.rol}</span>}
@@ -90,7 +90,7 @@ export function CopyGenerator() {
       ) : (
         <div
           className="flex items-start gap-3 rounded-xl px-4 py-3"
-          style={{ backgroundColor: '#8E1F2F15', border: '1px solid #8E1F2F44' }}
+          style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' }}
         >
           <AlertTriangle size={14} style={{ color: 'var(--accent)', marginTop: 2 }} className="flex-shrink-0" />
           <div className="flex-1">
@@ -213,7 +213,7 @@ export function CopyGenerator() {
       {/* Error */}
       {error && (
         <div className="flex items-center gap-2 rounded-xl px-4 py-3"
-          style={{ backgroundColor: '#8E1F2F11', border: '1px solid #8E1F2F44' }}>
+          style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' }}>
           <AlertTriangle size={13} style={{ color: 'var(--accent)' }} />
           <p className="text-xs" style={{ color: 'var(--accent)' }}>{error}</p>
           <button onClick={generate} className="ml-auto" title="Reintentar">

@@ -27,7 +27,7 @@ export function CopyTypeSelector({ value, onChange }: CopyTypeSelectorProps) {
             onClick={() => onChange(id)}
             className="text-left rounded-xl p-4 transition-all hover:opacity-90 cursor-pointer"
             style={{
-              backgroundColor: active ? '#8E1F2F11' : 'var(--card)',
+              backgroundColor: active ? 'color-mix(in srgb, var(--accent) 8%, var(--card))' : 'var(--card)',
               border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
             }}
           >
