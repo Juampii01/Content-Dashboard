@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Eye, Heart, MessageCircle, ExternalLink, Clock, Film, FileText, BarChart2 } from 'lucide-react'
 import type { ReelDTO } from '@/lib/types/competidores'
 import { formatK } from '@/lib/utils/formatters'
@@ -19,6 +20,8 @@ interface ReelCardProps {
 }
 
 export function ReelCard({ reel, onOpenDrawer }: ReelCardProps) {
+  const [imgFailed, setImgFailed] = useState(false)
+
   function handleCardClick() {
     onOpenDrawer(reel.id)
   }
@@ -43,16 +46,23 @@ export function ReelCard({ reel, onOpenDrawer }: ReelCardProps) {
         className="relative w-full overflow-hidden"
         style={{ aspectRatio: '9/16', backgroundColor: 'var(--muted)' }}
       >
-        {reel.thumbnailUrl ? (
+        {reel.thumbnailUrl && !imgFailed ? (
           // eslint-disable-next-line @next/next/no-img-element -- IG CDN URLs rotate
           <img
             src={reel.thumbnailUrl}
-            alt={reel.caption ?? 'Reel thumbnail'}
+            alt=""
+            aria-hidden="true"
+            onError={() => setImgFailed(true)}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Film size={32} style={{ color: 'var(--muted-foreground)', opacity: 0.4 }} />
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+            style={{
+              background: 'linear-gradient(135deg, color-mix(in srgb, var(--muted) 80%, var(--card)) 0%, var(--muted) 100%)',
+            }}
+          >
+            <Film size={28} style={{ color: 'var(--muted-foreground)', opacity: 0.35 }} />
           </div>
         )}
 
