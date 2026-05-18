@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
   // Load competitors context from DB
   let competitorsContext: Awaited<ReturnType<typeof loadCompetitorsContext>> = []
   try {
-    competitorsContext = await loadCompetitorsContext()
+    competitorsContext = await loadCompetitorsContext(clientId)
   } catch (err) {
     console.warn('[ai/chat] could not load competitors context:', err)
   }

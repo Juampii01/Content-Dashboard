@@ -9,8 +9,9 @@ const RECENT_ANALYSES_PER_COMPETITOR = 5
  * Carga desde Prisma los competidores del workspace con sus top reels
  * (por vistas) y análisis recientes para inyectar como contexto a Claude.
  */
-export async function loadCompetitorsContext(): Promise<CompetitorContext[]> {
+export async function loadCompetitorsContext(clientId: string): Promise<CompetitorContext[]> {
   const competitors = await db.competitor.findMany({
+    where: { clientId },
     take: MAX_COMPETITORS,
     orderBy: { createdAt: 'desc' },
     include: {
