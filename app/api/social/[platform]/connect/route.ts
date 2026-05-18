@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
+import { META_GRAPH_VERSION } from '@/lib/meta'
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
@@ -69,7 +70,7 @@ function buildOAuthUrl(platform: Platform, state: string): string | null {
       state,
       response_type: 'code',
     })
-    return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`
+    return `https://www.facebook.com/${META_GRAPH_VERSION}/dialog/oauth?${params.toString()}`
   }
 
   if (platform === 'tiktok') {
