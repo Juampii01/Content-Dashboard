@@ -78,7 +78,8 @@ function ResearchPanel({
   onDelete?: () => void
 }) {
   const [open, setOpen] = useState(defaultOpen)
-  const showThumb = row.platform !== 'instagram'
+  const showThumb      = row.platform !== 'instagram'
+  const showTranscript = row.platform !== 'instagram'
 
   return (
     <div
@@ -175,10 +176,12 @@ function ResearchPanel({
                   style={{ color: 'var(--muted-foreground)' }}>
                   Duración
                 </th>
-                <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wider"
-                  style={{ color: 'var(--muted-foreground)', minWidth: '220px' }}>
-                  Transcript
-                </th>
+                {showTranscript && (
+                  <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wider"
+                    style={{ color: 'var(--muted-foreground)', minWidth: '220px' }}>
+                    Transcript
+                  </th>
+                )}
                 <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wider"
                   style={{ color: 'var(--muted-foreground)', minWidth: '220px' }}>
                   Análisis
@@ -198,6 +201,7 @@ function ResearchPanel({
                   video={v}
                   creator={row.channelName ?? row.channelUrl}
                   showThumb={showThumb}
+                  showTranscript={showTranscript}
                   isLast={i === row.videos.length - 1}
                 />
               ))}
@@ -224,11 +228,13 @@ function VideoRow({
   video,
   creator,
   showThumb,
+  showTranscript,
   isLast,
 }: {
   video: ResearchVideo
   creator: string
   showThumb: boolean
+  showTranscript: boolean
   isLast: boolean
 }) {
   const [expandTranscript, setExpandTranscript] = useState(false)
@@ -282,29 +288,31 @@ function VideoRow({
         {video.duration || '—'}
       </td>
 
-      {/* Transcript */}
-      <td className="px-4 py-3" style={{ color: 'var(--muted-foreground)', maxWidth: '260px' }}>
-        {video.transcript ? (
-          <div>
-            <p className="leading-relaxed">
-              {expandTranscript ? video.transcript : trunc(video.transcript, 120)}
-            </p>
-            {video.transcript.length > 120 && (
-              <button
-                type="button"
-                onClick={() => setExpandTranscript((v) => !v)}
-                className="inline-flex items-center gap-1 mt-1 font-semibold hover:opacity-70 cursor-pointer"
-                style={{ color: 'var(--accent)', fontSize: '10px' }}
-              >
-                <FileText size={10} />
-                {expandTranscript ? 'Ver menos' : 'Ver más'}
-              </button>
-            )}
-          </div>
-        ) : (
-          <span style={{ opacity: 0.45 }}>—</span>
-        )}
-      </td>
+      {/* Transcript — YouTube only */}
+      {showTranscript && (
+        <td className="px-4 py-3" style={{ color: 'var(--muted-foreground)', maxWidth: '260px' }}>
+          {video.transcript ? (
+            <div>
+              <p className="leading-relaxed">
+                {expandTranscript ? video.transcript : trunc(video.transcript, 120)}
+              </p>
+              {video.transcript.length > 120 && (
+                <button
+                  type="button"
+                  onClick={() => setExpandTranscript((v) => !v)}
+                  className="inline-flex items-center gap-1 mt-1 font-semibold hover:opacity-70 cursor-pointer"
+                  style={{ color: 'var(--accent)', fontSize: '10px' }}
+                >
+                  <FileText size={10} />
+                  {expandTranscript ? 'Ver menos' : 'Ver más'}
+                </button>
+              )}
+            </div>
+          ) : (
+            <span style={{ opacity: 0.45 }}>—</span>
+          )}
+        </td>
+      )}
 
       {/* Análisis */}
       <td className="px-4 py-3" style={{ color: 'var(--muted-foreground)', maxWidth: '260px' }}>
