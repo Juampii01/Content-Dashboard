@@ -4,6 +4,15 @@ import { Eye, Heart, MessageCircle, ExternalLink, Clock, Film, FileText, BarChar
 import type { ReelDTO } from '@/lib/types/competidores'
 import { formatK } from '@/lib/utils/formatters'
 
+function formatDuration(sec: number): string {
+  const total = Math.round(sec)
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
 interface ReelCardProps {
   reel: ReelDTO
   onOpenDrawer: (reelId: string) => void
@@ -96,13 +105,13 @@ export function ReelCard({ reel, onOpenDrawer }: ReelCardProps) {
         </div>
 
         {/* Duration — bottom left */}
-        {reel.durationSec != null && (
+        {reel.durationSec != null && reel.durationSec > 0 && (
           <div
             className="absolute bottom-[72px] left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium"
             style={{ backgroundColor: 'rgba(0,0,0,0.55)', color: '#fff' }}
           >
             <Clock size={8} />
-            {reel.durationSec}s
+            {formatDuration(reel.durationSec)}
           </div>
         )}
 
