@@ -1,6 +1,6 @@
 'use client'
 
-import { Eye, Heart, Bookmark, MessageCircle, TrendingUp } from 'lucide-react'
+import { Eye, Heart, Users, MessageCircle, TrendingUp } from 'lucide-react'
 import { motion } from 'motion/react'
 import type { DashboardStats } from '@/lib/types'
 import { useCountUp } from '@/lib/hooks/useCountUp'
@@ -70,10 +70,10 @@ interface StatGridProps {
 
 export function StatGrid({ stats: s }: StatGridProps) {
   const cards = [
-    { label: 'Vistas Totales', rawValue: s.impressions, change: s.impressionsChange,                      icon: Eye,           color: 'var(--accent)' },
-    { label: 'Guardados',      rawValue: s.saves,        change: Math.round(s.impressionsChange * 0.85),   icon: Bookmark,      color: 'var(--stat-icon)' },
-    { label: 'Me Gusta',       rawValue: s.likes,        change: Math.round(s.impressionsChange * 0.72),   icon: Heart,         color: 'var(--stat-icon-secondary)' },
-    { label: 'Comentarios',    rawValue: s.comments,     change: Math.round(s.impressionsChange * 0.6),    icon: MessageCircle, color: 'var(--secondary)' },
+    { label: 'Vistas Totales', rawValue: s.impressions,   change: s.impressionsChange,                    icon: Eye,           color: 'var(--accent)' },
+    { label: 'Seguidores',     rawValue: s.profileGrowth, change: 0,                                      icon: Users,         color: 'var(--stat-icon)' },
+    { label: 'Me Gusta',       rawValue: s.likes,         change: Math.round(s.impressionsChange * 0.72), icon: Heart,         color: 'var(--stat-icon-secondary)' },
+    { label: 'Comentarios',    rawValue: s.comments,      change: Math.round(s.impressionsChange * 0.6),  icon: MessageCircle, color: 'var(--secondary)' },
   ]
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
