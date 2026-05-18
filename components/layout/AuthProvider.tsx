@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { logClientError } from '@/lib/client-errors'
 
 export type UserRole = 'admin' | 'team' | 'setter' | 'client'
@@ -27,14 +28,23 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 /**
  * Single source of truth for the active session + profile.
- * Fetches /api/me on mount and exposes the result via context.
+ *
+ * Strategy:
+ * 1. Fetch /api/me on mount (covers page-load with existing session).
+ * 2. Subscribe to Supabase onAuthStateChange:
+ *    - SIGNED_IN  → clear any stale error and reload profile.
+ *                   This fires after signInWithPassword() on the login page,
+ *                   guaranteeing the session cookie is ready before we hit
+ *                   /api/me — eliminating the race condition that showed
+ *                   "Sesión expirada" right after login.
+ *    - SIGNED_OUT → clear profile immediately.
+ * 3. Keep a short retry for transient network errors (not for 401s,
+ *    those are now handled reactively via onAuthStateChange).
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<AuthProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [sessionError, setSessionError] = useState(false)
-
-  // Tracks retry attempts — reset whenever `load` is called externally (refetch)
   const retryCount = useRef(0)
 
   const load = useCallback(async (isRetry = false) => {
@@ -42,13 +52,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const meRes = await fetch('/api/me')
       if (!meRes.ok) {
-        // 401 right after login is a cookie-propagation race condition.
-        // Retry up to 2 times with a short back-off before declaring a real error.
+        // For 401s we rely on onAuthStateChange to recover — don't show the
+        // error banner right away, just keep loading until SIGNED_IN fires.
+        // Only escalate to an error after 2 retries (covers network flakiness).
         if (meRes.status === 401 && retryCount.current < 2) {
           retryCount.current += 1
-          const delay = retryCount.current * 700
-          setTimeout(() => void load(true), delay)
-          return // stay in loading state during retry
+          setTimeout(() => void load(true), retryCount.current * 600)
+          return // stay in loading state
         }
         setSessionError(true)
         setProfile(null)
@@ -62,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       if (retryCount.current < 2) {
         retryCount.current += 1
-        setTimeout(() => void load(true), retryCount.current * 700)
+        setTimeout(() => void load(true), retryCount.current * 600)
         return
       }
       logClientError(err, 'AuthProvider:load', { silent: true })
@@ -71,8 +81,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // Initial load — covers page refresh / direct navigation with existing session.
   useEffect(() => {
     void load()
+  }, [load])
+
+  // Reactive auth listener — Supabase fires SIGNED_IN once the session is
+  // confirmed (after signInWithPassword OR after restoring from storage).
+  // This is the authoritative signal that /api/me will succeed, so we reset
+  // any stale error and reload.
+  useEffect(() => {
+    const supabase = createClient()
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // Session is confirmed — wipe any error that appeared before it was ready
+        setSessionError(false)
+        retryCount.current = 0
+        void load(false)
+      } else if (event === 'SIGNED_OUT') {
+        setProfile(null)
+        setSessionError(false)
+        setLoading(false)
+      }
+    })
+    return () => subscription.unsubscribe()
   }, [load])
 
   const setProfileFields = useCallback(
