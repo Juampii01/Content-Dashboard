@@ -12,6 +12,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { randomBytes } from 'node:crypto'
 import { db } from '@/lib/db'
 import { adminAuthOr401 } from '@/lib/admin/guard'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -25,7 +26,9 @@ const CreateUserSchema = z.object({
 })
 
 function generateTempPassword(): string {
-  return Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-4).toUpperCase() + '!'
+  // Use cryptographically secure random bytes instead of Math.random()
+  const base = randomBytes(12).toString('base64url')
+  return base + '!'
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
