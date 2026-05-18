@@ -10,12 +10,19 @@ import type { ClaudeModelId } from '@/lib/claude/models'
 
 const claudeModelIds = CLAUDE_MODELS.map((m) => m.id) as [ClaudeModelId, ...ClaudeModelId[]]
 
-// Sanea "@ramiro.cubria" / "ramiro.cubria/" → "ramiro.cubria"
+// Sanea "@ramiro.cubria" / "ramiro.cubria/" / "https://instagram.com/ramiro.cubria" → "ramiro.cubria"
 export const usernameSchema = z
   .string()
   .min(1)
-  .max(40)
-  .transform((s) => s.trim().replace(/^@/, '').replace(/\/$/, ''))
+  .max(2048)
+  .transform((s) => {
+    const trimmed = s.trim()
+    // Extract username from a pasted Instagram URL
+    const urlMatch = trimmed.match(/(?:instagram\.com\/)([a-zA-Z0-9._]+)/)
+    if (urlMatch) return urlMatch[1]
+    // Strip leading @ and trailing /
+    return trimmed.replace(/^@+/, '').replace(/\/+$/, '')
+  })
   .refine((s) => /^[a-zA-Z0-9._]{1,30}$/.test(s), {
     message: 'Username de Instagram inválido',
   })

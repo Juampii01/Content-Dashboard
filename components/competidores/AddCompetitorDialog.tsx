@@ -40,9 +40,16 @@ export function AddCompetitorDialog({ open, onOpenChange, onDismiss }: AddCompet
   const [jobId, setJobId] = useState('')
   const [scrapedUsername, setScrapedUsername] = useState('')
 
+  function extractHandle(raw: string): string {
+    const trimmed = raw.trim()
+    const urlMatch = trimmed.match(/(?:instagram\.com\/)([a-zA-Z0-9._]+)/)
+    if (urlMatch) return urlMatch[1]
+    return trimmed.replace(/^@+/, '').replace(/\/+$/, '')
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const handle = username.trim().replace(/^@+/, '')
+    const handle = extractHandle(username)
     if (!handle) return
 
     setLoading(true)
@@ -105,7 +112,7 @@ export function AddCompetitorDialog({ open, onOpenChange, onDismiss }: AddCompet
               <input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="username"
+                placeholder="username o URL de Instagram"
                 autoFocus
                 className="flex-1 bg-transparent text-sm outline-none"
                 style={{ color: 'var(--foreground)' }}
