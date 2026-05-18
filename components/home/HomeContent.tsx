@@ -7,7 +7,6 @@ import { GreetingBlock } from './GreetingBlock'
 import { StatGrid } from './StatGrid'
 import { PerformanceCharts } from './PerformanceCharts'
 import { QuickSummarySidebar } from './QuickSummarySidebar'
-import { AIInsightWidget } from './AIInsightWidget'
 import type { UserReelRow } from '@/hooks/useInstagramData'
 import type { InstagramAccountSummary } from '@/hooks/useInstagramData'
 
@@ -173,11 +172,7 @@ export function HomeContent() {
         />
       </motion.div>
 
-      <motion.div {...fadeUp(1)}>
-        <AIInsightWidget />
-      </motion.div>
-
-      <motion.div {...fadeUp(2)} className="flex items-center justify-between">
+      <motion.div {...fadeUp(1)} className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <p className="text-eyebrow">Rendimiento Instagram</p>
           {!hasPartialReal && (
@@ -231,11 +226,11 @@ export function HomeContent() {
         </div>
       </motion.div>
 
-      <motion.div {...fadeUp(3)}>
+      <motion.div {...fadeUp(2)}>
         <StatGrid stats={s} />
       </motion.div>
 
-      <motion.div {...fadeUp(4)} className="flex flex-col xl:flex-row gap-6" style={{ alignItems: 'stretch' }}>
+      <motion.div {...fadeUp(3)} className="flex flex-col xl:flex-row gap-6" style={{ alignItems: 'stretch' }}>
         <PerformanceCharts stats={s} />
         <QuickSummarySidebar stats={s} />
       </motion.div>

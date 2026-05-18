@@ -12,6 +12,13 @@ import { ResultPanel } from './ResultPanel'
 import { HistoryRow } from './HistoryRow'
 import type { CurrentResult, HistoryItem } from './types'
 
+type PlatformTab = 'instagram' | 'youtube'
+
+const PLATFORM_TABS: { id: PlatformTab; label: string }[] = [
+  { id: 'youtube', label: 'YouTube' },
+  { id: 'instagram', label: 'Instagram' },
+]
+
 function inferPlatformFromUrl(url: string): Platform | null {
   if (/youtube\.com|youtu\.be/i.test(url)) return 'youtube'
   if (/instagram\.com\/(p|reel|reels|tv)\//i.test(url)) return 'instagram'
@@ -19,6 +26,7 @@ function inferPlatformFromUrl(url: string): Platform | null {
 }
 
 export function TranscriptView() {
+  const [activePlatform, setActivePlatform] = useState<PlatformTab>('youtube')
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -50,6 +58,12 @@ export function TranscriptView() {
     void loadHistory()
   }, [loadHistory])
 
+  // When url changes, auto-switch to matching platform tab
+  useEffect(() => {
+    const platform = inferPlatformFromUrl(url)
+    if (platform) setActivePlatform(platform)
+  }, [url])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = url.trim()
@@ -73,7 +87,7 @@ export function TranscriptView() {
         setError((data && data.error) || 'Error al procesar el video.')
         return
       }
-      setCurrent({
+      const result: CurrentResult = {
         id: data.id,
         url: data.url,
         platform: data.platform,
@@ -83,7 +97,9 @@ export function TranscriptView() {
         thumbnail: data.thumbnail,
         transcript: data.transcript ?? '',
         summary: data.summary ?? '',
-      })
+      }
+      setCurrent(result)
+      setActivePlatform(data.platform as PlatformTab)
       setUrl('')
       void loadHistory()
     } catch (err) {
@@ -121,6 +137,8 @@ export function TranscriptView() {
     }
   }
 
+  const filteredHistory = history.filter((h) => h.platform === activePlatform)
+
   return (
     <div className="page-shell" style={{ maxWidth: '64rem' }}>
       <PageHeader
@@ -129,6 +147,31 @@ export function TranscriptView() {
         description="Pegá un link de YouTube o Instagram y obtené la transcripción completa con un resumen IA."
         icon={FileText}
       />
+
+      {/* Platform tab selector */}
+      <div className="flex justify-center mb-2">
+        <div
+          className="inline-flex items-center gap-1 p-1 rounded-xl"
+          style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}
+        >
+          {PLATFORM_TABS.map(({ id, label }) => {
+            const isActive = activePlatform === id
+            return (
+              <button
+                key={id}
+                onClick={() => setActivePlatform(id)}
+                className="relative px-5 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                style={{
+                  backgroundColor: isActive ? 'var(--accent)' : 'transparent',
+                  color: isActive ? 'var(--accent-foreground)' : 'var(--muted-foreground)',
+                }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
       {/* Input form */}
       <form onSubmit={handleSubmit} className="surface-elevated p-4 mb-6">
@@ -146,7 +189,11 @@ export function TranscriptView() {
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://www.youtube.com/watch?v=…  ó  https://instagram.com/reel/…"
+              placeholder={
+                activePlatform === 'youtube'
+                  ? 'https://www.youtube.com/watch?v=…'
+                  : 'https://instagram.com/reel/…'
+              }
               required
               disabled={loading}
               aria-describedby={error ? 'transcript-error' : undefined}
@@ -184,28 +231,28 @@ export function TranscriptView() {
         )}
       </form>
 
-      {/* Current result */}
-      {current && (
+      {/* Current result — show only if it matches the active platform tab */}
+      {current && current.platform === activePlatform && (
         <div className="mb-8">
           <ResultPanel result={current} />
         </div>
       )}
 
-      {/* History */}
+      {/* History filtered by platform */}
       <Section eyebrow="Historial" flush>
         {historyLoading ? (
           <div role="status" aria-live="polite" aria-label="Cargando historial" className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
             <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Cargando…
           </div>
-        ) : history.length === 0 ? (
+        ) : filteredHistory.length === 0 ? (
           <EmptyState
             icon={Inbox}
-            title="Aún no hay transcripts"
-            description="Pegá un link de YouTube o Instagram arriba y aparecerá acá."
+            title={`Aún no hay transcripts de ${activePlatform === 'youtube' ? 'YouTube' : 'Instagram'}`}
+            description={`Pegá un link de ${activePlatform === 'youtube' ? 'YouTube' : 'Instagram'} arriba y aparecerá acá.`}
           />
         ) : (
           <div className="grid gap-3">
-            {history.map((item) => (
+            {filteredHistory.map((item) => (
               <HistoryRow
                 key={item.id}
                 item={item}

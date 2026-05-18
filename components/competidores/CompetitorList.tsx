@@ -11,6 +11,13 @@ import { SkeletonCardGrid } from '@/components/ui/LoadingSkeletons'
 import type { CompetitorDTO, ListCompetitorsResponse } from '@/lib/types/competidores'
 import { readActive, type ActiveJob } from '@/lib/competidores/active-jobs'
 
+type PlatformTab = 'instagram' | 'youtube'
+
+const PLATFORM_TABS: { id: PlatformTab; label: string }[] = [
+  { id: 'instagram', label: 'Instagram' },
+  { id: 'youtube', label: 'YouTube' },
+]
+
 async function fetchCompetitors(): Promise<CompetitorDTO[]> {
   const res = await fetch('/api/competitors', { credentials: 'same-origin' })
   if (!res.ok) {
@@ -22,6 +29,7 @@ async function fetchCompetitors(): Promise<CompetitorDTO[]> {
 }
 
 export function CompetitorList() {
+  const [activePlatform, setActivePlatform] = useState<PlatformTab>('instagram')
   const [competitors, setCompetitors] = useState<CompetitorDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -34,7 +42,6 @@ export function CompetitorList() {
   useEffect(() => {
     const active = readActive()
     if (active.length > 0) {
-      // Re-open the most recent active job
       setResumedJob(active[active.length - 1])
     }
   }, [])
@@ -59,9 +66,6 @@ export function CompetitorList() {
   }, [loadCompetitors])
 
   function handleAddDismiss() {
-    // Refresh list after the add flow closes (job may still be running;
-    // the ScrapeProgressDialog will have already navigated away on completion,
-    // but if it failed we refresh to reflect any partial state).
     void loadCompetitors()
   }
 
@@ -73,58 +77,117 @@ export function CompetitorList() {
         description="Baúl de competidores. Extraé reels, transcribí y analizá con IA."
         icon={Users}
         actions={
-          <button
-            onClick={() => setAddOpen(true)}
-            className="btn btn-primary"
-          >
-            <Plus size={15} />
-            Agregar competidor
-          </button>
+          activePlatform === 'instagram' ? (
+            <button
+              onClick={() => setAddOpen(true)}
+              className="btn btn-primary"
+            >
+              <Plus size={15} />
+              Agregar competidor
+            </button>
+          ) : null
         }
       />
-      {/* Loading skeleton */}
-      {loading && <SkeletonCardGrid count={6} cardHeight={120} />}
 
-      {/* Persistent error panel */}
-      {!loading && loadError && (
+      {/* Platform tab selector */}
+      <div className="flex justify-center mb-2">
         <div
-          className="flex flex-col items-center gap-4 rounded-2xl p-8 text-center"
-          style={{
-            backgroundColor: 'color-mix(in srgb, var(--destructive) 8%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--destructive) 25%, transparent)',
-          }}
+          className="inline-flex items-center gap-1 p-1 rounded-xl"
+          style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}
         >
-          <AlertCircle size={24} style={{ color: 'var(--destructive)' }} />
-          <div>
-            <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-              Error al cargar competidores
-            </p>
-            <p className="mt-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              {loadError}
-            </p>
-          </div>
-          <button
-            onClick={() => void loadCompetitors()}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
-            style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
-          >
-            <RefreshCcw size={13} />
-            Reintentar
-          </button>
+          {PLATFORM_TABS.map(({ id, label }) => {
+            const isActive = activePlatform === id
+            return (
+              <button
+                key={id}
+                onClick={() => setActivePlatform(id)}
+                className="relative px-5 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                style={{
+                  backgroundColor: isActive ? 'var(--accent)' : 'transparent',
+                  color: isActive ? 'var(--accent-foreground)' : 'var(--muted-foreground)',
+                }}
+              >
+                {label}
+              </button>
+            )
+          })}
         </div>
+      </div>
+
+      {/* ── Instagram tab ── */}
+      {activePlatform === 'instagram' && (
+        <>
+          {/* Loading skeleton */}
+          {loading && <SkeletonCardGrid count={6} cardHeight={120} />}
+
+          {/* Persistent error panel */}
+          {!loading && loadError && (
+            <div
+              className="flex flex-col items-center gap-4 rounded-2xl p-8 text-center"
+              style={{
+                backgroundColor: 'color-mix(in srgb, var(--destructive) 8%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--destructive) 25%, transparent)',
+              }}
+            >
+              <AlertCircle size={24} style={{ color: 'var(--destructive)' }} />
+              <div>
+                <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                  Error al cargar competidores
+                </p>
+                <p className="mt-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                  {loadError}
+                </p>
+              </div>
+              <button
+                onClick={() => void loadCompetitors()}
+                className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
+                style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
+              >
+                <RefreshCcw size={13} />
+                Reintentar
+              </button>
+            </div>
+          )}
+
+          {/* Competitor grid */}
+          {!loading && competitors.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {competitors.map((c) => (
+                <CompetitorCard key={c.id} competitor={c} />
+              ))}
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!loading && !loadError && competitors.length === 0 && (
+            <div
+              className="rounded-2xl p-12 flex flex-col items-center text-center gap-4"
+              style={{ backgroundColor: 'var(--card)', border: '1px dashed var(--border)' }}
+            >
+              <Users size={32} style={{ color: 'var(--muted-foreground)' }} />
+              <div>
+                <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                  Ningún competidor añadido aún
+                </p>
+                <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)' }}>
+                  Añade un competidor para scrapear sus reels y analizarlos con IA.
+                </p>
+              </div>
+              <button
+                onClick={() => setAddOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-90"
+                style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+              >
+                <Plus size={14} />
+                Añadir primer competidor
+              </button>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Competitor grid */}
-      {!loading && competitors.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {competitors.map((c) => (
-            <CompetitorCard key={c.id} competitor={c} />
-          ))}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && competitors.length === 0 && (
+      {/* ── YouTube tab ── */}
+      {activePlatform === 'youtube' && (
         <div
           className="rounded-2xl p-12 flex flex-col items-center text-center gap-4"
           style={{ backgroundColor: 'var(--card)', border: '1px dashed var(--border)' }}
@@ -132,20 +195,12 @@ export function CompetitorList() {
           <Users size={32} style={{ color: 'var(--muted-foreground)' }} />
           <div>
             <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-              Ningún competidor añadido aún
+              Análisis de competidores en YouTube
             </p>
             <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)' }}>
-              Añade un competidor para scrapear sus reels y analizarlos con IA.
+              Próximamente podrás agregar canales de YouTube y analizar su contenido con IA.
             </p>
           </div>
-          <button
-            onClick={() => setAddOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
-          >
-            <Plus size={14} />
-            Añadir primer competidor
-          </button>
         </div>
       )}
 
