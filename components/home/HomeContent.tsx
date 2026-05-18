@@ -7,6 +7,7 @@ import { GreetingBlock } from './GreetingBlock'
 import { StatGrid } from './StatGrid'
 import { PerformanceCharts } from './PerformanceCharts'
 import { QuickSummarySidebar } from './QuickSummarySidebar'
+import { AIInsightWidget } from './AIInsightWidget'
 import type { UserReelRow } from '@/hooks/useInstagramData'
 import type { InstagramAccountSummary } from '@/hooks/useInstagramData'
 
@@ -35,6 +36,16 @@ export function HomeContent() {
   const [clientData, setClientData] = useState<{
     produccion: number; programado: number; ideasCount: number; loaded: boolean
   }>({ produccion: 0, programado: 0, ideasCount: 0, loaded: false })
+
+  const [snapshotData, setSnapshotData] = useState<{
+    chartData: { date: string; impressions: number; reach: number }[]
+    latestFollowers: number
+    latestEngagementRate: number
+    latestProfileVisits: number
+    latestNewFollowers: number
+    latestAvgDailyReach: number
+    hasData: boolean
+  } | null>(null)
 
   // Raw Instagram data — recomputed per-period via useMemo below
   const [igReels, setIgReels] = useState<UserReelRow[]>([])
@@ -86,6 +97,27 @@ export function HomeContent() {
     loadIgStats()
   }, [])
 
+  // Fetch snapshot history whenever period changes
+  useEffect(() => {
+    const loadSnapshotHistory = async () => {
+      try {
+        const res = await fetch(`/api/me/snapshot-history?days=${period}`)
+        if (!res.ok) return
+        const data = await res.json() as {
+          chartData: { date: string; impressions: number; reach: number }[]
+          latestFollowers: number
+          latestEngagementRate: number
+          latestProfileVisits: number
+          latestNewFollowers: number
+          latestAvgDailyReach: number
+          hasData: boolean
+        }
+        setSnapshotData(data)
+      } catch {}
+    }
+    loadSnapshotHistory()
+  }, [period])
+
   // Recompute stats whenever the period selector changes
   const igReal = useMemo(() => {
     if (!igSummary?.connected || igSummary?.tokenExpired || igReels.length === 0) return null
@@ -103,30 +135,30 @@ export function HomeContent() {
   // Build stats from real data only — fields not available from the API stay at 0
   const hasPartialReal = igReal?.hasData ?? false
   const s: DashboardStats = {
-    // Instagram Graph API with instagram_business_basic scope does not expose
-    // impressions, reach, saves, profile visits or traffic breakdown —
-    // those require instagram_manage_insights (App Review). Set to 0.
-    impressions: 0,
-    avgDailyReach: 0,
+    // Snapshot-based metrics (aggregated across platforms via /api/me/snapshot-history)
+    impressions: snapshotData?.hasData
+      ? snapshotData.chartData.reduce((sum, p) => sum + p.impressions, 0)
+      : 0,
+    avgDailyReach: snapshotData?.latestAvgDailyReach ?? 0,
     impressionsChange: 0,
     profileConversionRate: 0,
-    profileVisits: 0,
-    newFollowers: 0,
+    profileVisits: snapshotData?.latestProfileVisits ?? 0,
+    newFollowers: snapshotData?.latestNewFollowers ?? 0,
     conversionChange: 0,
     saves: 0,
     trafficOrganic: 0,
     trafficPaid: 0,
     viewsGoalPct: 0,
     followersGoalPct: 0,
-    chartData: [],
+    chartData: snapshotData?.chartData ?? [],
     interactionsData: [],
     // Real data from synced UserReel rows, filtered by selected period
     likes: igReal?.likes ?? 0,
     comments: igReal?.comments ?? 0,
     bestReelViews: igReal?.bestReelViews ?? 0,
-    profileGrowth: igReal?.followers ?? 0,
-    growthLast30: igReal?.followers ?? 0,
-    engagementRate: 0,
+    profileGrowth: snapshotData?.latestFollowers ?? igReal?.followers ?? 0,
+    growthLast30: snapshotData?.latestFollowers ?? igReal?.followers ?? 0,
+    engagementRate: snapshotData?.latestEngagementRate ?? 0,
   }
 
   return (
@@ -141,7 +173,11 @@ export function HomeContent() {
         />
       </motion.div>
 
-      <motion.div {...fadeUp(1)} className="flex items-center justify-between">
+      <motion.div {...fadeUp(1)}>
+        <AIInsightWidget />
+      </motion.div>
+
+      <motion.div {...fadeUp(2)} className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <p className="text-eyebrow">Rendimiento Instagram</p>
           {!hasPartialReal && (
@@ -195,11 +231,11 @@ export function HomeContent() {
         </div>
       </motion.div>
 
-      <motion.div {...fadeUp(2)}>
+      <motion.div {...fadeUp(3)}>
         <StatGrid stats={s} />
       </motion.div>
 
-      <motion.div {...fadeUp(3)} className="flex flex-col xl:flex-row gap-6" style={{ alignItems: 'stretch' }}>
+      <motion.div {...fadeUp(4)} className="flex flex-col xl:flex-row gap-6" style={{ alignItems: 'stretch' }}>
         <PerformanceCharts stats={s} />
         <QuickSummarySidebar stats={s} />
       </motion.div>
