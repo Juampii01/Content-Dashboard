@@ -19,6 +19,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { db } from '@/lib/db'
 import type { Profile, UserRole } from '@prisma/client'
 import { isAdmin } from '@/lib/auth/permissions'
@@ -111,6 +112,16 @@ export async function requireActiveClient(): Promise<{
 
   if (!profile) {
     throw new UnauthorizedError()
+  }
+
+  // Admin "view as" override — lets admins preview another client's workspace
+  if (isAdmin(profile.role ?? '')) {
+    const jar = await cookies()
+    const viewAs = jar.get('admin_view_as')?.value
+    if (viewAs) {
+      const overrideClient = await db.client.findUnique({ where: { id: viewAs }, select: { id: true } })
+      if (overrideClient) return { userId, clientId: viewAs }
+    }
   }
 
   if (profile.clientId) {
