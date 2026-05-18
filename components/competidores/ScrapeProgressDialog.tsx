@@ -18,15 +18,15 @@ interface ScrapeProgressDialogProps {
   open: boolean
   jobId: string
   username: string
-  requestedCount: 30 | 60 | 90
+  requestedCount: 10 | 20 | 30
   /** Called after dialog fully closes (failed or user dismissed after error) */
   onClose: () => void
 }
 
-function etaLabel(count: 30 | 60 | 90): string {
-  if (count === 30) return '~45s'
-  if (count === 60) return '~90s'
-  return '~2.5 min'
+function etaLabel(count: 10 | 20 | 30): string {
+  if (count === 10) return '~20s'
+  if (count === 20) return '~35s'
+  return '~45s'
 }
 
 export function ScrapeProgressDialog({

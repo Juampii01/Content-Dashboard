@@ -16,12 +16,12 @@ import { ScrapeProgressDialog } from '@/components/competidores/ScrapeProgressDi
 import type { CreateCompetitorResponse } from '@/lib/types/competidores'
 import { addActive } from '@/lib/competidores/active-jobs'
 
-type Limit = 30 | 60 | 90
+type Limit = 10 | 20 | 30
 
 const LIMIT_OPTIONS: { value: Limit; label: string; cost: string }[] = [
+  { value: 10, label: '10 reels', cost: '~$0.01' },
+  { value: 20, label: '20 reels', cost: '~$0.02' },
   { value: 30, label: '30 reels', cost: '~$0.03' },
-  { value: 60, label: '60 reels', cost: '~$0.06' },
-  { value: 90, label: '90 reels', cost: '~$0.09' },
 ]
 
 interface AddCompetitorDialogProps {
@@ -32,7 +32,7 @@ interface AddCompetitorDialogProps {
 
 export function AddCompetitorDialog({ open, onOpenChange, onDismiss }: AddCompetitorDialogProps) {
   const [username, setUsername] = useState('')
-  const [limit, setLimit] = useState<Limit>(30)
+  const [limit, setLimit] = useState<Limit>(10)
   const [loading, setLoading] = useState(false)
 
   // ScrapeProgressDialog state

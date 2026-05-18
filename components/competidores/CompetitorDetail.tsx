@@ -358,7 +358,7 @@ export function CompetitorDetail({ username }: Props) {
           open={refreshProgressOpen}
           jobId={refreshJobId}
           username={competitor.username}
-          requestedCount={refreshRequestedCount as 30 | 60 | 90}
+          requestedCount={refreshRequestedCount as 10 | 20 | 30}
           onClose={handleRefreshProgressClose}
         />
       )}

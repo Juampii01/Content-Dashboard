@@ -100,7 +100,7 @@ export interface ScrapeJobDTO {
 // POST /api/competitors — crea o devuelve existente y dispara scrape
 export interface CreateCompetitorRequest {
   username: string                                    // con o sin "@"
-  limit: 30 | 60 | 90
+  limit: 10 | 20 | 30
 }
 export interface CreateCompetitorResponse {
   competitor: CompetitorDTO

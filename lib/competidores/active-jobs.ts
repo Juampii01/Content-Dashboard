@@ -1,7 +1,7 @@
 export type ActiveJob = {
   jobId: string
   username: string
-  requestedCount: 30 | 60 | 90
+  requestedCount: 10 | 20 | 30
   kind: 'initial' | 'refresh'
   startedAt: string
 }

@@ -30,7 +30,7 @@ export const usernameSchema = z
 // POST /api/competitors
 export const CreateCompetitorSchema = z.object({
   username: usernameSchema,
-  limit: z.union([z.literal(30), z.literal(60), z.literal(90)]),
+  limit: z.union([z.literal(10), z.literal(20), z.literal(30)]),
 })
 
 // POST /api/reels/[id]/analyze

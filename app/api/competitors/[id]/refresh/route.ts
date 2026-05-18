@@ -21,7 +21,7 @@ import type { RefreshCompetitorResponse } from '@/lib/types/competidores'
 
 export const maxDuration = 300
 
-const REFRESH_LIMIT = 30
+const REFRESH_LIMIT = 15
 
 // ─── POST /api/competitors/[id]/refresh ───────────────────────────────────
 
