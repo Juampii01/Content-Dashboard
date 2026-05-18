@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Camera, Play,
   CheckSquare, BookOpen, Kanban,
   ChevronLeft, ChevronRight, Users,
-  Music, Megaphone, LogOut, Shield, UserCog, Building2,
+  Music, Megaphone, LogOut, Shield, UserCog,
   FileText, Telescope, Eye,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -68,7 +68,6 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Resumen', href: '/admin', icon: Shield },
       { label: 'Usuarios', href: '/admin/users', icon: UserCog },
-      { label: 'Temas', href: '/admin/clients', icon: Building2 },
     ],
   },
 ]
