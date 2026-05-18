@@ -8,12 +8,13 @@ import {
   Trash2,
   ExternalLink,
   Sparkles,
-  ThumbsUp,
   Eye,
-  MessageCircle,
+  ChevronDown,
+  ChevronUp,
   Telescope,
   Inbox,
   FileText,
+  CheckCircle2,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -50,150 +51,323 @@ interface ResearchRow {
   createdAt: string
 }
 
-// `formatK` (lib/utils/formatters) handles 1.5K / 1.5M compaction.
-// `formatDate` (lib/utils/formatDate) handles locale + Intl options.
-const dateOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }
+const dateOpts: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+}
 
-function VideoCard({ video, platform }: { video: ResearchVideo; platform: Platform }) {
-  const [showTranscript, setShowTranscript] = useState(false)
+// Truncate text to N chars with ellipsis
+function trunc(text: string | null, n = 120): string {
+  if (!text) return '—'
+  return text.length > n ? text.slice(0, n) + '…' : text
+}
+
+// ────────────────────────────────────────────────────────────
+// Single research panel — collapsible table
+// ────────────────────────────────────────────────────────────
+function ResearchPanel({
+  row,
+  defaultOpen = false,
+  onDelete,
+}: {
+  row: ResearchRow
+  defaultOpen?: boolean
+  onDelete?: () => void
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  const showThumb = row.platform !== 'instagram'
+
   return (
     <div
-      className="rounded-xl overflow-hidden card-lift"
+      className="rounded-2xl overflow-hidden"
       style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
     >
-      {video.thumbnail && (
-        <div className="relative aspect-video w-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
-          <Image
-            src={video.thumbnail}
-            alt=""
-            fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 100vw"
-            className="object-cover"
-            unoptimized={platform === 'instagram'}
-          />
+      {/* ── Header row ── */}
+      <div className="flex items-center gap-4 px-5 py-4">
+        {/* Platform icon */}
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}
+        >
+          <PlatformBadge platform={row.platform} variant="icon" size={18} />
+        </div>
+
+        {/* Meta */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-sm font-semibold capitalize" style={{ color: 'var(--foreground)' }}>
+              {row.platform === 'youtube' ? 'Youtube' : 'Instagram'}
+            </span>
+            <span
+              className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+              style={{
+                backgroundColor: 'color-mix(in srgb, var(--success, #22c55e) 12%, transparent)',
+                color: 'var(--success, #22c55e)',
+                border: '1px solid color-mix(in srgb, var(--success, #22c55e) 28%, transparent)',
+              }}
+            >
+              <CheckCircle2 size={10} />
+              Completado
+            </span>
+          </div>
+          <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+            {row.channelName ?? row.channelUrl}
+          </p>
+          <p className="text-xs" style={{ color: 'var(--muted-foreground)', opacity: 0.7 }}>
+            {formatDate(row.createdAt, dateOpts)} · Últimos {row.timeframeDays} días · {row.videos.length} videos
+          </p>
+        </div>
+
+        {/* Actions */}
+        {onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="p-2 rounded-lg hover:opacity-70 cursor-pointer transition-opacity"
+            style={{ color: 'var(--muted-foreground)' }}
+            aria-label="Eliminar investigación"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all hover:brightness-110"
+          style={{
+            backgroundColor: 'var(--muted)',
+            color: 'var(--foreground)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          Ver Resultados
+          {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+        </button>
+      </div>
+
+      {/* ── Table ── */}
+      {open && (
+        <div className="overflow-x-auto" style={{ borderTop: '1px solid var(--border)' }}>
+          <table className="w-full text-xs">
+            <thead>
+              <tr style={{ backgroundColor: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
+                <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wider whitespace-nowrap"
+                  style={{ color: 'var(--muted-foreground)' }}>
+                  Creator
+                </th>
+                <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wider whitespace-nowrap"
+                  style={{ color: 'var(--muted-foreground)' }}>
+                  URL
+                </th>
+                <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wider"
+                  style={{ color: 'var(--muted-foreground)', minWidth: '180px' }}>
+                  Hook
+                </th>
+                <th className="text-right px-4 py-2.5 font-semibold uppercase tracking-wider whitespace-nowrap"
+                  style={{ color: 'var(--muted-foreground)' }}>
+                  Views
+                </th>
+                <th className="text-right px-4 py-2.5 font-semibold uppercase tracking-wider whitespace-nowrap"
+                  style={{ color: 'var(--muted-foreground)' }}>
+                  Duración
+                </th>
+                <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wider"
+                  style={{ color: 'var(--muted-foreground)', minWidth: '220px' }}>
+                  Transcript
+                </th>
+                <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wider"
+                  style={{ color: 'var(--muted-foreground)', minWidth: '220px' }}>
+                  Análisis
+                </th>
+                {showThumb && (
+                  <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wider whitespace-nowrap"
+                    style={{ color: 'var(--muted-foreground)' }}>
+                    Thumbnail
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {row.videos.map((v, i) => (
+                <VideoRow
+                  key={v.videoId}
+                  video={v}
+                  creator={row.channelName ?? row.channelUrl}
+                  showThumb={showThumb}
+                  isLast={i === row.videos.length - 1}
+                />
+              ))}
+            </tbody>
+          </table>
+
+          {/* Video count footer */}
+          <div
+            className="px-5 py-2.5 text-[11px]"
+            style={{ color: 'var(--muted-foreground)', borderTop: '1px solid var(--border)' }}
+          >
+            {row.videos.length} videos
+          </div>
         </div>
       )}
-      <div className="p-4">
-        <div className="flex items-center gap-2 mb-2 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
-          <PlatformBadge platform={platform} variant="icon" size={14} />
-          <span className="tabular-nums">{video.duration}</span>
-          {video.publishedAt && <span>· {formatDate(video.publishedAt, dateOpts)}</span>}
-        </div>
-        <h3
-          className="text-sm font-semibold leading-snug mb-3 line-clamp-2"
-          style={{ color: 'var(--foreground)' }}
-        >
-          {video.title}
-        </h3>
+    </div>
+  )
+}
 
-        <div className="flex items-center gap-3 text-xs mb-3" style={{ color: 'var(--muted-foreground)' }}>
-          <span className="inline-flex items-center gap-1 tabular-nums">
-            <Eye size={11} /> {formatK(video.views)}
-          </span>
-          <span className="inline-flex items-center gap-1 tabular-nums">
-            <ThumbsUp size={11} /> {formatK(video.likes)}
-          </span>
-          <span className="inline-flex items-center gap-1 tabular-nums">
-            <MessageCircle size={11} /> {formatK(video.comments)}
-          </span>
-        </div>
+// ────────────────────────────────────────────────────────────
+// Table row for a single video
+// ────────────────────────────────────────────────────────────
+function VideoRow({
+  video,
+  creator,
+  showThumb,
+  isLast,
+}: {
+  video: ResearchVideo
+  creator: string
+  showThumb: boolean
+  isLast: boolean
+}) {
+  const [expandTranscript, setExpandTranscript] = useState(false)
+  const [expandAnalysis, setExpandAnalysis] = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
 
-        {video.analysis && (
-          <div
-            className="rounded-lg p-3 mb-3 text-xs leading-relaxed"
-            style={{
-              backgroundColor: 'color-mix(in srgb, var(--accent) 6%, transparent)',
-              border: '1px solid color-mix(in srgb, var(--accent) 18%, var(--border))',
-              color: 'var(--foreground)',
-            }}
-          >
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Sparkles size={11} style={{ color: 'var(--accent)' }} />
-              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
-                Análisis IA
-              </span>
-            </div>
-            {video.analysis}
-          </div>
-        )}
+  return (
+    <tr
+      style={{
+        borderBottom: isLast ? 'none' : '1px solid var(--border)',
+        verticalAlign: 'top',
+      }}
+    >
+      {/* Creator */}
+      <td className="px-4 py-3 whitespace-nowrap font-medium" style={{ color: 'var(--foreground)' }}>
+        {creator}
+      </td>
 
-        {video.transcript && (
-          <div className="mb-3">
-            <button
-              type="button"
-              onClick={() => setShowTranscript((v) => !v)}
-              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider hover:opacity-70 cursor-pointer"
-              style={{ color: 'var(--muted-foreground)' }}
-            >
-              <FileText size={10} />
-              {showTranscript ? 'Ocultar transcript' : 'Ver transcript'}
-            </button>
-            {showTranscript && (
-              <div
-                className="mt-2 rounded-lg p-3 text-xs leading-relaxed max-h-48 overflow-y-auto"
-                style={{
-                  backgroundColor: 'var(--muted)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--muted-foreground)',
-                  whiteSpace: 'pre-wrap',
-                }}
-              >
-                {video.transcript}
-              </div>
-            )}
-          </div>
-        )}
-
+      {/* URL */}
+      <td className="px-4 py-3 whitespace-nowrap">
         <a
           href={video.videoUrl}
           target="_blank"
           rel="noreferrer noopener"
-          className="inline-flex items-center gap-1.5 text-xs hover:underline"
-          style={{ color: 'var(--muted-foreground)' }}
+          className="inline-flex items-center gap-1 font-medium hover:underline"
+          style={{ color: 'var(--accent)' }}
         >
-          <ExternalLink size={11} /> Ver original
+          Ver <ExternalLink size={10} />
         </a>
-      </div>
-    </div>
+      </td>
+
+      {/* Hook / Title */}
+      <td className="px-4 py-3" style={{ color: 'var(--muted-foreground)', maxWidth: '220px' }}>
+        <span className="leading-snug" style={{ color: 'var(--foreground)' }}>
+          {video.title || '—'}
+        </span>
+      </td>
+
+      {/* Views */}
+      <td className="px-4 py-3 text-right whitespace-nowrap tabular-nums font-medium"
+        style={{ color: 'var(--foreground)' }}>
+        <span className="inline-flex items-center justify-end gap-1">
+          <Eye size={11} style={{ color: 'var(--muted-foreground)' }} />
+          {formatK(video.views)}
+        </span>
+      </td>
+
+      {/* Duration */}
+      <td className="px-4 py-3 text-right whitespace-nowrap tabular-nums"
+        style={{ color: 'var(--muted-foreground)' }}>
+        {video.duration || '—'}
+      </td>
+
+      {/* Transcript */}
+      <td className="px-4 py-3" style={{ color: 'var(--muted-foreground)', maxWidth: '260px' }}>
+        {video.transcript ? (
+          <div>
+            <p className="leading-relaxed">
+              {expandTranscript ? video.transcript : trunc(video.transcript, 120)}
+            </p>
+            {video.transcript.length > 120 && (
+              <button
+                type="button"
+                onClick={() => setExpandTranscript((v) => !v)}
+                className="inline-flex items-center gap-1 mt-1 font-semibold hover:opacity-70 cursor-pointer"
+                style={{ color: 'var(--accent)', fontSize: '10px' }}
+              >
+                <FileText size={10} />
+                {expandTranscript ? 'Ver menos' : 'Ver más'}
+              </button>
+            )}
+          </div>
+        ) : (
+          <span style={{ opacity: 0.45 }}>—</span>
+        )}
+      </td>
+
+      {/* Análisis */}
+      <td className="px-4 py-3" style={{ color: 'var(--muted-foreground)', maxWidth: '260px' }}>
+        {video.analysis ? (
+          <div>
+            <p className="leading-relaxed">
+              {expandAnalysis ? video.analysis : trunc(video.analysis, 120)}
+            </p>
+            {video.analysis.length > 120 && (
+              <button
+                type="button"
+                onClick={() => setExpandAnalysis((v) => !v)}
+                className="inline-flex items-center gap-1 mt-1 font-semibold hover:opacity-70 cursor-pointer"
+                style={{ color: 'var(--accent)', fontSize: '10px' }}
+              >
+                <Sparkles size={10} />
+                {expandAnalysis ? 'Ver menos' : 'Ver más'}
+              </button>
+            )}
+          </div>
+        ) : (
+          <span style={{ opacity: 0.45 }}>—</span>
+        )}
+      </td>
+
+      {/* Thumbnail — YouTube only */}
+      {showThumb && (
+        <td className="px-4 py-3">
+          {video.thumbnail && !imgFailed ? (
+            <div
+              className="relative overflow-hidden rounded-lg flex-shrink-0"
+              style={{ width: 72, height: 40 }}
+            >
+              <Image
+                src={video.thumbnail}
+                alt=""
+                fill
+                sizes="72px"
+                className="object-cover"
+                onError={() => setImgFailed(true)}
+                unoptimized
+              />
+            </div>
+          ) : (
+            <div
+              className="rounded-lg flex-shrink-0"
+              style={{
+                width: 72,
+                height: 40,
+                backgroundColor: 'var(--muted)',
+                border: '1px solid var(--border)',
+              }}
+            />
+          )}
+        </td>
+      )}
+    </tr>
   )
 }
 
-function ResearchPanel({ row }: { row: ResearchRow }) {
-  return (
-    <div
-      className="rounded-2xl p-5"
-      style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
-    >
-      <div className="flex items-center gap-3 mb-4">
-        <PlatformBadge platform={row.platform} variant="icon" size={14} />
-        <div className="flex-1 min-w-0">
-          <h3 className="text-base font-semibold leading-tight" style={{ color: 'var(--foreground)' }}>
-            {row.channelName ?? row.channelUrl}
-          </h3>
-          <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-            Top 5 de los últimos {row.timeframeDays} días · {formatDate(row.createdAt, dateOpts)}
-          </p>
-        </div>
-        <a
-          href={row.channelUrl}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="inline-flex items-center gap-1 text-xs hover:underline"
-          style={{ color: 'var(--muted-foreground)' }}
-        >
-          <ExternalLink size={11} /> abrir canal
-        </a>
-      </div>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {row.videos.map((v) => (
-          <VideoCard key={v.videoId} video={v} platform={row.platform} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
+// ────────────────────────────────────────────────────────────
+// Main view
+// ────────────────────────────────────────────────────────────
 export function ContentResearchView() {
   const [channelUrl, setChannelUrl] = useState('')
   const [timeframe, setTimeframe] = useState<number>(30)
@@ -278,7 +452,7 @@ export function ContentResearchView() {
   }
 
   return (
-    <div className="page-shell" style={{ maxWidth: '76rem' }}>
+    <div className="page-shell" style={{ maxWidth: '80rem' }}>
       <PageHeader
         eyebrow="Contenido"
         title="Content Research"
@@ -286,10 +460,8 @@ export function ContentResearchView() {
         icon={Telescope}
       />
 
-      <form
-        onSubmit={handleSubmit}
-        className="surface-elevated p-4 mb-6"
-      >
+      {/* Search form */}
+      <form onSubmit={handleSubmit} className="surface-elevated p-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
           <div
             className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-[var(--accent)]"
@@ -328,10 +500,11 @@ export function ContentResearchView() {
               color: 'var(--foreground)',
             }}
           >
-            <option value={7}>7 días</option>
-            <option value={30}>30 días</option>
-            <option value={90}>90 días</option>
-            <option value={365}>1 año</option>
+            <option value={7}>Últimos 7 días</option>
+            <option value={30}>Últimos 30 días</option>
+            <option value={60}>Últimos 60 días</option>
+            <option value={90}>Últimos 90 días</option>
+            <option value={365}>Último año</option>
           </select>
           <button
             type="submit"
@@ -355,12 +528,14 @@ export function ContentResearchView() {
         )}
       </form>
 
+      {/* Latest result — open by default */}
       {current && (
-        <div className="mb-8">
-          <ResearchPanel row={current} />
+        <div className="mb-6">
+          <ResearchPanel row={current} defaultOpen />
         </div>
       )}
 
+      {/* History */}
       <Section eyebrow="Historial" flush>
         {historyLoading ? (
           <div role="status" aria-live="polite" aria-label="Cargando historial" className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
@@ -373,20 +548,13 @@ export function ContentResearchView() {
             description="Pegá una URL arriba y guardamos los resultados acá para que vuelvas cuando quieras."
           />
         ) : (
-          <div className="grid gap-4">
+          <div className="flex flex-col gap-3">
             {history.map((row) => (
-              <div key={row.id} className="relative">
-                <ResearchPanel row={row} />
-                <button
-                  type="button"
-                  onClick={() => setPendingDelete(row)}
-                  className="absolute top-4 right-4 p-2 rounded-lg hover:opacity-70 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
-                  style={{ color: 'var(--muted-foreground)' }}
-                  aria-label={`Eliminar investigación de ${row.channelName ?? row.channelUrl}`}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
+              <ResearchPanel
+                key={row.id}
+                row={row}
+                onDelete={() => setPendingDelete(row)}
+              />
             ))}
           </div>
         )}
