@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { logClientError } from '@/lib/client-errors'
 
 export type UserRole = 'admin' | 'team' | 'setter' | 'client'
@@ -34,21 +34,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [sessionError, setSessionError] = useState(false)
 
-  const load = useCallback(async () => {
+  // Tracks retry attempts — reset whenever `load` is called externally (refetch)
+  const retryCount = useRef(0)
+
+  const load = useCallback(async (isRetry = false) => {
+    if (!isRetry) retryCount.current = 0
     try {
       const meRes = await fetch('/api/me')
       if (!meRes.ok) {
+        // 401 right after login is a cookie-propagation race condition.
+        // Retry up to 2 times with a short back-off before declaring a real error.
+        if (meRes.status === 401 && retryCount.current < 2) {
+          retryCount.current += 1
+          const delay = retryCount.current * 700
+          setTimeout(() => void load(true), delay)
+          return // stay in loading state during retry
+        }
         setSessionError(true)
         setProfile(null)
+        setLoading(false)
         return
       }
       const meData = (await meRes.json()) as AuthProfile
       setProfile(meData)
       setSessionError(false)
+      setLoading(false)
     } catch (err) {
+      if (retryCount.current < 2) {
+        retryCount.current += 1
+        setTimeout(() => void load(true), retryCount.current * 700)
+        return
+      }
       logClientError(err, 'AuthProvider:load', { silent: true })
       setSessionError(true)
-    } finally {
       setLoading(false)
     }
   }, [])
