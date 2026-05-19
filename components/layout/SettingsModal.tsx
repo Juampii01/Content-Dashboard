@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { SettingsMenuView } from './settings/SettingsMenuView'
 import { ProfileView } from './settings/ProfileView'
 import { PasswordView } from './settings/PasswordView'
+import { AppearanceView } from './settings/AppearanceView'
 
 interface SettingsModalProps {
   open: boolean
@@ -17,7 +18,7 @@ interface SettingsModalProps {
   onProfileChange?: (next: { displayName: string | null; avatarUrl: string | null }) => void
 }
 
-type View = 'menu' | 'password' | 'profile'
+type View = 'menu' | 'password' | 'profile' | 'appearance'
 
 export function SettingsModal({
   open,
@@ -72,7 +73,7 @@ export function SettingsModal({
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-bold" style={{ color: 'var(--foreground)' }}>
-            {view === 'menu' ? 'Ajustes' : view === 'password' ? 'Cambiar contraseña' : 'Perfil'}
+            {view === 'menu' ? 'Ajustes' : view === 'password' ? 'Cambiar contraseña' : view === 'appearance' ? 'Apariencia' : 'Perfil'}
           </h2>
           <button
             onClick={onClose}
@@ -90,6 +91,7 @@ export function SettingsModal({
             role={role}
             onSelectProfile={() => setView('profile')}
             onSelectPassword={() => setView('password')}
+            onSelectAppearance={() => setView('appearance')}
             onAdminLink={onClose}
           />
         )}
@@ -110,6 +112,10 @@ export function SettingsModal({
             onCancel={() => setView('menu')}
             onDone={() => setView('menu')}
           />
+        )}
+
+        {view === 'appearance' && (
+          <AppearanceView onBack={() => setView('menu')} />
         )}
       </div>
     </div>,

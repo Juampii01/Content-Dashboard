@@ -1,13 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { Lock, Shield, User } from 'lucide-react'
+import { Lock, Shield, User, Palette } from 'lucide-react'
 
 interface SettingsMenuViewProps {
   email: string | null
   role: string | null
   onSelectProfile: () => void
   onSelectPassword: () => void
+  onSelectAppearance: () => void
   onAdminLink: () => void
 }
 
@@ -16,6 +17,7 @@ export function SettingsMenuView({
   role,
   onSelectProfile,
   onSelectPassword,
+  onSelectAppearance,
   onAdminLink,
 }: SettingsMenuViewProps) {
   return (
@@ -40,6 +42,13 @@ export function SettingsMenuView({
         title="Perfil"
         desc="Nombre y foto de perfil"
         onClick={onSelectProfile}
+      />
+
+      <MenuItem
+        icon={<Palette size={15} style={{ color: 'var(--accent)' }} />}
+        title="Apariencia"
+        desc="Tema de marca y modo oscuro / claro"
+        onClick={onSelectAppearance}
       />
 
       <MenuItem
