@@ -58,6 +58,13 @@ export async function PATCH(
   if (parsed.data.displayName !== undefined) updateData.displayName = parsed.data.displayName
   if (parsed.data.themeKey !== undefined) updateData.themeKey = parsed.data.themeKey
 
+  if (updateData.clientId) {
+    const clientExists = await db.client.findUnique({ where: { id: updateData.clientId as string }, select: { id: true } })
+    if (!clientExists) {
+      return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+    }
+  }
+
   try {
     const updated = await db.profile.update({
       where: { id },

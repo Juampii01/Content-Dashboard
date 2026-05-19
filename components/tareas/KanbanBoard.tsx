@@ -69,6 +69,7 @@ function apiToUiTask(t: ApiTask): Task {
 export function KanbanBoard() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [modalConfig, setModalConfig] = useState<{
     open: boolean
@@ -93,6 +94,7 @@ export function KanbanBoard() {
         if (!cancelled) {
           const msg = err instanceof Error ? err.message : String(err)
           toast.error(`Error al cargar tareas: ${msg}`)
+          setLoadError(true)
         }
       })
       .finally(() => {
@@ -332,6 +334,11 @@ export function KanbanBoard() {
           <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
             Cargando tareas…
           </span>
+        </div>
+      ) : loadError && tasks.length === 0 ? (
+        <div className="flex items-center justify-center py-16 text-sm"
+          style={{ color: 'var(--muted-foreground)' }}>
+          Error al cargar las tareas. Recargá la página para intentar de nuevo.
         </div>
       ) : (
         <DndContext

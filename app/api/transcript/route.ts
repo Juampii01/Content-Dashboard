@@ -72,25 +72,29 @@ export async function GET() {
     throw err
   }
 
-  const items = await db.transcriptHistory.findMany({
-    where: { clientId: scope.clientId },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-    select: {
-      id: true,
-      url: true,
-      platform: true,
-      title: true,
-      creator: true,
-      duration: true,
-      thumbnail: true,
-      summary: true,
-      transcript: true,
-      createdAt: true,
-    },
-  })
-
-  return NextResponse.json({ items })
+  try {
+    const items = await db.transcriptHistory.findMany({
+      where: { clientId: scope.clientId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        url: true,
+        platform: true,
+        title: true,
+        creator: true,
+        duration: true,
+        thumbnail: true,
+        summary: true,
+        transcript: true,
+        createdAt: true,
+      },
+    })
+    return NextResponse.json({ items })
+  } catch (err) {
+    console.error('[transcript/GET]', err)
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+  }
 }
 
 // ─── DELETE: remove one ───────────────────────────────────────────────────────

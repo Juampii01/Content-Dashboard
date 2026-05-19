@@ -12,6 +12,7 @@ import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/au
 import { checkRateLimit } from '@/lib/utils/ratelimit'
 
 export const runtime = 'nodejs'
+export const maxDuration = 120
 
 export interface AIInsightResponse {
   insight: string | null

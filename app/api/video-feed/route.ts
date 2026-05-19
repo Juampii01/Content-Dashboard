@@ -94,10 +94,15 @@ export async function GET() {
     if (e) return e
     throw err
   }
-  const account = await db.videoFeedAccount.findUnique({
-    where: { clientId_platform: { clientId: scope.clientId, platform: PLATFORM } },
-  })
-  return NextResponse.json({ account })
+  try {
+    const account = await db.videoFeedAccount.findUnique({
+      where: { clientId_platform: { clientId: scope.clientId, platform: PLATFORM } },
+    })
+    return NextResponse.json({ account })
+  } catch (err) {
+    console.error('[video-feed/GET]', err)
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+  }
 }
 
 // ─── DELETE ──────────────────────────────────────────────────────────────────
@@ -164,7 +169,8 @@ export async function POST(req: NextRequest) {
     scraped = ig.posts
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    return NextResponse.json({ error: message || 'No se pudieron obtener los posts.' }, { status: 502 })
+    const safeMessage = process.env.NODE_ENV !== 'production' ? message : null
+    return NextResponse.json({ error: safeMessage || 'No se pudieron obtener los posts.' }, { status: 502 })
   }
 
   const cutoff = Date.now() - WINDOW_DAYS * 86_400_000

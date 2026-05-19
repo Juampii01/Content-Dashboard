@@ -31,8 +31,8 @@ export default function ResetPasswordPage() {
     // Confirming the session is an async side effect (not a render-derived
     // value), so the setState below is intentional.
     void (async () => {
-      const { data } = await supabase.auth.getSession()
-      if (!data.session) {
+      const { data } = await supabase.auth.getUser()
+      if (!data.user) {
         toast.error('El enlace de restablecimiento expiró o no es válido.')
         router.replace('/login')
         return

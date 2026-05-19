@@ -114,9 +114,8 @@ export async function GET(
   // Generate CSRF state token
   const state = crypto.randomUUID()
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // +10 min
-  const returnTo = req.nextUrl.searchParams.get('returnTo')
-    ?? req.headers.get('referer')
-    ?? '/'
+  const rawReturn = req.nextUrl.searchParams.get('returnTo') ?? req.headers.get('referer') ?? '/'
+  const returnTo = rawReturn.startsWith('/') && !rawReturn.startsWith('//') ? rawReturn : '/'
 
   // Persist state
   await db.oAuthState.create({ data: { userId, clientId, state, platform, returnTo, expiresAt } })

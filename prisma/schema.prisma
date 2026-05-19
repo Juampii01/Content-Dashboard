@@ -170,10 +170,11 @@ model ScrapeJob {
   costUsd        Float?
   startedAt      DateTime    @default(now())
   completedAt    DateTime?
-  competitor     Competitor? @relation(fields: [competitorId], references: [id])
+  competitor     Competitor? @relation(fields: [competitorId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
   @@index([status, startedAt])
+  @@index([competitorId])
 }
 
 model Conversation {
@@ -260,6 +261,7 @@ model Task {
   updatedAt   DateTime  @updatedAt
 
   @@index([clientId])
+  @@index([clientId, columnId])
 }
 
 // ContentPiece doubles as CalendarEvent (reels + historias calendar items)
@@ -363,6 +365,7 @@ model GuionTab {
   emoji     String      @default("")
   order     Int         @default(0)
   createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
   items     GuionItem[]
 
   @@index([clientId])
@@ -382,6 +385,7 @@ model GuionItem {
   tab       GuionTab @relation(fields: [tabId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
+  @@index([tabId])
 }
 
 // ─── Instagram analytics (client-owned reels + stories + account snapshots) ──
@@ -653,4 +657,5 @@ model IncomeRecord {
 
   @@index([clientId, date])
   @@index([clientId, source])
+  @@index([reelId])
 }

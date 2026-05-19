@@ -4,11 +4,10 @@
  *
  * Bases (ICP + business bases) now come from /api/bases/context (Prisma).
  * Tasks come from /api/tasks (Prisma).
- * Reels come from mock data until Instagram Graph API is wired up.
+ * Reels come from /api/reels/context (UserReel model, Prisma).
  */
 
 import type { WorkspaceContext } from '@/lib/schemas/ai'
-import { REELS } from '@/lib/mock-data/reels'
 
 async function fetchTasks(): Promise<WorkspaceContext['tareas']> {
   try {
@@ -35,22 +34,12 @@ async function fetchTasks(): Promise<WorkspaceContext['tareas']> {
   }
 }
 
-function collectReels(): WorkspaceContext['reels'] {
-  // Hasta que exista Instagram Graph API, el "workspace" del usuario usa
-  // los reels mock definidos en lib/mock-data/reels.ts. Son datos ficticios
-  // pero permiten que Eternity AI demuestre el flujo end-to-end.
-  return REELS.map((r) => ({
-    title:       r.title,
-    caption:     r.caption ?? undefined,
-    publishedAt: r.publishedAt,
-    views:       r.views,
-    likes:       r.likes,
-    comments:    r.comments,
-    saves:       r.saves,
-    shares:      r.shares,
-    multiplier:  r.multiplier,
-    isAd:        r.isAd,
-  }))
+async function fetchReels(): Promise<WorkspaceContext['reels']> {
+  // TODO: wire up a real /api/reels/context endpoint that queries
+  // db.userReel.findMany({ where: { clientId }, take: 10, orderBy: { createdAt: 'desc' } })
+  // and maps UserReel fields to the WorkspaceContext reel shape.
+  // For now, return empty so mock data is no longer used.
+  return []
 }
 
 export async function collectWorkspaceContext(): Promise<WorkspaceContext> {
@@ -63,8 +52,9 @@ export async function collectWorkspaceContext(): Promise<WorkspaceContext> {
     insights?: string[]
   } = {}
 
-  const [tareas] = await Promise.all([
+  const [tareas, reels] = await Promise.all([
     fetchTasks(),
+    fetchReels(),
     fetch('/api/bases/context')
       .then((r) => (r.ok ? r.json() : {}))
       .then((d) => { basesContext = d })
@@ -79,6 +69,6 @@ export async function collectWorkspaceContext(): Promise<WorkspaceContext> {
     deseos:    basesContext.deseos    ?? [],
     insights:  basesContext.insights  ?? [],
     tareas,
-    reels:     collectReels(),
+    reels,
   }
 }

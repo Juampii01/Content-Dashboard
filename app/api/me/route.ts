@@ -36,7 +36,7 @@ export async function GET(): Promise<NextResponse> {
 
 const PatchSchema = z.object({
   displayName: z.string().trim().min(1).max(64).nullable().optional(),
-  avatarUrl: z.string().max(300_000).nullable().optional(),
+  avatarUrl: z.string().url().max(2048).nullable().optional(),
 })
 
 export async function PATCH(req: NextRequest): Promise<NextResponse> {

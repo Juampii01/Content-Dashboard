@@ -25,8 +25,7 @@ export function ErrorBoundaryCard({
   showHome?: boolean
 }) {
   useEffect(() => {
-    // Always log server-side; users only see the card.
-    console.error('[ErrorBoundary]', title, error)
+    if (process.env.NODE_ENV !== 'production') console.error('[ErrorBoundary]', title, error)
   }, [error, title])
 
   return (

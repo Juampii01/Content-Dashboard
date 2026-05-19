@@ -77,6 +77,7 @@ export function YouTubeVideosTab({ connected, hasData }: Props) {
       </div>
 
       <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ backgroundColor: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
@@ -207,6 +208,7 @@ export function YouTubeVideosTab({ connected, hasData }: Props) {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {hasMore && (

@@ -4,6 +4,8 @@ import { AnalyzeRequestSchema } from '@/lib/schemas/analizador/analyze'
 import { checkRateLimit } from '@/lib/utils/ratelimit'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
 
+export const maxDuration = 120
+
 export async function POST(req: NextRequest) {
   try {
     // clientId extracted for tenant-scoping future DB writes

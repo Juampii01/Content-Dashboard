@@ -83,6 +83,7 @@ export function AdsCampaignsTab({ connected, hasData }: Props) {
       </span>
 
       <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ backgroundColor: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
@@ -157,6 +158,7 @@ export function AdsCampaignsTab({ connected, hasData }: Props) {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {hasMore && (

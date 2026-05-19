@@ -54,7 +54,7 @@ export default function LoginPage() {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     })
     setForgotSending(false)
-    if (resetErr) console.error('[forgot-password]', resetErr)
+    if (resetErr && process.env.NODE_ENV !== 'production') console.error('[forgot-password]', resetErr)
     toast.success('Si el correo existe, te enviamos un enlace para restablecer tu contraseña.')
     setForgotOpen(false)
     setForgotEmail('')

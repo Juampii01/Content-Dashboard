@@ -1,8 +1,12 @@
 name: Deploy to Vercel
 
 on:
-  push:
+  # Trigger when CI completes on main (covers normal pushes)
+  workflow_run:
+    workflows: [CI]
     branches: [main]
+    types: [completed]
+  # Allow manual deploys from the GitHub Actions UI
   workflow_dispatch:
 
 concurrency:
@@ -13,6 +17,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # For workflow_run triggers, only proceed when CI actually passed.
+    # workflow_dispatch always proceeds (manual override).
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

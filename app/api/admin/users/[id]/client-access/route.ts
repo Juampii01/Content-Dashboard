@@ -33,6 +33,11 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
+  const clientExists = await db.client.findUnique({ where: { id: parsed.data.clientId }, select: { id: true } })
+  if (!clientExists) {
+    return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+  }
+
   try {
     const updated = await db.profile.update({
       where: { id },

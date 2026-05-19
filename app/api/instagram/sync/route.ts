@@ -28,6 +28,7 @@ import {
 } from '@/lib/schemas/instagram'
 import { accountToSnapshot, mediaToUserReel } from '@/lib/instagram/transform'
 import { decryptToken } from '@/lib/crypto'
+import { checkRateLimit } from '@/lib/utils/ratelimit'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -70,6 +71,12 @@ export async function POST(): Promise<NextResponse> {
     if (err instanceof UnauthorizedError) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
     if (err instanceof ForbiddenError) return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
     throw err
+  }
+
+  // Rate limit — 5 per minute per client (mirrors youtube/sync)
+  const rl = await checkRateLimit(clientId, `instagram:sync:${clientId}`, 5, '60 s')
+  if (rl !== null && !rl.success) {
+    return NextResponse.json({ error: 'RATE_LIMITED' }, { status: 429 })
   }
 
   // 1. Load connection

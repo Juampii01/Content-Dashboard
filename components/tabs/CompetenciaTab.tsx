@@ -72,6 +72,7 @@ export function CompetenciaTab() {
   return (
     <div>
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -128,6 +129,7 @@ export function CompetenciaTab() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

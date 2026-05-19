@@ -170,6 +170,7 @@ export function AnalizadorContent() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="username"
+            aria-label="Nombre de usuario"
             className="flex-1 bg-transparent text-sm outline-none"
             style={{ color: 'var(--foreground)' }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}

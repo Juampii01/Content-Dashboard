@@ -4,6 +4,8 @@ import { GenerateRequestSchema } from '@/lib/schemas/copy/generate'
 import { checkRateLimit } from '@/lib/utils/ratelimit'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
 
+export const maxDuration = 120
+
 const TYPE_INSTRUCTIONS: Record<string, string> = {
   'reels-virales': `Genera scripts/hooks para reels virales de Instagram o TikTok orientados a máximo alcance.
 Cada resultado incluye: hook de apertura (máx 8 palabras que generen curiosidad inmediata), 2-3 puntos clave del desarrollo y un CTA de cierre.

@@ -83,12 +83,17 @@ export async function GET() {
     if (e) return e
     throw err
   }
-  const items = await db.contentResearchHistory.findMany({
-    where: { clientId: scope.clientId },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-  })
-  return NextResponse.json({ items })
+  try {
+    const items = await db.contentResearchHistory.findMany({
+      where: { clientId: scope.clientId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    })
+    return NextResponse.json({ items })
+  } catch (err) {
+    console.error('[content-research/GET]', err)
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+  }
 }
 
 // ─── DELETE ──────────────────────────────────────────────────────────────────
@@ -238,7 +243,8 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error('[content-research] pipeline error:', message)
-    return NextResponse.json({ error: message || 'Error en la búsqueda.' }, { status: 502 })
+    const safeMessage = process.env.NODE_ENV !== 'production' ? message : null
+    return NextResponse.json({ error: safeMessage || 'Error en la búsqueda.' }, { status: 502 })
   }
 
   if (videos.length === 0) {

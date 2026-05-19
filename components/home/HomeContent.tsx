@@ -31,6 +31,7 @@ export function HomeContent() {
     },
   })
 
+  const [fetchError, setFetchError] = useState(false)
   const [icpName, setIcpName] = useState<string>('')
   const [clientData, setClientData] = useState<{
     produccion: number; programado: number; ideasCount: number; loaded: boolean
@@ -67,14 +68,14 @@ export function HomeContent() {
           produccion = data.items.filter(i => i.status === 'en-proceso').length
           programado = data.items.filter(i => i.status === 'programado').length
         }
-      } catch {}
+      } catch { setFetchError(true) }
       try {
         const res = await fetch('/api/ideas')
         if (res.ok) {
           const data = await res.json() as { ideas: unknown[] }
           ideasCount = data.ideas?.length ?? 0
         }
-      } catch {}
+      } catch { setFetchError(true) }
       setClientData({ produccion, programado, ideasCount, loaded: true })
     }
 
@@ -89,7 +90,7 @@ export function HomeContent() {
         if (!summary?.connected || summary?.tokenExpired) return
         setIgReels(reels)
         setIgSummary(summary)
-      } catch {}
+      } catch { setFetchError(true) }
     }
 
     loadContentStats()
@@ -112,7 +113,7 @@ export function HomeContent() {
           hasData: boolean
         }
         setSnapshotData(data)
-      } catch {}
+      } catch { setFetchError(true) }
     }
     loadSnapshotHistory()
   }, [period])
@@ -162,6 +163,13 @@ export function HomeContent() {
 
   return (
     <div className="page-shell flex flex-col gap-7" style={{ minHeight: '100%' }}>
+      {fetchError && (
+        <div className="mb-4 px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"
+          style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 8%, transparent)', color: 'var(--accent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)' }}>
+          <span>&#9888;</span>
+          No se pudieron cargar algunos datos. Reintentá en unos momentos.
+        </div>
+      )}
       <motion.div {...fadeUp(0)}>
         <GreetingBlock
           pipelineProduccion={clientData.produccion}

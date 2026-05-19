@@ -42,13 +42,13 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 - **`lib/auth-user.ts`** — helpers: `requireUserId()`, `requireProfile()`, `requireSuperAdmin()`, `requireActiveClient()` (devuelve `{ userId, clientId }`). Constante `ACTIVE_CLIENT_COOKIE = 'activeClientId'`.
 - **`lib/supabase/{client,server,admin}.ts`** — browser / server-with-cookies / service-role (bypasa RLS, cached con `let` local).
 - **`lib/db.ts`** — Prisma singleton vía `globalThis`. Export `{ db }`.
-- **`lib/utils/ratelimit.ts`** — wrapper Upstash. Variantes: `checkRateLimit` (devuelve `{ success }`) y `checkSignupRateLimit` (IP, 3/hora). ⚠️ Admin routes usan `rl.success`; analizador usa `rl.allowed` — **shapes inconsistentes, cuidado al copiar**.
+- **`lib/utils/ratelimit.ts`** — wrapper Upstash. Variantes: `checkRateLimit` (devuelve `{ success }`) y `checkSignupRateLimit` (IP, 3/hora). Todas las rutas usan `.success` de forma consistente.
 
 ---
 
-## Modelos Prisma (26 en `schema.prisma`)
+## Modelos Prisma (31 en `schema.prisma`)
 
-`Profile` · `Client` · `ClientAccess` · `SocialConnection` · `OAuthState` · `Competitor` · `Reel` · `Transcription` · `Analysis` · `ChatMessage` · `ScrapeJob` · `Conversation` · `AIMessage` · `Task` · `ContentPiece` · `ContentTemplate` · `ICPProfile` · `BusinessBase` · `Idea` · `GuionTab` · `GuionItem` · `UserReel` · `Story` · `YouTubeVideo` · `AccountSnapshot` · `IncomeRecord`.
+`Profile` · `Client` · `SocialConnection` · `OAuthState` · `Competitor` · `Reel` · `Transcription` · `Analysis` · `ChatMessage` · `ScrapeJob` · `Conversation` · `AIMessage` · `Task` · `ContentPiece` · `ContentTemplate` · `ICPProfile` · `BusinessBase` · `Idea` · `GuionTab` · `GuionItem` · `UserReel` · `Story` · `YouTubeVideo` · `TikTokVideo` · `AccountSnapshot` · `ContentResearchHistory` · `VideoFeedAccount` · `TranscriptHistory` · `AdAccount` · `AdCampaign` · `IncomeRecord`.
 
 **Antes de usar un modelo**: `grep -n "^model " prisma/schema.prisma` para confirmar.
 
