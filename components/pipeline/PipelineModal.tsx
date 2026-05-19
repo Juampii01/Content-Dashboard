@@ -220,8 +220,8 @@ export function PipelineModal({ item, defaultStatus = 'drafts', onSave, onDelete
                     title={FORMAT_LABELS[f]}
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-base transition-all"
                     style={{
-                      backgroundColor: format === f ? '#8E1F2F33' : 'var(--muted)',
-                      border: format === f ? '1px solid #8E1F2F66' : '1px solid var(--border)',
+                      backgroundColor: format === f ? 'color-mix(in srgb, var(--accent) 20%, transparent)' : 'var(--muted)',
+                      border: format === f ? '1px solid color-mix(in srgb, var(--accent) 40%, transparent)' : '1px solid var(--border)',
                     }}
                   >
                     {FORMAT_ICONS[f]}

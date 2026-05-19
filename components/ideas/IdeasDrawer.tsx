@@ -209,8 +209,16 @@ export function IdeasDrawer({ open, onClose, onCountChange }: IdeasDrawerProps) 
 
         <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
           {loading && (
-            <div className="text-center py-12">
-              <p className="text-sm" style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}>Cargando…</p>
+            <div className="space-y-1.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--muted)', animationDelay: `${i * 60}ms` }}>
+                  <div className="w-6 h-6 rounded-lg shrink-0 mt-0.5" style={{ backgroundColor: 'var(--border)' }} />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3.5 rounded" style={{ width: `${55 + i * 11}%`, backgroundColor: 'var(--border)' }} />
+                    <div className="h-2.5 w-16 rounded" style={{ backgroundColor: 'var(--border)' }} />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -265,9 +273,9 @@ export function IdeasDrawer({ open, onClose, onCountChange }: IdeasDrawerProps) 
                   <button key={f.value} onClick={() => setNewFormat(f.value)}
                     className="text-[10px] px-2 py-1 rounded-full font-medium transition-all"
                     style={{
-                      backgroundColor: newFormat === f.value ? '#8E1F2F33' : 'var(--muted)',
+                      backgroundColor: newFormat === f.value ? 'color-mix(in srgb, var(--accent) 20%, transparent)' : 'var(--muted)',
                       color: newFormat === f.value ? 'var(--accent)' : 'var(--muted-foreground)',
-                      border: newFormat === f.value ? '1px solid #8E1F2F66' : '1px solid var(--border)',
+                      border: newFormat === f.value ? '1px solid color-mix(in srgb, var(--accent) 40%, transparent)' : '1px solid var(--border)',
                     }}>
                     {FORMAT_ICONS[f.value]} {f.label}
                   </button>

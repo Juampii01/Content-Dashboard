@@ -30,11 +30,17 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCou
   if (loading) {
     return (
       <div
-        className="flex items-center gap-3 rounded-xl px-4 py-3 mb-4 text-sm"
-        style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)', color: 'var(--muted-foreground)' }}
+        className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 mb-4 animate-pulse"
+        style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
       >
-        <Loader2 size={14} className="animate-spin" />
-        Cargando estado de Instagram…
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg shrink-0" style={{ backgroundColor: 'var(--muted)' }} />
+          <div className="space-y-1.5">
+            <div className="h-3.5 w-44 rounded" style={{ backgroundColor: 'var(--muted)' }} />
+            <div className="h-2.5 w-60 rounded" style={{ backgroundColor: 'var(--muted)' }} />
+          </div>
+        </div>
+        <div className="h-8 w-28 rounded-lg shrink-0" style={{ backgroundColor: 'var(--muted)' }} />
       </div>
     )
   }

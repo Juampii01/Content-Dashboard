@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { X, Loader2, RefreshCcw, ExternalLink, AlertCircle } from 'lucide-react'
+import { X, RefreshCcw, ExternalLink, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -165,12 +165,20 @@ export function ReelDetailDrawer({ reelId, onClose }: ReelDetailDrawerProps) {
           <div className="flex flex-1 flex-col overflow-hidden">
             {/* Loading state */}
             {loading && (
-              <div className="flex flex-1 items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                  <Loader2 size={24} className="animate-spin" style={{ color: 'var(--accent)' }} />
-                  <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-                    Cargando reel…
-                  </p>
+              <div className="flex-1 p-4 space-y-4 overflow-hidden">
+                <div className="rounded-xl overflow-hidden aspect-video animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+                <div className="space-y-2">
+                  <div className="h-3.5 w-3/4 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+                  <div className="h-3 w-full rounded animate-pulse" style={{ backgroundColor: 'var(--muted)', animationDelay: '60ms' }} />
+                  <div className="h-3 w-5/6 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)', animationDelay: '120ms' }} />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {[1,2,3].map((i) => (
+                    <div key={i} className="rounded-xl p-3 animate-pulse" style={{ backgroundColor: 'var(--muted)', animationDelay: `${i * 80}ms` }}>
+                      <div className="h-4 w-12 rounded mx-auto mb-1" style={{ backgroundColor: 'var(--border)' }} />
+                      <div className="h-2.5 w-16 rounded mx-auto" style={{ backgroundColor: 'var(--border)' }} />
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

@@ -108,7 +108,7 @@ export function StructureModal({ title, structure, onClose }: StructureModalProp
 
           {/* Insights */}
           {structure.insights && (
-            <div className="rounded-xl p-4" style={{ backgroundColor: '#8E1F2F11', border: '1px solid #8E1F2F33' }}>
+            <div className="rounded-xl p-4" style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)' }}>
               <p className="text-[11px] font-semibold mb-1" style={{ color: 'var(--accent)' }}>✦ Insight de Eternity</p>
               <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{structure.insights}</p>
             </div>

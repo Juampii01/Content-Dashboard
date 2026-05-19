@@ -47,14 +47,26 @@ export function TikTokVideosTab({ connected, hasData }: Props) {
 
   if (loading && videos.length === 0) {
     return (
-      <div
-        className="rounded-xl p-8 flex items-center justify-center gap-2"
-        style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
-      >
-        <Loader2 size={16} className="animate-spin" style={{ color: 'var(--muted-foreground)' }} />
-        <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-          Cargando videos…
-        </span>
+      <div className="space-y-3">
+        <div className="h-4 w-48 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+          <div style={{ backgroundColor: 'var(--muted)', borderBottom: '1px solid var(--border)' }} className="flex gap-4 px-4 py-3">
+            {[120, 50, 60, 55, 65, 50, 40].map((w, i) => (
+              <div key={i} className="h-3 rounded animate-pulse shrink-0" style={{ width: w, backgroundColor: 'var(--border)' }} />
+            ))}
+          </div>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 px-4 py-3.5" style={{ borderBottom: i < 7 ? '1px solid var(--border)' : undefined, backgroundColor: 'var(--card)' }}>
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3.5 rounded animate-pulse" style={{ width: `${55 + (i * 19) % 40}%`, backgroundColor: 'var(--muted)', animationDelay: `${i * 40}ms` }} />
+                <div className="h-2.5 w-20 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)', animationDelay: `${i * 40 + 20}ms` }} />
+              </div>
+              {[40, 60, 55, 60, 50, 40].map((w, j) => (
+                <div key={j} className="h-3 rounded animate-pulse shrink-0" style={{ width: w, backgroundColor: 'var(--muted)', animationDelay: `${i * 40 + j * 15}ms` }} />
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     )
   }

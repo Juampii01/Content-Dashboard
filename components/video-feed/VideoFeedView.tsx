@@ -274,8 +274,19 @@ export function VideoFeedView() {
       />
 
       {accountLoading ? (
-        <div role="status" aria-live="polite" aria-label="Cargando cuenta" className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-          <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Cargando…
+        <div role="status" aria-live="polite" aria-label="Cargando cuenta" className="space-y-4">
+          <div className="h-12 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }} />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-xl overflow-hidden animate-pulse" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', animationDelay: `${i * 50}ms` }}>
+                <div className="aspect-square" style={{ backgroundColor: 'var(--muted)' }} />
+                <div className="p-3 space-y-1.5">
+                  <div className="h-3 w-3/4 rounded" style={{ backgroundColor: 'var(--muted)' }} />
+                  <div className="h-2.5 w-1/2 rounded" style={{ backgroundColor: 'var(--muted)' }} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : !account ? (
         <form onSubmit={handleConnect} className="surface-elevated p-6">

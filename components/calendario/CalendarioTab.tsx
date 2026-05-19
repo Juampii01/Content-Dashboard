@@ -307,8 +307,41 @@ export function CalendarioTab({ type }: CalendarioTabProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48" style={{ color: 'var(--muted-foreground)' }}>
-        <span className="text-sm">Cargando calendario…</span>
+      <div className="space-y-5">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="h-5 w-5 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+            <div className="h-5 w-40 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-9 w-28 rounded-lg animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+            <div className="h-9 w-28 rounded-lg animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+          </div>
+        </div>
+        {/* Category chips skeleton */}
+        <div className="flex flex-wrap gap-2">
+          {[80, 95, 70, 110, 85].map((w, i) => (
+            <div key={i} className="h-6 rounded-full animate-pulse" style={{ width: w, backgroundColor: 'var(--muted)', animationDelay: `${i * 50}ms` }} />
+          ))}
+        </div>
+        {/* Calendar grid skeleton */}
+        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+          <div className="grid grid-cols-7 gap-px" style={{ backgroundColor: 'var(--border)' }}>
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="px-2 py-2.5" style={{ backgroundColor: 'var(--muted)' }}>
+                <div className="h-3 w-8 rounded animate-pulse mx-auto" style={{ backgroundColor: 'var(--border)' }} />
+              </div>
+            ))}
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div key={i} className="min-h-[80px] p-2 space-y-1" style={{ backgroundColor: 'var(--card)' }}>
+                <div className="h-4 w-4 rounded-full animate-pulse" style={{ backgroundColor: 'var(--muted)', animationDelay: `${i * 20}ms` }} />
+                {i % 5 === 0 && <div className="h-5 w-full rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />}
+                {i % 7 === 1 && <div className="h-5 w-3/4 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }

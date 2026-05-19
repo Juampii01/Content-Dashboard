@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Link2, Check, Loader2 } from 'lucide-react'
+import { Link2, Check } from 'lucide-react'
 import { useSocialConnection, type SocialPlatform } from '@/hooks/useSocialConnection'
 import { ConnectAccountModal } from './ConnectAccountModal'
 
@@ -21,15 +21,11 @@ export function ConnectButton({ platform, labels }: Props) {
 
   if (loading) {
     return (
-      <button
-        type="button"
-        disabled
-        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium opacity-60 cursor-not-allowed"
-        style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', border: '1px solid var(--border)' }}
-      >
-        <Loader2 size={14} className="animate-spin" />
-        Cargando...
-      </button>
+      <div
+        className="h-9 w-36 rounded-lg animate-pulse"
+        style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}
+        aria-hidden
+      />
     )
   }
 

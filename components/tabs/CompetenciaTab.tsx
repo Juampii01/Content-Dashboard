@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Loader2, Users } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { formatK } from '@/lib/utils/formatters'
 import type { CompetitorDTO } from '@/lib/types/competidores'
 import Link from 'next/link'
@@ -31,9 +31,37 @@ export function CompetenciaTab() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16 gap-2" style={{ color: 'var(--muted-foreground)' }}>
-        <Loader2 size={14} className="animate-spin" />
-        <span className="text-sm">Cargando competidores…</span>
+      <div className="space-y-4">
+        {[1, 2].map((i) => (
+          <div key={i} className="rounded-2xl p-5 space-y-4 animate-pulse" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', animationDelay: `${i * 80}ms` }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl shrink-0" style={{ backgroundColor: 'var(--muted)' }} />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3.5 w-32 rounded" style={{ backgroundColor: 'var(--muted)' }} />
+                <div className="h-2.5 w-24 rounded" style={{ backgroundColor: 'var(--muted)' }} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <div className="h-2.5 w-16 rounded" style={{ backgroundColor: 'var(--muted)' }} />
+                <div className="flex flex-wrap gap-1.5">
+                  {[70, 90, 60].map((w, j) => (
+                    <div key={j} className="h-5 rounded-full" style={{ width: w, backgroundColor: 'var(--muted)' }} />
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-2.5 w-16 rounded" style={{ backgroundColor: 'var(--muted)' }} />
+                <div className="flex flex-wrap gap-1.5">
+                  {[80, 55, 75].map((w, j) => (
+                    <div key={j} className="h-5 rounded-full" style={{ width: w, backgroundColor: 'var(--muted)' }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="h-8 w-full rounded-lg" style={{ backgroundColor: 'var(--muted)' }} />
+          </div>
+        ))}
       </div>
     )
   }

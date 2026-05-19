@@ -80,7 +80,7 @@ export function GreetingBlock({
         </div>
         <div
           className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl max-w-sm"
-          style={{ backgroundColor: '#8E1F2F11', border: '1px solid #8E1F2F33' }}
+          style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)' }}
         >
           <Lightbulb size={13} style={{ color: 'var(--warning)', flexShrink: 0 }} />
           <p className="text-xs italic leading-relaxed min-h-[1.2em]" style={{ color: 'var(--muted-foreground)' }} suppressHydrationWarning>

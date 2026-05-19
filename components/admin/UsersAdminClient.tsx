@@ -135,8 +135,20 @@ export function UsersAdminClient() {
         </div>
 
         {users === null && (
-          <div className="px-4 py-8 text-xs text-center flex items-center justify-center gap-2" style={{ color: 'var(--muted-foreground)' }}>
-            <Loader2 size={13} className="animate-spin" /> Cargando…
+          <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="grid grid-cols-12 gap-4 px-4 py-3.5 items-center animate-pulse" style={{ animationDelay: `${i * 60}ms` }}>
+                <div className="col-span-3 h-3.5 rounded" style={{ width: '80%', backgroundColor: 'var(--muted)' }} />
+                <div className="col-span-2 h-3.5 rounded" style={{ width: '65%', backgroundColor: 'var(--muted)' }} />
+                <div className="col-span-3">
+                  <div className="h-5 w-20 rounded-full" style={{ backgroundColor: 'var(--muted)' }} />
+                </div>
+                <div className="col-span-2 h-3.5 rounded" style={{ width: '50%', backgroundColor: 'var(--muted)' }} />
+                <div className="col-span-2 flex justify-end gap-2">
+                  <div className="h-7 w-16 rounded-lg" style={{ backgroundColor: 'var(--muted)' }} />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

@@ -587,8 +587,17 @@ export function ContentResearchView({ platform: platformFilter, embedded = false
       {/* History */}
       <Section eyebrow="Historial" flush>
         {historyLoading ? (
-          <div role="status" aria-live="polite" aria-label="Cargando historial" className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Cargando…
+          <div role="status" aria-live="polite" aria-label="Cargando historial" className="space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', animationDelay: `${i * 60}ms` }}>
+                <div className="w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: 'var(--muted)' }} />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 rounded" style={{ width: `${45 + i * 14}%`, backgroundColor: 'var(--muted)' }} />
+                  <div className="h-2.5 w-20 rounded" style={{ backgroundColor: 'var(--muted)' }} />
+                </div>
+                <div className="h-6 w-14 rounded-full shrink-0" style={{ backgroundColor: 'var(--muted)' }} />
+              </div>
+            ))}
           </div>
         ) : visibleHistory.length === 0 ? (
           <EmptyState

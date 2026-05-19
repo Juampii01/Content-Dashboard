@@ -307,9 +307,9 @@ export function ContentItemModal({ item, defaultDate, prefill, type, onSave, onD
                   onClick={() => setCategory(undefined)}
                   className={`text-[11px] px-2 py-0.5 rounded-full font-medium transition-all${category !== undefined ? ' hover:bg-muted' : ''}`}
                   style={{
-                    backgroundColor: !category ? '#8E1F2F22' : 'transparent',
+                    backgroundColor: !category ? 'color-mix(in srgb, var(--accent) 13%, transparent)' : 'transparent',
                     color: !category ? 'var(--accent)' : 'var(--muted-foreground)',
-                    border: !category ? '1px solid #8E1F2F55' : '1px solid transparent',
+                    border: !category ? '1px solid color-mix(in srgb, var(--accent) 33%, transparent)' : '1px solid transparent',
                   }}
                 >
                   Sin categoría
