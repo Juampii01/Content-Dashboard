@@ -24,6 +24,11 @@ const TONE_OPTIONS = [
 const WPM: Record<string, number> = { reel: 150, historia: 175 }
 const TARGET_SEC: Record<string, number> = { reel: 60, historia: 30 }
 
+const TYPE_LABELS: Record<string, string> = {
+  reel: 'Reel',
+  historia: 'Historia',
+}
+
 // ─── Templates ────────────────────────────────────────────────────────────────
 
 const TEMPLATES: Record<string, string> = {
@@ -214,41 +219,51 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
     })
   }
 
-  // ─── Empty / no-item states ─────────────────────────────────────────────────
+  // ─── Empty / no-item state ──────────────────────────────────────────────────
 
   if (!activeItem) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8">
-        <div
-          className="w-16 h-16 rounded-3xl flex items-center justify-center"
-          style={{
-            background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
-            border: '1.5px solid color-mix(in srgb, var(--accent) 22%, transparent)',
-          }}
-        >
-          <FileText size={26} style={{ color: 'var(--accent)', opacity: 0.7 }} />
-        </div>
-        <div className="text-center">
-          <p className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>
-            {hasTabs ? 'Seleccioná o creá un guión' : 'Creá una carpeta para empezar'}
-          </p>
-          <p className="text-sm mt-1.5" style={{ color: 'var(--muted-foreground)', opacity: 0.65 }}>
+      <div className="flex-1 flex flex-col items-center justify-center gap-8 px-10">
+        {/* Icon */}
+        <div className="relative">
+          <div
+            className="w-20 h-20 rounded-3xl flex items-center justify-center"
+            style={{
+              background: 'color-mix(in srgb, var(--accent) 8%, transparent)',
+              border: '2px dashed color-mix(in srgb, var(--accent) 20%, transparent)',
+            }}
+          >
             {hasTabs
-              ? 'Hacé clic en un guión del panel izquierdo, o creá uno nuevo con el botón +'
-              : 'Usá el botón "Nueva" en el panel izquierdo para crear tu primera carpeta de guiones'}
+              ? <FileText size={32} style={{ color: 'var(--accent)', opacity: 0.4 }} />
+              : <FolderOpen size={32} style={{ color: 'var(--accent)', opacity: 0.4 }} />
+            }
+          </div>
+        </div>
+
+        {/* Text */}
+        <div className="text-center space-y-2 max-w-xs">
+          <p className="text-lg font-semibold" style={{ color: 'var(--foreground)', opacity: 0.6 }}>
+            {hasTabs ? 'Seleccioná un guión' : 'Tu espacio de escritura'}
+          </p>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}>
+            {hasTabs
+              ? 'Elegí un guión del panel izquierdo o creá uno nuevo con el botón +'
+              : 'Creá tu primera carpeta en el panel izquierdo para empezar a escribir guiones'}
           </p>
         </div>
+
+        {/* CTA */}
         {!hasTabs && (
           <div
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium"
+            className="flex items-center gap-2.5 px-5 py-2.5 rounded-2xl text-sm font-medium"
             style={{
               backgroundColor: 'color-mix(in srgb, var(--accent) 10%, transparent)',
               color: 'var(--accent)',
-              border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--accent) 22%, transparent)',
             }}
           >
-            <FolderOpen size={13} />
-            Panel izquierdo → Nueva
+            <FolderOpen size={15} />
+            Panel izquierdo → botón +
           </div>
         )}
       </div>
@@ -257,11 +272,12 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
 
   // ─── Computed ───────────────────────────────────────────────────────────────
 
-  const wordCount  = editor?.getText().split(/\s+/).filter(Boolean).length ?? 0
-  const duration   = estimateDuration(wordCount, type)
-  const target     = targetWords(type)
-  const progress   = Math.min(wordCount / target, 1)
-  const isEmpty    = wordCount === 0
+  const wordCount = editor?.getText().split(/\s+/).filter(Boolean).length ?? 0
+  const duration  = estimateDuration(wordCount, type)
+  const target    = targetWords(type)
+  const progress  = Math.min(wordCount / target, 1)
+  const isEmpty   = wordCount === 0
+  const typeLabel = TYPE_LABELS[type ?? ''] ?? null
 
   const toolbarButtons = editor ? [
     { icon: <Bold size={13} />, title: 'Negrita (⌘B)', active: editor.isActive('bold'), action: () => editor.chain().focus().toggleBold().run() },
@@ -281,87 +297,113 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
   return (
     <div className="flex-1 flex flex-col min-w-0 min-h-0">
 
-      {/* ── Title bar ── */}
+      {/* ── Title area ── */}
       <div
-        className="flex items-center gap-3 px-6 py-3 flex-shrink-0"
+        className="px-8 pt-6 pb-4 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
+        {/* Type badge + save indicator */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            {typeLabel && (
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+                  color: 'var(--accent)',
+                  border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)',
+                }}
+              >
+                {typeLabel}
+              </span>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1.5">
+            {/* Save indicator */}
+            <span
+              className="text-[11px] font-medium flex items-center gap-1.5 mr-1 transition-opacity"
+              style={{
+                color: saveState === 'saved' ? 'color-mix(in srgb, #22c55e 70%, var(--muted-foreground))' : 'var(--muted-foreground)',
+                opacity: saveState === 'idle' ? 0 : 0.7,
+              }}
+            >
+              {saveState === 'saving' && (
+                <><span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse inline-block" />Guardando…</>
+              )}
+              {saveState === 'saved' && (
+                <><span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />Guardado</>
+              )}
+            </span>
+
+            {/* Copy */}
+            <button
+              onClick={handleCopy}
+              title="Copiar guión completo"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer"
+              style={{
+                background: copied ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--muted)',
+                color: copied ? 'var(--accent)' : 'var(--muted-foreground)',
+                border: copied ? '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' : '1px solid transparent',
+              }}
+            >
+              {copied ? <Check size={12} /> : <Copy size={12} />}
+              <span className="hidden sm:inline">{copied ? 'Copiado' : 'Copiar'}</span>
+            </button>
+
+            {/* AI Generate */}
+            <button
+              onClick={() => { setShowAIPanel((p) => !p); setAiError(null) }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+              title="Generar con IA"
+              style={{
+                background: showAIPanel
+                  ? 'var(--accent)'
+                  : 'color-mix(in srgb, var(--accent) 12%, transparent)',
+                color: showAIPanel ? 'var(--accent-foreground)' : 'var(--accent)',
+                border: showAIPanel
+                  ? 'none'
+                  : '1px solid color-mix(in srgb, var(--accent) 25%, transparent)',
+              }}
+            >
+              <Wand2 size={12} />
+              <span className="hidden sm:inline">IA</span>
+            </button>
+
+            {/* Delete */}
+            <button
+              onClick={() => onDelete(activeItem.id)}
+              className="p-1.5 rounded-lg transition-all cursor-pointer opacity-30 hover:opacity-70"
+              style={{ color: 'var(--destructive, #ef4444)' }}
+              title="Eliminar guión"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        </div>
+
+        {/* Title input — big, Notion-style */}
         <input
           value={localTitle}
           onChange={(e) => handleTitleChange(e.target.value)}
-          placeholder="Título del guión"
-          className="flex-1 text-base font-bold bg-transparent outline-none min-w-0"
-          style={{ color: 'var(--foreground)' }}
+          placeholder="Sin título"
+          className="w-full text-2xl font-bold bg-transparent outline-none placeholder:opacity-20"
+          style={{ color: 'var(--foreground)', lineHeight: '1.3' }}
         />
-
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {/* Save indicator */}
-          <span className="text-[11px] font-medium flex items-center gap-1.5 mr-1" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
-            {saveState === 'saving' && (
-              <><span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse inline-block" />Guardando</>
-            )}
-            {saveState === 'saved' && (
-              <><span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />Guardado</>
-            )}
-          </span>
-
-          {/* Copy */}
-          <button
-            onClick={handleCopy}
-            title="Copiar guión completo"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer"
-            style={{
-              background: copied ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--muted)',
-              color: copied ? 'var(--accent)' : 'var(--muted-foreground)',
-              border: copied ? '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' : '1px solid transparent',
-            }}
-          >
-            {copied ? <Check size={12} /> : <Copy size={12} />}
-            <span className="hidden sm:inline">{copied ? 'Copiado' : 'Copiar'}</span>
-          </button>
-
-          {/* AI Generate */}
-          <button
-            onClick={() => { setShowAIPanel((p) => !p); setAiError(null) }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-            title="Generar con IA"
-            style={{
-              background: showAIPanel
-                ? 'var(--accent)'
-                : 'color-mix(in srgb, var(--accent) 12%, transparent)',
-              color: showAIPanel ? 'var(--accent-foreground)' : 'var(--accent)',
-              border: showAIPanel
-                ? 'none'
-                : '1px solid color-mix(in srgb, var(--accent) 25%, transparent)',
-            }}
-          >
-            <Wand2 size={12} />
-            <span className="hidden sm:inline">IA</span>
-          </button>
-
-          {/* Delete */}
-          <button
-            onClick={() => onDelete(activeItem.id)}
-            className="p-1.5 rounded-lg transition-all cursor-pointer opacity-40 hover:opacity-80"
-            style={{ color: 'var(--destructive, #ef4444)' }}
-            title="Eliminar guión"
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
       </div>
 
       {/* ── AI Panel ── */}
       {showAIPanel && (
         <div
-          className="px-6 py-4 flex-shrink-0"
+          className="px-8 py-4 flex-shrink-0"
           style={{
             borderBottom: '1px solid var(--border)',
-            background: 'color-mix(in srgb, var(--accent) 5%, var(--card))',
+            background: 'color-mix(in srgb, var(--accent) 4%, var(--background))',
           }}
         >
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2.5">
               <div
                 className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                 style={{ background: 'var(--accent)' }}
@@ -372,14 +414,14 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
                 <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
                   Generar guión con IA
                 </p>
-                <p className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
-                  Objetivo: ~{TARGET_SEC[type ?? ''] ?? 60} seg — {targetWords(type)} palabras
+                <p className="text-[11px]" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
+                  Objetivo: ~{TARGET_SEC[type ?? ''] ?? 60} seg · {targetWords(type)} palabras
                 </p>
               </div>
             </div>
             <button
               onClick={() => { setShowAIPanel(false); setAiError(null) }}
-              className="p-1 rounded-lg opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
+              className="p-1 rounded-lg opacity-40 hover:opacity-80 transition-opacity cursor-pointer"
               style={{ color: 'var(--muted-foreground)' }}
             >
               <X size={14} />
@@ -394,7 +436,7 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
               placeholder={`Ej: 3 errores que comete todo emprendedor al arrancar`}
               className="flex-1 text-sm px-3.5 py-2.5 rounded-xl outline-none"
               style={{
-                background: 'var(--background)',
+                background: 'var(--card)',
                 color: 'var(--foreground)',
                 border: '1px solid var(--border)',
               }}
@@ -407,7 +449,7 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
                 onChange={(e) => setAiTone(e.target.value)}
                 className="text-sm px-3 py-2.5 rounded-xl outline-none cursor-pointer"
                 style={{
-                  background: 'var(--background)',
+                  background: 'var(--card)',
                   color: 'var(--foreground)',
                   border: '1px solid var(--border)',
                 }}
@@ -420,7 +462,7 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
               <button
                 onClick={() => void handleGenerate()}
                 disabled={isGenerating || !aiTopic.trim()}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 cursor-pointer"
                 style={{ background: 'var(--accent)', color: 'var(--accent-foreground)' }}
               >
                 {isGenerating
@@ -442,8 +484,8 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
       {/* ── Formatting toolbar ── */}
       {editor && (
         <div
-          className="flex items-center gap-0.5 px-3 py-1.5 flex-shrink-0"
-          style={{ borderBottom: '1px solid var(--border)', background: 'var(--card)' }}
+          className="flex items-center gap-0.5 px-4 py-1.5 flex-shrink-0"
+          style={{ borderBottom: '1px solid var(--border)' }}
         >
           {toolbarButtons.map((btn, i) =>
             btn === null ? (
@@ -456,9 +498,7 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
                 className="p-1.5 rounded-lg transition-all flex-shrink-0 cursor-pointer"
                 style={{
                   color: btn.active ? 'var(--accent-foreground)' : 'var(--muted-foreground)',
-                  background: btn.active
-                    ? 'var(--accent)'
-                    : 'transparent',
+                  background: btn.active ? 'var(--accent)' : 'transparent',
                 }}
                 onMouseEnter={(e) => {
                   if (!btn.active) e.currentTarget.style.background = 'var(--muted)'
@@ -474,7 +514,7 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
 
           <div className="flex-1" />
 
-          {/* Template button */}
+          {/* Template button (only when empty) */}
           {isEmpty && (
             <button
               onMouseDown={(e) => { e.preventDefault(); insertTemplate() }}
@@ -494,59 +534,70 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
               }}
             >
               <LayoutTemplate size={11} />
-              Usar plantilla
+              Plantilla
             </button>
           )}
         </div>
       )}
 
-      {/* ── Editor area + empty CTA ── */}
+      {/* ── Editor area ── */}
       {isEmpty && !showAIPanel ? (
-        /* When editor is empty show two CTA cards */
         <div className="flex-1 flex flex-col">
+          {/* Clickable editor area */}
           <div
-            className="flex-1 overflow-y-auto px-6 py-5 cursor-text"
+            className="flex-1 overflow-y-auto px-8 pt-6 cursor-text"
             onClick={() => editor?.commands.focus()}
           >
             <EditorContent editor={editor} />
           </div>
 
-          <div className="px-6 pb-6 pt-2 flex gap-3">
-            {/* Template CTA */}
+          {/* Start CTA cards */}
+          <div className="px-8 pb-8 pt-4 grid grid-cols-2 gap-3">
             <button
               onClick={insertTemplate}
-              className="flex-1 flex items-start gap-3 p-4 rounded-2xl text-left transition-all cursor-pointer group"
+              className="flex items-start gap-3 p-4 rounded-2xl text-left transition-all cursor-pointer group"
               style={{
                 backgroundColor: 'var(--muted)',
                 border: '1px solid var(--border)',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--foreground) 25%, transparent)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--foreground) 20%, transparent)'
+                e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--foreground) 4%, var(--muted))'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)'
+                e.currentTarget.style.backgroundColor = 'var(--muted)'
+              }}
             >
               <div
                 className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
                 style={{ backgroundColor: 'color-mix(in srgb, var(--foreground) 8%, transparent)' }}
               >
-                <LayoutTemplate size={15} style={{ color: 'var(--foreground)', opacity: 0.7 }} />
+                <LayoutTemplate size={15} style={{ color: 'var(--foreground)', opacity: 0.6 }} />
               </div>
               <div>
                 <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Usar plantilla</p>
                 <p className="text-xs mt-0.5 leading-snug" style={{ color: 'var(--muted-foreground)' }}>
-                  Estructura con Hook, Desarrollo y CTA lista para completar
+                  Hook, Desarrollo y CTA listos para completar
                 </p>
               </div>
             </button>
 
-            {/* AI CTA */}
             <button
               onClick={() => { setShowAIPanel(true); setAiError(null) }}
-              className="flex-1 flex items-start gap-3 p-4 rounded-2xl text-left transition-all cursor-pointer"
+              className="flex items-start gap-3 p-4 rounded-2xl text-left transition-all cursor-pointer"
               style={{
                 backgroundColor: 'color-mix(in srgb, var(--accent) 8%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--accent) 18%, transparent)',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--accent) 45%, transparent)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--accent) 20%, transparent)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--accent) 13%, transparent)'
+                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--accent) 35%, transparent)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--accent) 8%, transparent)'
+                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--accent) 18%, transparent)'
+              }}
             >
               <div
                 className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
@@ -557,7 +608,7 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
               <div>
                 <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Generar con IA</p>
                 <p className="text-xs mt-0.5 leading-snug" style={{ color: 'var(--muted-foreground)' }}>
-                  Describí el tema y la IA escribe el guión completo por vos
+                  Describí el tema y la IA escribe por vos
                 </p>
               </div>
             </button>
@@ -565,7 +616,7 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
         </div>
       ) : (
         <div
-          className="flex-1 overflow-y-auto px-6 py-5 cursor-text"
+          className="flex-1 overflow-y-auto px-8 py-6 cursor-text"
           onClick={() => editor?.commands.focus()}
         >
           <EditorContent editor={editor} />
@@ -574,12 +625,12 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
 
       {/* ── Footer ── */}
       <div
-        className="px-5 py-2.5 flex-shrink-0 flex items-center gap-4"
+        className="px-6 py-2.5 flex-shrink-0 flex items-center gap-4"
         style={{ borderTop: '1px solid var(--border)' }}
       >
         {/* Word count + duration */}
-        <div className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
-          <span>{wordCount} {wordCount === 1 ? 'palabra' : 'palabras'}</span>
+        <div className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}>
+          <span className="tabular-nums">{wordCount} {wordCount === 1 ? 'palabra' : 'palabras'}</span>
           {duration && (
             <>
               <span>·</span>
@@ -591,13 +642,13 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
 
         {/* Progress bar */}
         {wordCount > 0 && (
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex items-center gap-2.5 flex-1 max-w-[200px]">
             <div
               className="flex-1 h-1 rounded-full overflow-hidden"
               style={{ backgroundColor: 'var(--muted)' }}
             >
               <div
-                className="h-full rounded-full transition-all duration-300"
+                className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${progress * 100}%`,
                   backgroundColor: progress >= 1
@@ -606,8 +657,11 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
                 }}
               />
             </div>
-            <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}>
-              /{target}
+            <span
+              className="text-[10px] flex-shrink-0 tabular-nums"
+              style={{ color: 'var(--muted-foreground)', opacity: 0.4 }}
+            >
+              {Math.round(progress * 100)}%
             </span>
           </div>
         )}
@@ -616,44 +670,46 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
       {/* ── Styles ── */}
       <style>{`
         .tiptap-guion {
-          min-height: 300px;
-          font-size: 0.9rem;
-          line-height: 1.85;
+          min-height: 280px;
+          font-size: 0.925rem;
+          line-height: 1.9;
           color: var(--foreground);
         }
-        .tiptap-guion p { margin: 0 0 0.75em; }
+        .tiptap-guion p { margin: 0 0 0.85em; }
         .tiptap-guion p:last-child { margin-bottom: 0; }
         .tiptap-guion h2 {
-          font-size: 0.75rem;
+          font-size: 0.7rem;
           font-weight: 800;
-          margin: 1.75em 0 0.5em;
+          margin: 2em 0 0.6em;
           color: var(--accent);
           text-transform: uppercase;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.1em;
           display: flex;
           align-items: center;
           gap: 0.5em;
+          opacity: 0.85;
         }
         .tiptap-guion h2:first-child { margin-top: 0; }
         .tiptap-guion ul,
-        .tiptap-guion ol { padding-left: 1.5em; margin: 0.4em 0 0.75em; }
-        .tiptap-guion li { margin: 0.25em 0; }
+        .tiptap-guion ol { padding-left: 1.5em; margin: 0.4em 0 0.85em; }
+        .tiptap-guion li { margin: 0.3em 0; }
         .tiptap-guion strong { font-weight: 700; }
         .tiptap-guion em { font-style: italic; }
-        .tiptap-guion s { opacity: 0.5; }
+        .tiptap-guion s { opacity: 0.4; text-decoration-color: var(--muted-foreground); }
         .tiptap-guion hr {
           border: none;
           border-top: 1px solid var(--border);
-          margin: 1.5em 0;
+          margin: 1.75em 0;
         }
         .tiptap-guion .tiptap-placeholder::before {
           content: attr(data-placeholder);
           color: var(--muted-foreground);
-          opacity: 0.35;
+          opacity: 0.25;
           float: left;
           pointer-events: none;
           height: 0;
           white-space: pre-line;
+          font-style: italic;
         }
       `}</style>
     </div>
