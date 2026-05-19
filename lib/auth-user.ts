@@ -123,9 +123,25 @@ export async function requireActiveClient(): Promise<{
     if (viewAsUserId) {
       const targetProfile = await db.profile.findUnique({
         where: { id: viewAsUserId },
-        select: { clientId: true },
+        select: { clientId: true, displayName: true, email: true },
       })
-      if (targetProfile?.clientId) return { userId, clientId: targetProfile.clientId }
+      if (targetProfile) {
+        // If the target user already has a workspace, use it directly.
+        if (targetProfile.clientId) {
+          return { userId, clientId: targetProfile.clientId }
+        }
+        // Otherwise auto-create their personal workspace so we see their data,
+        // not the admin's. Same logic as the bottom of this function.
+        const slug = `personal-${viewAsUserId.slice(0, 8)}`
+        const name = targetProfile.displayName ?? targetProfile.email?.split('@')[0] ?? 'Personal'
+        const client = await db.client.upsert({
+          where: { slug },
+          create: { name, slug },
+          update: {},
+        })
+        await db.profile.update({ where: { id: viewAsUserId }, data: { clientId: client.id } })
+        return { userId, clientId: client.id }
+      }
     }
   }
 
