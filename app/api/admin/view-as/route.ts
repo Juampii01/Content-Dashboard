@@ -1,14 +1,14 @@
 /**
- * POST /api/admin/view-as — set or clear the admin "view as" client override.
- * Body: { clientId: string } to set, { clientId: null } to clear.
- * SUPER_ADMIN only.
+ * POST /api/admin/view-as — set or clear the admin "view as" user override.
+ * Body: { userId: string } to set, { userId: null } to clear.
+ * ADMIN only.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { adminAuthOr401 } from '@/lib/admin/guard'
 
-const Schema = z.object({ clientId: z.string().nullable() })
+const Schema = z.object({ userId: z.string().nullable() })
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const auth = await adminAuthOr401()
@@ -23,25 +23,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
   }
 
-  const { clientId } = parsed.data
+  const { userId } = parsed.data
   const res = NextResponse.json({ ok: true })
 
-  if (!clientId) {
-    res.cookies.delete('admin_view_as')
+  if (!userId) {
+    res.cookies.delete('admin_view_as_user')
     return res
   }
 
-  // Verify the client exists
-  const client = await db.client.findUnique({ where: { id: clientId }, select: { id: true, name: true } })
-  if (!client) {
-    return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+  // Verify the user exists
+  const profile = await db.profile.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  })
+  if (!profile) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
 
-  res.cookies.set('admin_view_as', clientId, {
-    httpOnly: false,  // readable by client JS for display purposes
+  res.cookies.set('admin_view_as_user', userId, {
+    httpOnly: false, // readable by client JS for display
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 8, // 8 hours
   })
-  return NextResponse.json({ ok: true, clientId: client.id, clientName: client.name })
+  return NextResponse.json({ ok: true })
 }

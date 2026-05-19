@@ -114,13 +114,18 @@ export async function requireActiveClient(): Promise<{
     throw new UnauthorizedError()
   }
 
-  // Admin "view as" override — lets admins preview another client's workspace
+  // Admin "view as" override — lets admins preview another user's workspace.
+  // Cookie stores the target userId; we resolve their clientId here so the
+  // frontend never needs to know about the organisation/clientId concept.
   if (isAdmin(profile.role ?? '')) {
     const jar = await cookies()
-    const viewAs = jar.get('admin_view_as')?.value
-    if (viewAs) {
-      const overrideClient = await db.client.findUnique({ where: { id: viewAs }, select: { id: true } })
-      if (overrideClient) return { userId, clientId: viewAs }
+    const viewAsUserId = jar.get('admin_view_as_user')?.value
+    if (viewAsUserId) {
+      const targetProfile = await db.profile.findUnique({
+        where: { id: viewAsUserId },
+        select: { clientId: true },
+      })
+      if (targetProfile?.clientId) return { userId, clientId: targetProfile.clientId }
     }
   }
 

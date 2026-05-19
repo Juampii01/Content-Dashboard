@@ -22,14 +22,13 @@ interface UserEntry {
   email: string | null
   displayName: string | null
   role: string
-  clientId: string | null
 }
 
 const EMPTY = '—'
 
 function readViewAsCookie(): string | null {
   if (typeof document === 'undefined') return null
-  const match = document.cookie.split(';').map((c) => c.trim()).find((c) => c.startsWith('admin_view_as='))
+  const match = document.cookie.split(';').map((c) => c.trim()).find((c) => c.startsWith('admin_view_as_user='))
   return match ? decodeURIComponent(match.split('=')[1]) : null
 }
 
@@ -48,14 +47,14 @@ export function TopBar() {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // View-as state
-  const [viewAsClientId, setViewAsClientId] = useState<string | null>(null)
+  const [viewAsUserId, setViewAsUserId] = useState<string | null>(null)
   const [viewAsLoading, setViewAsLoading] = useState(false)
 
   const isAdmin = profile?.role === 'admin'
 
   // Initials & display for the current identity shown in the pill
-  const viewAsUser = viewAsClientId
-    ? allUsers.find((u) => u.clientId === viewAsClientId) ?? null
+  const viewAsUser = viewAsUserId
+    ? allUsers.find((u) => u.id === viewAsUserId) ?? null
     : null
 
   const pillName = viewAsUser
@@ -97,7 +96,7 @@ export function TopBar() {
       })
       .catch(() => {})
     // Read cookie after users load
-    setViewAsClientId(readViewAsCookie())
+    setViewAsUserId(readViewAsCookie())
   }, [isAdmin])
 
   // Close dropdown on outside click
@@ -115,19 +114,15 @@ export function TopBar() {
 
   async function handleViewAs(user: UserEntry) {
     if (user.id === profile?.userId) return
-    if (!user.clientId) {
-      toast.error('Este usuario no tiene organización asignada.')
-      return
-    }
     setViewAsLoading(true)
     try {
       const res = await fetch('/api/admin/view-as', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: user.clientId }),
+        body: JSON.stringify({ userId: user.id }),
       })
       if (res.ok) {
-        setViewAsClientId(user.clientId)
+        setViewAsUserId(user.id)
         setDropdownOpen(false)
         router.refresh()
         window.location.reload()
@@ -145,9 +140,9 @@ export function TopBar() {
       await fetch('/api/admin/view-as', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: null }),
+        body: JSON.stringify({ userId: null }),
       })
-      setViewAsClientId(null)
+      setViewAsUserId(null)
       setDropdownOpen(false)
       router.refresh()
       window.location.reload()
@@ -221,7 +216,7 @@ export function TopBar() {
       <div className="flex items-center gap-2">
 
         {/* View-as active banner */}
-        {viewAsClientId && viewAsUser && (
+        {viewAsUserId && viewAsUser && (
           <div
             className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
             style={{
@@ -252,25 +247,25 @@ export function TopBar() {
             aria-expanded={dropdownOpen}
             className="flex items-center gap-2 px-3 py-2 rounded-full transition-colors cursor-pointer"
             style={{
-              backgroundColor: viewAsClientId ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card)',
-              border: viewAsClientId
+              backgroundColor: viewAsUserId ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card)',
+              border: viewAsUserId
                 ? '1px solid color-mix(in srgb, var(--accent) 30%, transparent)'
                 : '1px solid var(--border)',
               color: 'var(--foreground)',
             }}
             onMouseEnter={(e) => {
-              if (!viewAsClientId)
+              if (!viewAsUserId)
                 e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--card) 80%, var(--foreground) 4%)'
             }}
             onMouseLeave={(e) => {
-              if (!viewAsClientId)
+              if (!viewAsUserId)
                 e.currentTarget.style.backgroundColor = 'var(--card)'
             }}
           >
             <span
               className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
               style={{
-                backgroundColor: viewAsClientId
+                backgroundColor: viewAsUserId
                   ? 'color-mix(in srgb, var(--accent) 25%, transparent)'
                   : 'color-mix(in srgb, var(--accent) 15%, transparent)',
                 border: '1.5px solid color-mix(in srgb, var(--accent) 40%, transparent)',
@@ -309,7 +304,7 @@ export function TopBar() {
                 <p className="text-[11px] font-medium truncate" style={{ color: 'var(--muted-foreground)' }}>
                   {profile?.email ?? ''}
                 </p>
-                {viewAsClientId && viewAsUser && (
+                {viewAsUserId && viewAsUser && (
                   <p className="text-[11px] mt-0.5 font-semibold flex items-center gap-1" style={{ color: 'var(--accent)' }}>
                     <Eye size={10} />
                     Viendo como {viewAsUser.displayName ?? viewAsUser.email}
@@ -328,7 +323,7 @@ export function TopBar() {
                   <div className="pb-2" style={{ maxHeight: '220px', overflowY: 'auto' }}>
                     {allUsers.map((u) => {
                       const isSelf      = u.id === profile?.userId
-                      const isViewingAs = u.clientId === viewAsClientId && !!viewAsClientId
+                      const isViewingAs = u.id === viewAsUserId
                       const name        = u.displayName ?? u.email ?? u.id
                       const letter      = name.slice(0, 1).toUpperCase()
 
