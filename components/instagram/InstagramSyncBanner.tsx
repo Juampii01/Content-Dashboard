@@ -12,6 +12,7 @@
 import { useState } from 'react'
 import { Camera, Loader2, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useSocialConnection } from '@/hooks/useSocialConnection'
+import { ConnectAccountModal } from '@/components/shared/ConnectAccountModal'
 import type { InstagramAccountSummary } from '@/hooks/useInstagramData'
 
 interface Props {
@@ -24,7 +25,7 @@ interface Props {
 
 export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCount }: Props) {
   const { connect } = useSocialConnection('instagram')
-  const [clicked, setClicked] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
 
   if (loading) {
     return (
@@ -41,40 +42,43 @@ export function InstagramSyncBanner({ summary, loading, syncing, onSync, reelCou
   // ── Not connected ──────────────────────────────────────────────────────────
   if (!summary?.connected) {
     return (
-      <div
-        className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 mb-4"
-        style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: 'color-mix(in srgb, var(--platform-instagram) 9%, transparent)', border: '1px solid color-mix(in srgb, var(--platform-instagram) 19%, transparent)' }}
-          >
-            <Camera size={16} style={{ color: 'var(--platform-instagram)' }} />
-          </div>
-          <div>
-            <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-              Conecta tu cuenta de Instagram
-            </p>
-            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              Sincroniza tus reels y métricas reales. Mientras tanto verás datos de demo.
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setClicked(true)
-            connect()
-          }}
-          disabled={clicked}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
-          style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+      <>
+        <div
+          className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 mb-4"
+          style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
         >
-          {clicked ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
-          Conectar Instagram
-        </button>
-      </div>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--platform-instagram) 9%, transparent)', border: '1px solid color-mix(in srgb, var(--platform-instagram) 19%, transparent)' }}
+            >
+              <Camera size={16} style={{ color: 'var(--platform-instagram)' }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                Conecta tu cuenta de Instagram
+              </p>
+              <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                Sincroniza tus reels y métricas reales. Mientras tanto verás datos de demo.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+          >
+            <Camera size={14} />
+            Conectar Instagram
+          </button>
+        </div>
+        <ConnectAccountModal
+          platform="instagram"
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+        />
+      </>
     )
   }
 
