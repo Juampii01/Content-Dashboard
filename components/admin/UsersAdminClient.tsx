@@ -21,9 +21,7 @@ type User = {
 const ROLE_FILTERS: { key: 'ALL' | UserRole; label: string }[] = [
   { key: 'ALL',    label: 'Todos'   },
   { key: 'ADMIN',  label: 'Admin'   },
-  { key: 'TEAM',   label: 'Team'    },
-  { key: 'SETTER', label: 'Setter'  },
-  { key: 'CLIENT', label: 'Client'  },
+  { key: 'CLIENT', label: 'Cliente' },
 ]
 
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
