@@ -18,12 +18,6 @@ type User = {
   createdAt: string
 }
 
-type Client = {
-  id: string
-  name: string
-  slug: string
-}
-
 const ROLE_FILTERS: { key: 'ALL' | UserRole; label: string }[] = [
   { key: 'ALL',    label: 'Todos'   },
   { key: 'ADMIN',  label: 'Admin'   },
@@ -49,10 +43,9 @@ function roleChipStyle(role: UserRole): { bg: string; fg: string } {
 }
 
 export function UsersAdminClient() {
-  const [users, setUsers]     = useState<User[] | null>(null)
-  const [clients, setClients] = useState<Client[]>([])
-  const [filter, setFilter]   = useState<'ALL' | UserRole>('ALL')
-  const [busyId, setBusyId]   = useState<string | null>(null)
+  const [users, setUsers]   = useState<User[] | null>(null)
+  const [filter, setFilter] = useState<'ALL' | UserRole>('ALL')
+  const [busyId, setBusyId] = useState<string | null>(null)
 
   const loadUsers = useCallback(async () => {
     try {
@@ -65,22 +58,9 @@ export function UsersAdminClient() {
     }
   }, [])
 
-  const loadClients = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/clients')
-      if (!res.ok) return
-      const data = await res.json()
-      const list: Client[] = Array.isArray(data) ? data : (data.clients ?? [])
-      setClients(list)
-    } catch {
-      // ignore — client dropdown just won't show options
-    }
-  }, [])
-
   useEffect(() => {
     loadUsers()
-    loadClients()
-  }, [loadUsers, loadClients])
+  }, [loadUsers])
 
   async function patchUser(userId: string, body: Record<string, unknown>, successMsg: string) {
     if (busyId) return
@@ -142,10 +122,9 @@ export function UsersAdminClient() {
           className="grid grid-cols-12 gap-3 px-4 py-3 text-[10px] font-semibold uppercase tracking-wider"
           style={{ color: 'var(--muted-foreground)', borderBottom: '1px solid var(--border)' }}
         >
-          <div className="col-span-3">Email</div>
-          <div className="col-span-2">Nombre</div>
-          <div className="col-span-2">Rol</div>
-          <div className="col-span-3">Cliente</div>
+          <div className="col-span-4">Email</div>
+          <div className="col-span-3">Nombre</div>
+          <div className="col-span-3">Rol</div>
           <div className="col-span-2"></div>
         </div>
 
@@ -170,15 +149,15 @@ export function UsersAdminClient() {
               className="grid grid-cols-12 gap-3 px-4 py-3 items-center text-xs"
               style={{ borderBottom: '1px solid var(--border)' }}
             >
-              <div className="col-span-3 truncate" style={{ color: 'var(--foreground)' }}>
+              <div className="col-span-4 truncate" style={{ color: 'var(--foreground)' }}>
                 {u.email ?? '—'}
               </div>
-              <div className="col-span-2 truncate" style={{ color: 'var(--muted-foreground)' }}>
+              <div className="col-span-3 truncate" style={{ color: 'var(--muted-foreground)' }}>
                 {u.displayName ?? '—'}
               </div>
 
               {/* Rol */}
-              <div className="col-span-2">
+              <div className="col-span-3">
                 <select
                   value={u.role}
                   onChange={(e) => patchUser(u.id, { role: e.target.value }, 'Rol actualizado')}
@@ -192,32 +171,6 @@ export function UsersAdminClient() {
                 >
                   {ROLE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Cliente workspace */}
-              <div className="col-span-3">
-                <select
-                  value={u.clientId ?? ''}
-                  onChange={(e) =>
-                    patchUser(
-                      u.id,
-                      { clientId: e.target.value || null },
-                      'Cliente actualizado',
-                    )
-                  }
-                  disabled={isBusy || clients.length === 0}
-                  className="text-[11px] px-2 py-1 rounded-lg outline-none w-full truncate"
-                  style={{
-                    backgroundColor: 'var(--muted)',
-                    color: u.clientId ? 'var(--foreground)' : 'var(--muted-foreground)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  <option value="">Sin asignar</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
               </div>
