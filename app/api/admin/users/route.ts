@@ -21,7 +21,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const profiles = await db.profile.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
-        client: { select: { id: true, name: true, slug: true, themeKey: true } },
+        client: { select: { id: true, name: true, slug: true } },
       },
     })
 
@@ -44,7 +44,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       clientId: p.clientId,
       clientName: p.client?.name ?? null,
       clientSlug: p.client?.slug ?? null,
-      themeKey: p.client?.themeKey ?? null,
       createdAt: p.createdAt,
     }))
 

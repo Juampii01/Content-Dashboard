@@ -7,22 +7,22 @@ import { logClientError } from '@/lib/client-errors'
 
 type UserRole = 'ADMIN' | 'TEAM' | 'SETTER' | 'CLIENT'
 
-type ThemeKey = 'eternity' | 'govbidder'
-
 type User = {
   id: string
   email: string | null
   displayName: string | null
   role: UserRole
   clientId: string | null
-  themeKey: string | null
+  clientName: string | null
+  clientSlug: string | null
   createdAt: string
 }
 
-const THEME_OPTIONS: { value: ThemeKey; label: string; description: string }[] = [
-  { value: 'eternity',  label: 'Eternity',  description: 'Dark · Brand rojo' },
-  { value: 'govbidder', label: 'GovBidder', description: 'Light · Azul gobierno' },
-]
+type Client = {
+  id: string
+  name: string
+  slug: string
+}
 
 const ROLE_FILTERS: { key: 'ALL' | UserRole; label: string }[] = [
   { key: 'ALL',    label: 'Todos'   },
@@ -49,9 +49,10 @@ function roleChipStyle(role: UserRole): { bg: string; fg: string } {
 }
 
 export function UsersAdminClient() {
-  const [users, setUsers]   = useState<User[] | null>(null)
-  const [filter, setFilter] = useState<'ALL' | UserRole>('ALL')
-  const [busyId, setBusyId] = useState<string | null>(null)
+  const [users, setUsers]     = useState<User[] | null>(null)
+  const [clients, setClients] = useState<Client[]>([])
+  const [filter, setFilter]   = useState<'ALL' | UserRole>('ALL')
+  const [busyId, setBusyId]   = useState<string | null>(null)
 
   const loadUsers = useCallback(async () => {
     try {
@@ -64,9 +65,22 @@ export function UsersAdminClient() {
     }
   }, [])
 
+  const loadClients = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/clients')
+      if (!res.ok) return
+      const data = await res.json()
+      const list: Client[] = Array.isArray(data) ? data : (data.clients ?? [])
+      setClients(list)
+    } catch {
+      // ignore — client dropdown just won't show options
+    }
+  }, [])
+
   useEffect(() => {
     loadUsers()
-  }, [loadUsers])
+    loadClients()
+  }, [loadUsers, loadClients])
 
   async function patchUser(userId: string, body: Record<string, unknown>, successMsg: string) {
     if (busyId) return
@@ -131,7 +145,7 @@ export function UsersAdminClient() {
           <div className="col-span-3">Email</div>
           <div className="col-span-2">Nombre</div>
           <div className="col-span-2">Rol</div>
-          <div className="col-span-3">Tema</div>
+          <div className="col-span-3">Cliente</div>
           <div className="col-span-2"></div>
         </div>
 
@@ -162,12 +176,14 @@ export function UsersAdminClient() {
               <div className="col-span-2 truncate" style={{ color: 'var(--muted-foreground)' }}>
                 {u.displayName ?? '—'}
               </div>
+
+              {/* Rol */}
               <div className="col-span-2">
                 <select
                   value={u.role}
                   onChange={(e) => patchUser(u.id, { role: e.target.value }, 'Rol actualizado')}
                   disabled={isBusy}
-                  className="text-[11px] font-medium px-2 py-1 rounded-lg outline-none"
+                  className="text-[11px] font-medium px-2 py-1 rounded-lg outline-none w-full"
                   style={{
                     backgroundColor: chip.bg,
                     color: chip.fg,
@@ -179,23 +195,33 @@ export function UsersAdminClient() {
                   ))}
                 </select>
               </div>
+
+              {/* Cliente workspace */}
               <div className="col-span-3">
                 <select
-                  value={u.themeKey ?? 'eternity'}
-                  onChange={(e) => patchUser(u.id, { themeKey: e.target.value }, 'Tema actualizado')}
-                  disabled={isBusy}
-                  className="text-[11px] px-2 py-1 rounded-lg outline-none"
+                  value={u.clientId ?? ''}
+                  onChange={(e) =>
+                    patchUser(
+                      u.id,
+                      { clientId: e.target.value || null },
+                      'Cliente actualizado',
+                    )
+                  }
+                  disabled={isBusy || clients.length === 0}
+                  className="text-[11px] px-2 py-1 rounded-lg outline-none w-full truncate"
                   style={{
                     backgroundColor: 'var(--muted)',
-                    color: 'var(--foreground)',
+                    color: u.clientId ? 'var(--foreground)' : 'var(--muted-foreground)',
                     border: '1px solid var(--border)',
                   }}
                 >
-                  {THEME_OPTIONS.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+                  <option value="">Sin asignar</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
               </div>
+
               <div className="col-span-2 flex items-center justify-end">
                 {isBusy && <Loader2 size={12} className="animate-spin" style={{ color: 'var(--muted-foreground)' }} />}
               </div>
@@ -203,7 +229,6 @@ export function UsersAdminClient() {
           )
         })}
       </div>
-
     </>
   )
 }
