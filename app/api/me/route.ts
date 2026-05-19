@@ -22,6 +22,7 @@ export async function GET(): Promise<NextResponse> {
       role: role.toLowerCase(),
       clientId: profile.clientId,
       clientName,
+      themeKey: profile.themeKey ?? 'eternity',
     })
   } catch (err) {
     if (err instanceof UnauthorizedError) {

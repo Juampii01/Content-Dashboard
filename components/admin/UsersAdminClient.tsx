@@ -6,17 +6,24 @@ import { toast } from 'sonner'
 import { logClientError } from '@/lib/client-errors'
 
 type UserRole = 'ADMIN' | 'TEAM' | 'SETTER' | 'CLIENT'
+type ThemeKey = 'eternity' | 'govbidder'
 
 type User = {
   id: string
   email: string | null
   displayName: string | null
   role: UserRole
+  themeKey: ThemeKey
   clientId: string | null
   clientName: string | null
   clientSlug: string | null
   createdAt: string
 }
+
+const THEME_OPTIONS: { value: ThemeKey; label: string }[] = [
+  { value: 'eternity',  label: 'Eternity'  },
+  { value: 'govbidder', label: 'GovBidder' },
+]
 
 const ROLE_FILTERS: { key: 'ALL' | UserRole; label: string }[] = [
   { key: 'ALL',    label: 'Todos'   },
@@ -120,9 +127,10 @@ export function UsersAdminClient() {
           className="grid grid-cols-12 gap-3 px-4 py-3 text-[10px] font-semibold uppercase tracking-wider"
           style={{ color: 'var(--muted-foreground)', borderBottom: '1px solid var(--border)' }}
         >
-          <div className="col-span-4">Email</div>
-          <div className="col-span-3">Nombre</div>
+          <div className="col-span-3">Email</div>
+          <div className="col-span-2">Nombre</div>
           <div className="col-span-3">Rol</div>
+          <div className="col-span-2">Tema</div>
           <div className="col-span-2"></div>
         </div>
 
@@ -147,10 +155,10 @@ export function UsersAdminClient() {
               className="grid grid-cols-12 gap-3 px-4 py-3 items-center text-xs"
               style={{ borderBottom: '1px solid var(--border)' }}
             >
-              <div className="col-span-4 truncate" style={{ color: 'var(--foreground)' }}>
+              <div className="col-span-3 truncate" style={{ color: 'var(--foreground)' }}>
                 {u.email ?? '—'}
               </div>
-              <div className="col-span-3 truncate" style={{ color: 'var(--muted-foreground)' }}>
+              <div className="col-span-2 truncate" style={{ color: 'var(--muted-foreground)' }}>
                 {u.displayName ?? '—'}
               </div>
 
@@ -169,6 +177,25 @@ export function UsersAdminClient() {
                 >
                   {ROLE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tema */}
+              <div className="col-span-2">
+                <select
+                  value={u.themeKey ?? 'eternity'}
+                  onChange={(e) => patchUser(u.id, { themeKey: e.target.value }, 'Tema actualizado')}
+                  disabled={isBusy}
+                  className="text-[11px] px-2 py-1 rounded-lg outline-none w-full"
+                  style={{
+                    backgroundColor: 'var(--muted)',
+                    color: 'var(--foreground)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  {THEME_OPTIONS.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
                 </select>
               </div>

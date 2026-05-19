@@ -28,6 +28,7 @@ model Profile {
   instagramUsername String?
   nicho             String?
   role              UserRole  @default(CLIENT)
+  themeKey          String    @default("eternity")
   clientId          String?
   client            Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
   createdAt         DateTime  @default(now())

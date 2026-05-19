@@ -61,18 +61,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState<ThemeKey>(DEFAULT_THEME_KEY)
 
   // Once we know the user's role, apply their stored preference (admins only).
+  // Priority: localStorage (instant) → profile.themeKey from /api/me (source of truth).
   useEffect(() => {
     if (!isAdmin) {
-      // Non-admins always see the default. Ensure the DOM reflects this
-      // in case an earlier admin session left a different theme.
       applyThemeToDom(DEFAULT_THEME_KEY)
       setCurrentTheme(DEFAULT_THEME_KEY)
       return
     }
+    // Apply localStorage immediately to avoid FOUC.
     const stored = localStorage.getItem(STORAGE_KEY)
-    const theme = isValidThemeKey(stored) ? stored : DEFAULT_THEME_KEY
-    applyThemeToDom(theme)
-    setCurrentTheme(theme)
+    const localTheme = isValidThemeKey(stored) ? stored : DEFAULT_THEME_KEY
+    applyThemeToDom(localTheme)
+    setCurrentTheme(localTheme)
+
+    // Then sync from DB (profile.themeKey) as source of truth.
+    fetch('/api/me')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return
+        const dbTheme = isValidThemeKey(data.themeKey) ? data.themeKey : null
+        if (dbTheme && dbTheme !== localTheme) {
+          localStorage.setItem(STORAGE_KEY, dbTheme)
+          applyThemeToDom(dbTheme)
+          setCurrentTheme(dbTheme)
+        }
+      })
+      .catch(() => { /* ignore — keep localStorage value */ })
   }, [isAdmin])
 
   const setTheme = useCallback(

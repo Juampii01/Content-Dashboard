@@ -44,6 +44,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       clientId: p.clientId,
       clientName: p.client?.name ?? null,
       clientSlug: p.client?.slug ?? null,
+      themeKey: p.themeKey,
       createdAt: p.createdAt,
     }))
 

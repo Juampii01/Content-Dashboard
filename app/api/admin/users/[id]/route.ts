@@ -56,6 +56,7 @@ export async function PATCH(
   if (parsed.data.role !== undefined) updateData.role = parsed.data.role.toUpperCase()
   if (parsed.data.clientId !== undefined) updateData.clientId = parsed.data.clientId
   if (parsed.data.displayName !== undefined) updateData.displayName = parsed.data.displayName
+  if (parsed.data.themeKey !== undefined) updateData.themeKey = parsed.data.themeKey
 
   try {
     const updated = await db.profile.update({
