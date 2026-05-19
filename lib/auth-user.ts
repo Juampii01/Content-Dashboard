@@ -163,17 +163,14 @@ export async function requireActiveClient(): Promise<{
 }
 
 /**
- * Returns the active clientId from the profile (no cookie needed).
- * Returns null if the user has no session or no client assigned.
+ * Returns the active clientId, respecting the admin view-as override.
+ * Delegates to requireActiveClient() so the admin_view_as_user cookie
+ * is always honoured. Returns null if no session or no client assigned.
  */
 export async function getActiveClientId(): Promise<string | null> {
   try {
-    const userId = await requireUserId()
-    const profile = await db.profile.findUnique({
-      where: { id: userId },
-      select: { clientId: true },
-    })
-    return profile?.clientId ?? null
+    const { clientId } = await requireActiveClient()
+    return clientId
   } catch {
     return null
   }
