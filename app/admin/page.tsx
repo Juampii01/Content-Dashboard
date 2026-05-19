@@ -30,7 +30,7 @@ export default async function AdminOverviewPage() {
       href: '/admin/users',
     },
     {
-      label: 'Clientes',
+      label: 'Organizaciones',
       value: clientCount,
       icon: Building2,
       href: '/admin/clients',
