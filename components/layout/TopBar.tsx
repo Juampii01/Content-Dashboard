@@ -1,15 +1,14 @@
 'use client'
 
-import { useContext, useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
-import { Eye, Users, TrendingUp, Menu, UserCircle2, ChevronDown } from 'lucide-react'
+import { useContext, useEffect, useRef, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Eye, Users, TrendingUp, Menu, UserCircle2, ChevronDown, Settings, LogOut } from 'lucide-react'
 import { formatM, formatPercent } from '@/lib/utils/formatters'
 import { ThemeToggle } from './ThemeToggle'
-import { ThemePicker } from './ThemePicker'
-import { ViewAsPicker } from './ViewAsPicker'
 import { SettingsModal } from './SettingsModal'
 import { MobileSidebarContext } from './LayoutShell'
 import { useAuth } from './AuthProvider'
+import { createClient } from '@/lib/supabase/client'
 
 interface GlobalStats {
   followers: number
@@ -17,15 +16,30 @@ interface GlobalStats {
   engagementRate: number
 }
 
+interface UserEntry {
+  id: string
+  email: string | null
+  displayName: string | null
+  role: string
+}
+
 const EMPTY = '—'
 
 export function TopBar() {
   const { open: openMobileSidebar } = useContext(MobileSidebarContext)
   const pathname = usePathname()
+  const router = useRouter()
   const { profile } = useAuth()
   const [stats, setStats] = useState<GlobalStats | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // User dropdown
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [allUsers, setAllUsers] = useState<UserEntry[]>([])
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const isAdmin = profile?.role === 'admin'
 
   const initials = profile?.displayName
     ? profile.displayName.slice(0, 2).toUpperCase()
@@ -66,6 +80,36 @@ export function TopBar() {
     }
   }, [pathname, platformParam])
 
+  // Fetch all users when admin opens dropdown
+  useEffect(() => {
+    if (!isAdmin) return
+    fetch('/api/admin/users')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.users) setAllUsers(data.users)
+      })
+      .catch(() => {})
+  }, [isAdmin])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!dropdownOpen) return
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [dropdownOpen])
+
+  // Sign out
+  async function handleSignOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
   // Until the fetch resolves we show the same dash placeholders so the
   // pills don't flash mock numbers during hydration.
   const metrics = [
@@ -83,8 +127,8 @@ export function TopBar() {
         borderBottom: '1px solid var(--border)',
       }}
     >
-      {/* Mobile menu + identity pill */}
-      <div className="flex items-center gap-3 min-w-0">
+      {/* Mobile menu button */}
+      <div className="flex items-center">
         <button
           type="button"
           onClick={openMobileSidebar}
@@ -94,48 +138,7 @@ export function TopBar() {
         >
           <Menu size={18} />
         </button>
-
-        <button
-          type="button"
-          onClick={() => setSettingsOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-full transition-colors cursor-pointer"
-          style={{
-            backgroundColor: 'var(--card)',
-            border: '1px solid var(--border)',
-            color: 'var(--foreground)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--card) 80%, var(--foreground) 4%)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--card)'
-          }}
-        >
-          <span
-            className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full"
-            style={{
-              backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)',
-              border: '1.5px solid color-mix(in srgb, var(--accent) 40%, transparent)',
-              color: 'var(--accent)',
-            }}
-          >
-            <UserCircle2 size={14} />
-          </span>
-          <span className="hidden sm:block text-sm font-medium leading-none truncate max-w-[120px]">
-            {displayName}
-          </span>
-          <ChevronDown size={13} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
-        </button>
       </div>
-
-      <SettingsModal
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        role={profile?.role ?? null}
-        email={profile?.email ?? null}
-        displayName={profile?.displayName ?? null}
-        avatarUrl={profile?.avatarUrl ?? null}
-      />
 
       {/* Center metric pills */}
       <div
@@ -173,10 +176,178 @@ export function TopBar() {
 
       {/* Right actions */}
       <div className="flex items-center gap-2">
-        <ViewAsPicker />
-        <ThemePicker />
+        {/* User dropdown */}
+        <div ref={dropdownRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setDropdownOpen((v) => !v)}
+            aria-expanded={dropdownOpen}
+            className="flex items-center gap-2 px-3 py-2 rounded-full transition-colors cursor-pointer"
+            style={{
+              backgroundColor: 'var(--card)',
+              border: '1px solid var(--border)',
+              color: 'var(--foreground)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--card) 80%, var(--foreground) 4%)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--card)'
+            }}
+          >
+            <span
+              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+              style={{
+                backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+                border: '1.5px solid color-mix(in srgb, var(--accent) 40%, transparent)',
+                color: 'var(--accent)',
+              }}
+            >
+              {initials}
+            </span>
+            <span className="hidden sm:block text-sm font-medium leading-none truncate max-w-[120px]">
+              {displayName}
+            </span>
+            <ChevronDown
+              size={13}
+              style={{
+                color: 'var(--muted-foreground)',
+                flexShrink: 0,
+                transition: 'transform 200ms',
+                transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
+          </button>
+
+          {dropdownOpen && (
+            <div
+              className="absolute right-0 top-full mt-2 rounded-xl shadow-lg overflow-hidden"
+              style={{
+                zIndex: 100,
+                backgroundColor: 'var(--card)',
+                border: '1px solid var(--border)',
+                minWidth: '220px',
+                boxShadow: 'var(--shadow-modal)',
+              }}
+            >
+              {/* Current user header */}
+              <div
+                className="px-4 py-3"
+                style={{ borderBottom: '1px solid var(--border)' }}
+              >
+                <p className="text-[11px] font-medium truncate" style={{ color: 'var(--muted-foreground)' }}>
+                  {profile?.email ?? ''}
+                </p>
+              </div>
+
+              {/* Users list — admin only */}
+              {isAdmin && allUsers.length > 0 && (
+                <>
+                  <div className="px-4 pt-3 pb-1">
+                    <p
+                      className="text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ color: 'var(--muted-foreground)' }}
+                    >
+                      Usuarios
+                    </p>
+                  </div>
+                  <div className="pb-2" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {allUsers.map((u) => {
+                      const isCurrent = u.id === profile?.userId
+                      const name = u.displayName ?? u.email ?? u.id
+                      const letter = name.slice(0, 1).toUpperCase()
+                      return (
+                        <div
+                          key={u.id}
+                          className="flex items-center gap-2.5 px-4 py-2"
+                        >
+                          <span
+                            className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                            style={{
+                              backgroundColor: isCurrent
+                                ? 'color-mix(in srgb, var(--accent) 15%, transparent)'
+                                : 'var(--muted)',
+                              color: isCurrent ? 'var(--accent)' : 'var(--muted-foreground)',
+                              border: isCurrent
+                                ? '1.5px solid color-mix(in srgb, var(--accent) 35%, transparent)'
+                                : '1px solid var(--border)',
+                            }}
+                          >
+                            {letter}
+                          </span>
+                          <span
+                            className="flex-1 text-xs font-medium truncate"
+                            style={{ color: 'var(--foreground)' }}
+                          >
+                            {name}
+                          </span>
+                          {isCurrent && (
+                            <span
+                              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                              style={{
+                                backgroundColor: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+                                color: 'var(--accent)',
+                              }}
+                            >
+                              Activo
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div style={{ borderTop: '1px solid var(--border)' }} />
+                </>
+              )}
+
+              {/* Settings */}
+              <button
+                type="button"
+                onClick={() => { setSettingsOpen(true); setDropdownOpen(false) }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium cursor-pointer transition-colors"
+                style={{ color: 'var(--foreground)', backgroundColor: 'transparent' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--foreground) 5%, transparent)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                <Settings size={13} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
+                Configuración
+              </button>
+
+              {/* Sign out */}
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium cursor-pointer transition-colors"
+                style={{ color: 'var(--muted-foreground)', backgroundColor: 'transparent' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--foreground) 5%, transparent)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                <LogOut size={13} style={{ flexShrink: 0 }} />
+                Cerrar sesión
+              </button>
+            </div>
+          )}
+        </div>
+
         <ThemeToggle />
       </div>
+
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        role={profile?.role ?? null}
+        email={profile?.email ?? null}
+        displayName={profile?.displayName ?? null}
+        avatarUrl={profile?.avatarUrl ?? null}
+      />
     </header>
   )
 }
