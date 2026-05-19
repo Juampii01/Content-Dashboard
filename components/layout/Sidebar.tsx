@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'motion/react'
@@ -150,13 +151,23 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
                 onClick={onToggle}
                 aria-label="Expandir menú"
                 title="Expandir menú"
-                className="group/logo relative w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs cursor-pointer overflow-hidden transition-transform hover:scale-105"
-                style={{ backgroundColor: 'var(--accent)' }}
+                className="group/logo relative w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs cursor-pointer overflow-hidden transition-transform hover:scale-105"
+                style={{ backgroundColor: avatarUrl ? 'transparent' : 'var(--accent)' }}
               >
-                <span className="transition-opacity duration-150 group-hover/logo:opacity-0">E</span>
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt="Avatar"
+                    fill
+                    sizes="32px"
+                    className="object-cover transition-opacity duration-150 group-hover/logo:opacity-40"
+                  />
+                ) : (
+                  <span className="transition-opacity duration-150 group-hover/logo:opacity-0">E</span>
+                )}
                 <ChevronRight
                   size={14}
-                  className="absolute opacity-0 transition-opacity duration-150 group-hover/logo:opacity-100"
+                  className="absolute opacity-0 transition-opacity duration-150 group-hover/logo:opacity-100 z-10"
                 />
               </button>
             </div>
@@ -164,10 +175,20 @@ export function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose
             <>
               <div className="flex items-center gap-2.5 min-w-0">
                 <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
-                  style={{ backgroundColor: 'var(--accent)' }}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0 overflow-hidden relative"
+                  style={{ backgroundColor: avatarUrl ? 'transparent' : 'var(--accent)' }}
                 >
-                  E
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt="Avatar"
+                      fill
+                      sizes="28px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    'E'
+                  )}
                 </div>
                 <div className="min-w-0 overflow-hidden">
                   <p className="text-xs font-semibold leading-tight truncate" style={{ color: 'var(--foreground)' }}>
