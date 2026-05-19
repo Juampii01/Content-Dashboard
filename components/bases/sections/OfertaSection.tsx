@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChipEditor } from '../ChipEditor'
 import { OfertaData } from '@/lib/types'
+import { tryParseArray } from '@/lib/utils/parseArray'
 
 const STORAGE_KEY = 'oferta'
 
@@ -108,8 +109,13 @@ export function OfertaSection() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Cargando…</span>
+      <div className="rounded-xl p-5 space-y-4" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+        {[1,2,3,4].map((i) => (
+          <div key={i} className="space-y-1.5">
+            <div className="h-2 w-20 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+            <div className={`h-${i >= 3 ? 16 : 8} w-full rounded-lg animate-pulse`} style={{ backgroundColor: 'var(--muted)', height: i >= 3 ? '64px' : '34px' }} />
+          </div>
+        ))}
       </div>
     )
   }
@@ -140,13 +146,3 @@ export function OfertaSection() {
   )
 }
 
-function tryParseArray(raw: unknown): string[] {
-  if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === 'string')
-  if (typeof raw === 'string') {
-    try {
-      const p = JSON.parse(raw)
-      if (Array.isArray(p)) return p.filter((x): x is string => typeof x === 'string')
-    } catch {}
-  }
-  return []
-}

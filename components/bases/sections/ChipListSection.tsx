@@ -85,7 +85,11 @@ export function ChipListSection({
         )}
 
         {loading ? (
-          <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Cargando…</span>
+          <div className="flex flex-wrap gap-2 py-1">
+            {[60, 90, 72, 50, 80].map((w, i) => (
+              <div key={i} className="h-6 rounded-full animate-pulse" style={{ width: `${w}px`, backgroundColor: 'var(--muted)' }} />
+            ))}
+          </div>
         ) : (
           <ChipEditor
             items={items}

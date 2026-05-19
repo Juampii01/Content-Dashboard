@@ -62,8 +62,18 @@ export function InsightsSection() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Cargando…</span>
+      <div className="flex flex-wrap gap-4">
+        {[1,2,3].map((i) => (
+          <div key={i} className="rounded-xl p-4 w-full sm:w-64 flex-shrink-0 space-y-2"
+            style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+            <div className="w-4 h-4 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+            <div className="h-3.5 w-36 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+            <div className="space-y-1.5">
+              <div className="h-2.5 w-full rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+              <div className="h-2.5 w-4/5 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+            </div>
+          </div>
+        ))}
       </div>
     )
   }

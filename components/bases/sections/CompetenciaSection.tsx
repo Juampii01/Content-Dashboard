@@ -61,8 +61,25 @@ export function CompetenciaSection() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Cargando…</span>
+      <div className="space-y-4">
+        {[1,2].map((i) => (
+          <div key={i} className="rounded-xl p-5 space-y-4"
+            style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+            <div className="h-8 w-48 rounded-lg animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[1,2].map((j) => (
+                <div key={j} className="space-y-2">
+                  <div className="h-2 w-16 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+                  <div className="flex flex-wrap gap-2">
+                    {[70, 85, 60].map((w, k) => (
+                      <div key={k} className="h-6 rounded-full animate-pulse" style={{ width: `${w}px`, backgroundColor: 'var(--muted)' }} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     )
   }

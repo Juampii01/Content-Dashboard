@@ -17,10 +17,17 @@ function ToolbarButton({ onClick, active, disabled, children, title }: ToolbarBu
       onMouseDown={(e) => { e.preventDefault(); onClick() }}
       disabled={disabled}
       title={title}
-      className="p-1.5 rounded-md transition-all disabled:opacity-30"
+      className="p-1.5 rounded-md transition-all disabled:opacity-30 cursor-pointer"
       style={{
         backgroundColor: active ? 'var(--accent)' : 'transparent',
-        color: active ? 'var(--accent)' : 'var(--muted-foreground)',
+        // when active, the background IS var(--accent) → use foreground that sits on it
+        color: active ? 'var(--accent-foreground)' : 'var(--muted-foreground)',
+      }}
+      onMouseEnter={(e) => {
+        if (!active && !disabled) (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--muted)'
+      }}
+      onMouseLeave={(e) => {
+        if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
       }}
     >
       {children}
@@ -127,7 +134,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
         style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)' }}
       >
         ✦ Generar con IA
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#8E1F2F22', color: 'var(--accent)' }}>
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 13%, transparent)', color: 'var(--accent)' }}>
           Próximamente
         </span>
       </button>

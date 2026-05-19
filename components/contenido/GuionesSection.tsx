@@ -6,6 +6,7 @@ import type { GuionTab, GuionItem } from '@/lib/types'
 import { GuionesGrid } from './guiones/GuionesGrid'
 import { GuionEditor } from './guiones/GuionEditor'
 import { EmojiPickerPortal } from './guiones/EmojiPicker'
+import { toast } from 'sonner'
 
 // ─── DB row shapes (API responses mirror Prisma types) ────────────────────────
 
@@ -70,20 +71,24 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
   // ─── Load from API on mount ──────────────────────────────────────────────
 
   const loadTabs = useCallback(async () => {
+    setLoading(true)
     try {
       const res = await fetch(`/api/guiones/tabs?type=${encodeURIComponent(type)}`)
-      if (!res.ok) return
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json() as { tabs: DbGuionTab[] }
       const fetchedTabs  = data.tabs.map(toGuionTab)
       const fetchedItems = data.tabs.flatMap(t => t.items.map(toGuionItem))
       setTabs(fetchedTabs)
       setItems(fetchedItems)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error(`Error al cargar guiones: ${msg}`)
     } finally {
       setLoading(false)
     }
   }, [type])
 
-  useEffect(() => { loadTabs() }, [loadTabs])
+  useEffect(() => { void loadTabs() }, [loadTabs])
 
   // Auto-expand the first tab on initial load
   useEffect(() => {
@@ -111,28 +116,44 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
   // ─── Tab operations ──────────────────────────────────────────────────────
 
   const addTab = async () => {
-    const res = await fetch('/api/guiones/tabs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'Nueva pestaña', type, order: tabs.length }),
-    })
-    if (!res.ok) return
-    const data = await res.json() as { tab: DbGuionTab }
-    const newTab = toGuionTab(data.tab)
-    setTabs(prev => [...prev, newTab])
-    setExpandedTabId(newTab.id)
-    setRenamingTabId(newTab.id)
-    setRenameVal('Nueva pestaña')
+    try {
+      const res = await fetch('/api/guiones/tabs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Nueva carpeta', type, order: tabs.length }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json() as { tab: DbGuionTab }
+      const newTab = toGuionTab(data.tab)
+      setTabs(prev => [...prev, newTab])
+      setExpandedTabId(newTab.id)
+      setRenamingTabId(newTab.id)
+      setRenameVal('Nueva carpeta')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error(`Error al crear carpeta: ${msg}`)
+    }
   }
 
   const deleteTab = async (tabId: string) => {
     // Optimistic update
+    const prevTabs  = tabs
+    const prevItems = items
     setTabs(prev => prev.filter(t => t.id !== tabId))
     setItems(prev => prev.filter(i => i.tabId !== tabId))
     if (expandedTabId === tabId) setExpandedTabId(null)
     setMenuTabId(null)
 
-    await fetch(`/api/guiones/tabs/${tabId}`, { method: 'DELETE' })
+    try {
+      const res = await fetch(`/api/guiones/tabs/${tabId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    } catch (err: unknown) {
+      // Rollback
+      setTabs(prevTabs)
+      setItems(prevItems)
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error(`Error al eliminar carpeta: ${msg}`)
+    }
   }
 
   const setTabEmoji = async (tabId: string, emoji: string) => {
@@ -140,22 +161,31 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
     setEmojiTabId(null)
     setEmojiAnchor(null)
 
-    await fetch(`/api/guiones/tabs/${tabId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emoji }),
-    })
+    try {
+      const res = await fetch(`/api/guiones/tabs/${tabId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    } catch {
+      // Soft fail — emoji is cosmetic, don't disrupt UX with rollback
+    }
   }
 
   const clearTabEmoji = async (tabId: string) => {
     setTabs(prev => prev.map(t => t.id === tabId ? { ...t, emoji: '' } : t))
     setMenuTabId(null)
 
-    await fetch(`/api/guiones/tabs/${tabId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emoji: '' }),
-    })
+    try {
+      await fetch(`/api/guiones/tabs/${tabId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji: '' }),
+      })
+    } catch {
+      // Soft fail — cosmetic
+    }
   }
 
   const finishRename = async (tabId: string) => {
@@ -163,36 +193,55 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
     setTabs(prev => prev.map(t => t.id === tabId ? { ...t, name } : t))
     setRenamingTabId(null)
 
-    await fetch(`/api/guiones/tabs/${tabId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    })
+    try {
+      const res = await fetch(`/api/guiones/tabs/${tabId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    } catch {
+      // Keep optimistic name — user already sees the new name
+    }
   }
 
   // ─── Item operations ─────────────────────────────────────────────────────
 
   const addItem = async (tabId: string) => {
-    const res = await fetch(`/api/guiones/tabs/${tabId}/items`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: 'Nuevo guión', order: items.filter(i => i.tabId === tabId).length }),
-    })
-    if (!res.ok) return
-    const data = await res.json() as { item: DbGuionItem }
-    const newItem = toGuionItem(data.item)
-    setItems(prev => [...prev, newItem])
-    setActiveItemId(newItem.id)
+    try {
+      const res = await fetch(`/api/guiones/tabs/${tabId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Nuevo guión', order: items.filter(i => i.tabId === tabId).length }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json() as { item: DbGuionItem }
+      const newItem = toGuionItem(data.item)
+      setItems(prev => [...prev, newItem])
+      setActiveItemId(newItem.id)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error(`Error al crear guión: ${msg}`)
+    }
   }
 
   const deleteItem = async (id: string) => {
+    const prevItems = items
     const next = items.filter(i => i.id !== id)
     setItems(next)
     if (activeItemId === id) {
       setActiveItemId(next.length > 0 ? next[next.length - 1].id : null)
     }
 
-    await fetch(`/api/guiones/items/${id}`, { method: 'DELETE' })
+    try {
+      const res = await fetch(`/api/guiones/items/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    } catch (err: unknown) {
+      // Rollback
+      setItems(prevItems)
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error(`Error al eliminar guión: ${msg}`)
+    }
   }
 
   const updateActive = async (patch: Partial<GuionItem>) => {
@@ -201,11 +250,13 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
     setItems(prev =>
       prev.map(i => i.id === activeItemId ? { ...i, ...patch, updatedAt: now } : i)
     )
-
+    // Fire-and-forget — save indicator in editor handles feedback
     await fetch(`/api/guiones/items/${activeItemId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
+    }).catch(() => {
+      toast.error('Error al guardar — revisá tu conexión')
     })
   }
 
@@ -215,19 +266,52 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
     setItems(prev => prev.map(i => i.id === itemId ? { ...i, title: name, updatedAt: now } : i))
     setRenamingItemId(null)
 
-    await fetch(`/api/guiones/items/${itemId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: name }),
-    })
+    try {
+      await fetch(`/api/guiones/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: name }),
+      })
+    } catch {
+      // Keep optimistic name
+    }
   }
 
   const activeItem = items.find(i => i.id === activeItemId) ?? null
 
+  // ─── Loading skeleton ─────────────────────────────────────────────────────
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full" style={{ minHeight: '70vh' }}>
-        <p className="text-sm" style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}>Cargando guiones…</p>
+      <div className="flex h-full" style={{ minHeight: '70vh' }}>
+        {/* Sidebar skeleton */}
+        <div className="w-64 flex-shrink-0 flex flex-col" style={{ borderRight: '1px solid var(--border)' }}>
+          <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+            <div className="h-2.5 w-16 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+            <div className="h-5 w-5 rounded-lg animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+          </div>
+          <div className="flex-1 py-2 px-2 space-y-1">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-2 px-2 py-2 rounded-xl">
+                <div className="w-5 h-5 rounded-lg animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+                <div className="h-2.5 flex-1 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+                <div className="h-4 w-4 rounded-full animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Editor skeleton */}
+        <div className="flex-1 flex flex-col">
+          <div className="px-8 pt-6 pb-4 flex-shrink-0 space-y-3" style={{ borderBottom: '1px solid var(--border)' }}>
+            <div className="h-2.5 w-12 rounded-full animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+            <div className="h-7 w-64 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+          </div>
+          <div className="flex-1 px-8 py-6 space-y-3">
+            {[80, 100, 60, 90, 70].map((w, i) => (
+              <div key={i} className="h-3 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)', width: `${w}%` }} />
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
