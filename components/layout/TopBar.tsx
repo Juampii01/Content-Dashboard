@@ -2,11 +2,12 @@
 
 import { useContext, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { Eye, Users, TrendingUp, Menu } from 'lucide-react'
+import { Eye, Users, TrendingUp, Menu, UserCircle2, ChevronDown } from 'lucide-react'
 import { formatM, formatPercent } from '@/lib/utils/formatters'
 import { ThemeToggle } from './ThemeToggle'
 import { ThemePicker } from './ThemePicker'
 import { ViewAsPicker } from './ViewAsPicker'
+import { SettingsModal } from './SettingsModal'
 import { MobileSidebarContext } from './LayoutShell'
 import { useAuth } from './AuthProvider'
 
@@ -24,6 +25,7 @@ export function TopBar() {
   const { profile } = useAuth()
   const [stats, setStats] = useState<GlobalStats | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const initials = profile?.displayName
     ? profile.displayName.slice(0, 2).toUpperCase()
@@ -81,7 +83,7 @@ export function TopBar() {
         borderBottom: '1px solid var(--border)',
       }}
     >
-      {/* Mobile menu + identity block */}
+      {/* Mobile menu + identity pill */}
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
@@ -92,41 +94,48 @@ export function TopBar() {
         >
           <Menu size={18} />
         </button>
-        <div
-          className="flex items-center gap-2.5 rounded-xl px-2 py-1 transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_4%,transparent)]"
+
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(true)}
+          className="flex items-center gap-2 px-3 py-2 rounded-full transition-colors cursor-pointer"
+          style={{
+            backgroundColor: 'var(--card)',
+            border: '1px solid var(--border)',
+            color: 'var(--foreground)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--card) 80%, var(--foreground) 4%)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--card)'
+          }}
         >
           <span
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold ring-2 transition-shadow duration-200"
+            className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full"
             style={{
-              background: 'var(--gradient-accent)',
-              color: 'var(--accent-foreground)',
-              boxShadow:
-                '0 4px 14px -4px color-mix(in srgb, var(--accent) 50%, transparent)',
-              ['--tw-ring-color' as string]:
-                'color-mix(in srgb, var(--background) 100%, transparent)',
+              backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+              border: '1.5px solid color-mix(in srgb, var(--accent) 40%, transparent)',
+              color: 'var(--accent)',
             }}
           >
-            {initials}
+            <UserCircle2 size={14} />
           </span>
-          <div className="hidden sm:flex items-center gap-2">
-            <span
-              className="text-sm font-semibold leading-none"
-              style={{ color: 'var(--foreground)' }}
-            >
-              {displayName}
-            </span>
-            <span
-              className="text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-[0.12em] animate-glow-pulse"
-              style={{
-                background: 'var(--gradient-accent)',
-                color: 'var(--accent-foreground)',
-              }}
-            >
-              PRO
-            </span>
-          </div>
-        </div>
+          <span className="hidden sm:block text-sm font-medium leading-none truncate max-w-[120px]">
+            {displayName}
+          </span>
+          <ChevronDown size={13} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
+        </button>
       </div>
+
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        role={profile?.role ?? null}
+        email={profile?.email ?? null}
+        displayName={profile?.displayName ?? null}
+        avatarUrl={profile?.avatarUrl ?? null}
+      />
 
       {/* Center metric pills */}
       <div
