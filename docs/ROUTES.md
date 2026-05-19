@@ -11,14 +11,15 @@
 | `/ai`          | `app/ai/page.tsx` → `EternityAIContent`         | Eternity AI — streaming chat grounded on workspace data          |
 | `/analizador`  | `app/analizador/page.tsx` → `AnalizadorContent` | Content analyzer (uses `app/api/analizador`)                     |
 | `/bases`       | `app/bases/page.tsx` → `BasesContent`           | Knowledge bases / source library                                 |
-| `/competidores` | `app/competidores/page.tsx`                    | Competitor list (scrape, refresh, open detail)                   |
+| `/investigacion` | `app/investigacion/page.tsx` → `InvestigacionHub` | Unified research hub — Competidores / Investigar Canal / Transcript with YouTube & Instagram platform subtabs |
+| `/competidores` | `app/competidores/page.tsx`                    | **Redirects → `/investigacion`** (kept for backward compat)      |
 | `/competidores/[username]` | `app/competidores/[username]/page.tsx` | Competitor detail — reels, transcribe, analysis, chat            |
 | `/contenido`   | `app/contenido/page.tsx` → `ContenidoContent`   | Content workspace (editor + lists)                               |
 | `/instagram`   | `app/instagram/page.tsx` → `InstagramContent`   | Instagram analytics view                                         |
 | `/login`       | `app/login/page.tsx`                            | Supabase Auth — email/password. Redirects to `/` on success      |
 | `/tareas`      | `app/tareas/page.tsx` → `KanbanBoard`           | Task kanban board                                                |
-| `/transcript`  | `app/transcript/page.tsx` → `TranscriptView`    | Paste a YouTube/Instagram URL → transcript + AI summary (Apify + Groq + Claude). History scoped to active client. |
-| `/content-research` | `app/content-research/page.tsx` → `ContentResearchView` | Channel-level research — top 5 videos in a timeframe with AI analysis (YouTube via Data API, Instagram via Apify). |
+| `/transcript`  | `app/transcript/page.tsx`                       | **Redirects → `/investigacion`** (kept for backward compat)      |
+| `/content-research` | `app/content-research/page.tsx`            | **Redirects → `/investigacion`** (kept for backward compat)      |
 | `/video-feed`  | `app/video-feed/page.tsx` → `VideoFeedView`     | Connect own Instagram → last 30 days ranked by engagement, AI analysis per post. Singleton per (client, platform). |
 | `/tiktok`      | `app/tiktok/page.tsx` → `TikTokContent`         | TikTok analytics — 2 tabs (Dashboard, Videos) + ConnectButton + sync |
 | `/youtube`     | `app/youtube/page.tsx` → `YouTubeContent`       | YouTube analytics — 3 tabs (Dashboard, Videos, Audiencia) + ConnectButton |
@@ -96,14 +97,15 @@ Visual verification — all routes
 - [ ] /ai          Eternity chat renders; nueva conversación, streaming, historial funcionan
 - [ ] /analizador  loads, brand accents correct
 - [ ] /bases       loads, brand accents correct
-- [ ] /competidores  list renders; add/refresh competitor works
+- [ ] /investigacion  hub renders; main tabs (Competidores, Investigar Canal, Transcript) y platform subtabs (YouTube, Instagram) funcionan; Competidores/Instagram carga lista; Investigar Canal filtra por plataforma; Transcript filtra por plataforma
+- [ ] /competidores  redirects to /investigacion
 - [ ] /competidores/[username]  detail renders (reels, transcribe, analysis, chat)
 - [ ] /contenido   loads, brand accents correct
 - [ ] /instagram   loads, filters render (incl. ReelFilters, TimeFilter), ConnectButton visible
 - [ ] /login       form renders; successful login redirects to /
 - [ ] /tareas      kanban renders, drag works
-- [ ] /transcript  URL form renders; paste YouTube link returns transcript + summary; history list shows past items
-- [ ] /content-research  channel input + timeframe; results grid renders with AI analysis chips; history works
+- [ ] /transcript  redirects to /investigacion
+- [ ] /content-research  redirects to /investigacion
 - [ ] /video-feed  empty state shows connect form; after connect, posts grid renders ranked with AI summaries
 - [ ] /tiktok      loads, tabs (Dashboard, Videos) renderizan; ConnectButton visible; sync funciona tras conectar
 - [ ] /youtube     loads, tabs (Dashboard, Videos, Audiencia) renderizan

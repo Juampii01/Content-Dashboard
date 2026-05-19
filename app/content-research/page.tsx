@@ -1,7 +1,6 @@
-import { ContentResearchView } from '@/components/content-research/ContentResearchView'
+import { redirect } from 'next/navigation'
 
-export const metadata = { title: 'Content Research | Eternity Dashboard' }
-
+/** Redirect legacy standalone route to the unified Investigación hub. */
 export default function ContentResearchPage() {
-  return <ContentResearchView />
+  redirect('/investigacion')
 }

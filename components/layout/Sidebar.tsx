@@ -7,9 +7,9 @@ import { motion } from 'motion/react'
 import {
   LayoutDashboard, Camera, Play,
   CheckSquare, BookOpen, Kanban,
-  ChevronLeft, ChevronRight, Users,
+  ChevronLeft, ChevronRight,
   Music, Megaphone, LogOut, Shield, UserCog,
-  FileText, Telescope,
+  Telescope,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -53,14 +53,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Estudio', href: '/contenido', icon: Kanban },
       { label: 'Bases del negocio', href: '/bases', icon: BookOpen },
-    ],
-  },
-  {
-    label: 'INVESTIGACIÓN',
-    items: [
-      { label: 'Competidores', href: '/competidores', icon: Users },
-      { label: 'Investigar Canal', href: '/content-research', icon: Telescope },
-      { label: 'Transcript', href: '/transcript', icon: FileText },
+      { label: 'Investigación', href: '/investigacion', icon: Telescope },
     ],
   },
   {

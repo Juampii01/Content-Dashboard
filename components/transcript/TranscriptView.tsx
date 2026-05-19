@@ -25,8 +25,16 @@ function inferPlatformFromUrl(url: string): Platform | null {
   return null
 }
 
-export function TranscriptView() {
-  const [activePlatform, setActivePlatform] = useState<PlatformTab>('youtube')
+interface TranscriptViewProps {
+  /** When provided by a hub, the hub controls the platform and internal tabs are hidden. */
+  platform?: PlatformTab
+  /** Hide the PageHeader (used when embedded inside a hub). */
+  embedded?: boolean
+}
+
+export function TranscriptView({ platform: platformProp, embedded = false }: TranscriptViewProps) {
+  const [internalPlatform, setInternalPlatform] = useState<PlatformTab>('youtube')
+  const activePlatform: PlatformTab = platformProp ?? internalPlatform
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -58,11 +66,12 @@ export function TranscriptView() {
     void loadHistory()
   }, [loadHistory])
 
-  // When url changes, auto-switch to matching platform tab
+  // When url changes, auto-switch to matching platform tab (only when not controlled by hub)
   useEffect(() => {
+    if (platformProp) return
     const platform = inferPlatformFromUrl(url)
-    if (platform) setActivePlatform(platform)
-  }, [url])
+    if (platform) setInternalPlatform(platform)
+  }, [url, platformProp])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -99,7 +108,7 @@ export function TranscriptView() {
         summary: data.summary ?? '',
       }
       setCurrent(result)
-      setActivePlatform(data.platform as PlatformTab)
+      if (!platformProp) setInternalPlatform(data.platform as PlatformTab)
       setUrl('')
       void loadHistory()
     } catch (err) {
@@ -140,15 +149,18 @@ export function TranscriptView() {
   const filteredHistory = history.filter((h) => h.platform === activePlatform)
 
   return (
-    <div className="page-shell" style={{ maxWidth: '64rem' }}>
-      <PageHeader
-        eyebrow="Contenido"
-        title="Transcript"
-        description="Pegá un link de YouTube o Instagram y obtené la transcripción completa con un resumen IA."
-        icon={FileText}
-      />
+    <div className={embedded ? '' : 'page-shell'} style={embedded ? undefined : { maxWidth: '64rem' }}>
+      {!embedded && (
+        <PageHeader
+          eyebrow="Contenido"
+          title="Transcript"
+          description="Pegá un link de YouTube o Instagram y obtené la transcripción completa con un resumen IA."
+          icon={FileText}
+        />
+      )}
 
-      {/* Platform tab selector */}
+      {/* Platform tab selector — only when NOT controlled by a parent hub */}
+      {!platformProp && (
       <div className="flex justify-center mb-2">
         <div
           className="inline-flex items-center gap-1 p-1 rounded-xl"
@@ -159,7 +171,7 @@ export function TranscriptView() {
             return (
               <button
                 key={id}
-                onClick={() => setActivePlatform(id)}
+                onClick={() => setInternalPlatform(id)}
                 className="relative px-5 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
                 style={{
                   backgroundColor: isActive ? 'var(--accent)' : 'transparent',
@@ -172,6 +184,7 @@ export function TranscriptView() {
           })}
         </div>
       </div>
+      )}
 
       {/* Input form */}
       <form onSubmit={handleSubmit} className="surface-elevated p-4 mb-6">

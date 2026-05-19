@@ -63,6 +63,9 @@
 /* ── Default font binding (eternity theme) ───────────────────────────── */
 :root {
   --font-sans: var(--font-sans-eternity, system-ui, sans-serif);
+  /* Theme preview dot colors — used by ThemePicker swatches only */
+  --theme-dot-eternity: #8E1F2F;
+  --theme-dot-govbidder: #1D4ED8;
 }
 html[data-theme="govbidder"] {
   --font-sans: var(--font-sans-govbidder, "Raleway", system-ui, sans-serif);

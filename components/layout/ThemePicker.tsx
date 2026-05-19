@@ -14,9 +14,9 @@ import { Palette, Check } from 'lucide-react'
 import { useTheme } from '@/components/theme/ThemeProvider'
 import type { ThemeKey } from '@/lib/themes'
 
-const THEME_LABELS: Record<ThemeKey, { label: string; dot: string }> = {
-  eternity:  { label: 'Eternity',  dot: '#8E1F2F' },
-  govbidder: { label: 'GovBidder', dot: '#1D4ED8' },
+const THEME_LABELS: Record<ThemeKey, { label: string; dotVar: string }> = {
+  eternity:  { label: 'Eternity',  dotVar: 'var(--theme-dot-eternity)' },
+  govbidder: { label: 'GovBidder', dotVar: 'var(--theme-dot-govbidder)' },
 }
 
 export function ThemePicker() {
@@ -60,7 +60,7 @@ export function ThemePicker() {
         <Palette size={12} style={{ color: 'var(--accent)' }} />
         <span
           className="hidden sm:inline h-2 w-2 rounded-full flex-shrink-0"
-          style={{ backgroundColor: meta.dot }}
+          style={{ backgroundColor: meta.dotVar }}
         />
         <span className="hidden sm:inline">{meta.label}</span>
       </button>
@@ -105,7 +105,7 @@ export function ThemePicker() {
                   {/* Color dot */}
                   <span
                     className="h-3 w-3 flex-shrink-0 rounded-full"
-                    style={{ backgroundColor: m.dot }}
+                    style={{ backgroundColor: m.dotVar }}
                   />
                   <span className="flex-1 font-medium">{m.label}</span>
                   {isActive && (

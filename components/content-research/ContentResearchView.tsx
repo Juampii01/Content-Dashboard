@@ -376,7 +376,14 @@ function VideoRow({
 // ────────────────────────────────────────────────────────────
 // Main view
 // ────────────────────────────────────────────────────────────
-export function ContentResearchView() {
+interface ContentResearchViewProps {
+  /** When provided by a hub, filter history and current result to this platform. */
+  platform?: Platform
+  /** Hide the PageHeader (used when embedded inside a hub). */
+  embedded?: boolean
+}
+
+export function ContentResearchView({ platform: platformFilter, embedded = false }: ContentResearchViewProps) {
   const [channelUrl, setChannelUrl] = useState('')
   const [timeframe, setTimeframe] = useState<number>(30)
   const [loading, setLoading] = useState(false)
@@ -459,14 +466,22 @@ export function ContentResearchView() {
     }
   }
 
+  const visibleHistory = platformFilter
+    ? history.filter((r) => r.platform === platformFilter)
+    : history
+  const visibleCurrent =
+    current && (!platformFilter || current.platform === platformFilter) ? current : null
+
   return (
-    <div className="page-shell" style={{ maxWidth: '80rem' }}>
-      <PageHeader
-        eyebrow="Contenido"
-        title="Content Research"
-        description="Pegá un canal de YouTube o un perfil de Instagram. Te traemos sus 5 videos más vistos del periodo y los analizamos con IA."
-        icon={Telescope}
-      />
+    <div className={embedded ? '' : 'page-shell'} style={embedded ? undefined : { maxWidth: '80rem' }}>
+      {!embedded && (
+        <PageHeader
+          eyebrow="Contenido"
+          title="Content Research"
+          description="Pegá un canal de YouTube o un perfil de Instagram. Te traemos sus 5 videos más vistos del periodo y los analizamos con IA."
+          icon={Telescope}
+        />
+      )}
 
       {/* Search form */}
       <form onSubmit={handleSubmit} className="surface-elevated p-4 mb-6">
@@ -537,9 +552,9 @@ export function ContentResearchView() {
       </form>
 
       {/* Latest result — open by default */}
-      {current && (
+      {visibleCurrent && (
         <div className="mb-6">
-          <ResearchPanel row={current} defaultOpen />
+          <ResearchPanel row={visibleCurrent} defaultOpen />
         </div>
       )}
 
@@ -549,7 +564,7 @@ export function ContentResearchView() {
           <div role="status" aria-live="polite" aria-label="Cargando historial" className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
             <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Cargando…
           </div>
-        ) : history.length === 0 ? (
+        ) : visibleHistory.length === 0 ? (
           <EmptyState
             icon={Inbox}
             title="Aún no investigaste ningún canal"
@@ -557,7 +572,7 @@ export function ContentResearchView() {
           />
         ) : (
           <div className="flex flex-col gap-3">
-            {history.map((row) => (
+            {visibleHistory.map((row) => (
               <ResearchPanel
                 key={row.id}
                 row={row}

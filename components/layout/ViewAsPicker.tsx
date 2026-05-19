@@ -30,31 +30,33 @@ export function ViewAsPicker() {
   const [loading, setLoading] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Only render for admins
-  if (!profile || !isAdmin(profile.role)) return null
+  // Compute admin status BEFORE any hooks that depend on it.
+  // Do NOT early-return before all hooks — that violates Rules of Hooks.
+  const userIsAdmin = profile !== null && isAdmin(profile.role)
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // Fetch clients and read the active cookie — only when the user is admin.
   useEffect(() => {
+    if (!userIsAdmin) return
     const currentId = readViewAsCookie()
     setViewAsId(currentId)
 
-    // Fetch all clients for the dropdown
     fetch('/api/admin/clients')
       .then((r) => (r.ok ? (r.json() as Promise<{ clients: Client[] } | Client[]>) : null))
       .then((data) => {
         if (!data) return
-        const list: Client[] = Array.isArray(data) ? data : (data as { clients: Client[] }).clients ?? []
+        const list: Client[] = Array.isArray(data)
+          ? data
+          : (data as { clients: Client[] }).clients ?? []
         setClients(list)
         if (currentId) {
           const found = list.find((c) => c.id === currentId)
           if (found) setViewAsName(found.name)
         }
       })
-      .catch(() => {/* ignore */})
-  }, [])
+      .catch(() => { /* ignore */ })
+  }, [userIsAdmin])
 
-  // Close dropdown on outside click
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // Close dropdown on outside click.
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
@@ -65,6 +67,9 @@ export function ViewAsPicker() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
+
+  // Non-admins render nothing — but all hooks are already declared above.
+  if (!userIsAdmin) return null
 
   async function selectClient(client: Client) {
     setLoading(true)
@@ -110,7 +115,6 @@ export function ViewAsPicker() {
   return (
     <div ref={dropdownRef} style={{ position: 'relative' }}>
       {isActive ? (
-        // Active state — showing as a specific client
         <div
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
           style={{
@@ -133,7 +137,6 @@ export function ViewAsPicker() {
           </button>
         </div>
       ) : (
-        // Inactive state — show dropdown trigger
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -173,10 +176,7 @@ export function ViewAsPicker() {
           }}
         >
           {clients.length === 0 ? (
-            <div
-              className="px-4 py-3 text-xs"
-              style={{ color: 'var(--muted-foreground)' }}
-            >
+            <div className="px-4 py-3 text-xs" style={{ color: 'var(--muted-foreground)' }}>
               No hay clientes
             </div>
           ) : (
@@ -186,10 +186,7 @@ export function ViewAsPicker() {
                 type="button"
                 onClick={() => selectClient(client)}
                 className="w-full text-left px-4 py-2.5 text-xs font-medium transition-colors cursor-pointer"
-                style={{
-                  color: 'var(--foreground)',
-                  backgroundColor: 'transparent',
-                }}
+                style={{ color: 'var(--foreground)', backgroundColor: 'transparent' }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor =
                     'color-mix(in srgb, var(--foreground) 6%, transparent)'

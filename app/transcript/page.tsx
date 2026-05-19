@@ -1,7 +1,6 @@
-import { TranscriptView } from '@/components/transcript/TranscriptView'
+import { redirect } from 'next/navigation'
 
-export const metadata = { title: 'Transcript | Eternity Dashboard' }
-
+/** Redirect legacy standalone route to the unified Investigación hub. */
 export default function TranscriptPage() {
-  return <TranscriptView />
+  redirect('/investigacion')
 }

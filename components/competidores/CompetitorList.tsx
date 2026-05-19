@@ -28,8 +28,16 @@ async function fetchCompetitors(): Promise<CompetitorDTO[]> {
   return data.competitors
 }
 
-export function CompetitorList() {
-  const [activePlatform, setActivePlatform] = useState<PlatformTab>('instagram')
+interface CompetitorListProps {
+  /** When provided by a hub, the hub controls the platform and internal tabs are hidden. */
+  platform?: PlatformTab
+  /** Hide the PageHeader (used when embedded inside a hub). */
+  embedded?: boolean
+}
+
+export function CompetitorList({ platform: platformProp, embedded = false }: CompetitorListProps) {
+  const [internalPlatform, setInternalPlatform] = useState<PlatformTab>('instagram')
+  const activePlatform: PlatformTab = platformProp ?? internalPlatform
   const [competitors, setCompetitors] = useState<CompetitorDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -70,26 +78,42 @@ export function CompetitorList() {
   }
 
   return (
-    <div className="page-shell">
-      <PageHeader
-        eyebrow="Inteligencia"
-        title="Competidores"
-        description="Baúl de competidores. Extraé reels, transcribí y analizá con IA."
-        icon={Users}
-        actions={
-          activePlatform === 'instagram' ? (
-            <button
-              onClick={() => setAddOpen(true)}
-              className="btn btn-primary"
-            >
-              <Plus size={15} />
-              Agregar competidor
-            </button>
-          ) : null
-        }
-      />
+    <div className={embedded ? '' : 'page-shell'}>
+      {!embedded && (
+        <PageHeader
+          eyebrow="Inteligencia"
+          title="Competidores"
+          description="Baúl de competidores. Extraé reels, transcribí y analizá con IA."
+          icon={Users}
+          actions={
+            activePlatform === 'instagram' ? (
+              <button
+                onClick={() => setAddOpen(true)}
+                className="btn btn-primary"
+              >
+                <Plus size={15} />
+                Agregar competidor
+              </button>
+            ) : null
+          }
+        />
+      )}
 
-      {/* Platform tab selector */}
+      {/* "Agregar" action when embedded (header-level button hidden by hub) */}
+      {embedded && activePlatform === 'instagram' && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setAddOpen(true)}
+            className="btn btn-primary"
+          >
+            <Plus size={15} />
+            Agregar competidor
+          </button>
+        </div>
+      )}
+
+      {/* Platform tab selector — only when NOT controlled by a parent hub */}
+      {!platformProp && (
       <div className="flex justify-center mb-2">
         <div
           className="inline-flex items-center gap-1 p-1 rounded-xl"
@@ -100,7 +124,7 @@ export function CompetitorList() {
             return (
               <button
                 key={id}
-                onClick={() => setActivePlatform(id)}
+                onClick={() => setInternalPlatform(id)}
                 className="relative px-5 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
                 style={{
                   backgroundColor: isActive ? 'var(--accent)' : 'transparent',
@@ -113,6 +137,7 @@ export function CompetitorList() {
           })}
         </div>
       </div>
+      )}
 
       {/* ── Instagram tab ── */}
       {activePlatform === 'instagram' && (

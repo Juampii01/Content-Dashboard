@@ -57,37 +57,53 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'API key no configurada' }, { status: 500 })
   }
 
-  const typeLabel = type === 'reel' ? 'Reel (video corto de 30-90 segundos)' : 'Historia (Instagram/TikTok Story de 15-60 segundos)'
+  const isReel = type === 'reel'
+  const typeLabel = isReel
+    ? 'Reel (video corto de 30-90 segundos, ~150 palabras)'
+    : 'Historia (Story de Instagram/TikTok, 15-30 segundos, ~70 palabras)'
 
-  const prompt = `Sos un experto en creación de contenido para redes sociales. Escribí un guión completo en español para el siguiente contenido:
+  const structureGuide = isReel
+    ? `🎣 HOOK (0-3 seg):
+[Una frase inicial poderosa que capture la atención de inmediato: pregunta disruptiva, estadística sorprendente, o promesa de valor clara. 1-2 oraciones.]
+
+📖 DESARROLLO:
+[El cuerpo principal. 3-5 puntos concretos con ritmo. Cada punto breve y contundente. Sin relleno.]
+
+📣 CTA:
+[Llamada a la acción específica y natural. Ej: "Guardá esto para cuando lo necesites", "Contame en comentarios si te pasó", "Seguime para más tips como este".]`
+    : `🎣 APERTURA (0-3 seg):
+[Frase de apertura breve e impactante. Genera curiosidad o promete valor inmediato. 1 oración.]
+
+📖 MENSAJE CENTRAL:
+[Un mensaje único y directo. Visual, emocional o útil — elegí uno. Máximo 3 oraciones cortas.]
+
+📣 CTA:
+[Acción concreta: responder, guardar, ir al perfil, mandar DM, etc. 1 oración.]`
+
+  const prompt = `Sos un experto en creación de contenido para redes sociales hispanohablantes. Escribí un guión completo en español rioplatense (vos, no tú) para el siguiente contenido:
 
 Tema: ${topic}
 Tipo: ${typeLabel}
 Tono: ${tone}
 
-El guión debe seguir exactamente esta estructura:
+El guión debe seguir EXACTAMENTE esta estructura, con los emojis y secciones tal cual:
 
-🎣 HOOK (0-3 seg):
-[Una frase inicial poderosa que capture la atención de inmediato. Puede ser una pregunta disruptiva, una afirmación sorprendente, o una promesa de valor clara.]
-
-📖 DESARROLLO:
-[El cuerpo principal del contenido. Para un Reel: 3-5 puntos concretos o una narrativa con ritmo. Para una Historia: mensaje único y directo. Incluí lo que el espectador va a aprender, ver o sentir.]
-
-📣 CTA:
-[Llamada a la acción específica y natural. Ejemplos: "Guardá esto para cuando lo necesites", "Contame en comentarios si te pasó lo mismo", "Seguime para más tips como este".]
+${structureGuide}
 
 ---
-Importante:
-- Escribí el guión listo para hablar en cámara, sin indicaciones de producción
-- Usá el tono "${tone}" de forma consistente
-- Sé concreto y específico, evitá el relleno
-- El texto debe fluir de forma natural al hablarlo en voz alta`
+Reglas:
+- El texto debe sonar natural al hablarlo en voz alta frente a cámara
+- Sin indicaciones de producción, stage directions ni acotaciones
+- Usá el tono "${tone}" de forma consistente en todo el guión
+- Sé concreto y específico, evitá el relleno y las generalidades
+- Respetá estrictamente el límite de duración del tipo de contenido
+- Entregá SOLO el guión, sin introducción ni explicación adicional`
 
   try {
     const anthropic = new Anthropic({ apiKey })
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 800,
+      max_tokens: 1200,
       messages: [{ role: 'user', content: prompt }],
     })
 
