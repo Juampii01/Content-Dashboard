@@ -17,7 +17,12 @@ import { join, relative, sep } from 'node:path'
 
 const ROOT = process.cwd()
 const SEARCH_DIRS = ['components', 'app']
-const EXCLUDE_FILES = new Set([join('app', 'globals.css')])
+const EXCLUDE_FILES = new Set([
+  join('app', 'globals.css'),
+  // login/page.tsx is intentionally always-dark (never changes theme) so it
+  // uses fixed palette values rather than CSS vars. This is the only exception.
+  join('app', 'login', 'page.tsx'),
+])
 const EXCLUDE_DIR_NAMES = new Set(['node_modules', '.next', 'dist', 'build'])
 // Match the literals only (case-insensitive). We intentionally do NOT
 // match `var(--accent)` etc. — those are the correct usage.

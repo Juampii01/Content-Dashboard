@@ -30,7 +30,6 @@ import {
   Megaphone,
   Shield,
   UserCog,
-  Building2,
   FileText,
   Telescope,
   Rss,
@@ -66,9 +65,8 @@ const NAV: NavItem[] = [
   { group: 'Contenido', label: 'Video Feed',      href: '/video-feed',        icon: Rss },
   { group: 'Performance', label: 'Ads',           href: '/ads',               icon: Megaphone },
   { group: 'IA', label: 'Eternity AI',            href: '/ai',                icon: Bot },
-  { group: 'Admin', label: 'Resumen',  href: '/admin',         icon: Shield,    requiresAdmin: true },
-  { group: 'Admin', label: 'Usuarios', href: '/admin/users',   icon: UserCog,   requiresAdmin: true },
-  { group: 'Admin', label: 'Clientes', href: '/admin/clients', icon: Building2, requiresAdmin: true },
+  { group: 'Admin', label: 'Resumen',  href: '/admin',       icon: Shield,  requiresAdmin: true },
+  { group: 'Admin', label: 'Usuarios', href: '/admin/users', icon: UserCog, requiresAdmin: true },
 ]
 
 export function CommandPalette() {
