@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Eye, Users, TrendingUp, Menu } from 'lucide-react'
 import { formatM, formatPercent } from '@/lib/utils/formatters'
 import { ThemeToggle } from './ThemeToggle'
+import { ThemePicker } from './ThemePicker'
 import { ViewAsPicker } from './ViewAsPicker'
 import { MobileSidebarContext } from './LayoutShell'
 import { useAuth } from './AuthProvider'
@@ -164,6 +165,7 @@ export function TopBar() {
       {/* Right actions */}
       <div className="flex items-center gap-2">
         <ViewAsPicker />
+        <ThemePicker />
         <ThemeToggle />
       </div>
     </header>

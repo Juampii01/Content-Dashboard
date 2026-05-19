@@ -1,32 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Sun, Moon, Check, ArrowLeft } from 'lucide-react'
-import type { ThemeKey } from '@/lib/themes'
-import { VALID_THEME_KEYS } from '@/lib/themes'
+import { Sun, Moon, ArrowLeft } from 'lucide-react'
 
 type Mode = 'dark' | 'light'
 
-const THEME_META: Record<ThemeKey, { label: string; desc: string; accent: string; bg: string; text: string }> = {
-  eternity: {
-    label: 'Eternity',
-    desc: 'Rojo profundo · Tipografía Fira Sans',
-    accent: '#8E1F2F',
-    bg: '#0F0F0F',
-    text: '#F5EDE3',
-  },
-  govbidder: {
-    label: 'GovBidder',
-    desc: 'Azul institucional · Tipografía Raleway',
-    accent: '#1D4ED8',
-    bg: '#F8FAFC',
-    text: '#0F172A',
-  },
-}
-
-function readCurrentTheme(): ThemeKey {
-  const t = document.documentElement.dataset.theme
-  return (VALID_THEME_KEYS as readonly string[]).includes(t ?? '') ? (t as ThemeKey) : 'eternity'
+function readCurrentTheme(): string {
+  return document.documentElement.dataset.theme ?? 'eternity'
 }
 
 function readCurrentMode(): Mode {
@@ -42,16 +22,12 @@ interface AppearanceViewProps {
 }
 
 export function AppearanceView({ onBack }: AppearanceViewProps) {
-  const [brandTheme, setBrandTheme] = useState<ThemeKey>('eternity')
   const [mode, setMode] = useState<Mode>('dark')
-  const [changingTheme, setChangingTheme] = useState<ThemeKey | null>(null)
 
   useEffect(() => {
-    setBrandTheme(readCurrentTheme())
     setMode(readCurrentMode())
   }, [])
 
-  // ── Toggle dark / light mode ─────────────────────────────────────────────
   function toggleMode() {
     const next: Mode = mode === 'dark' ? 'light' : 'dark'
     const html = document.documentElement
@@ -60,32 +36,6 @@ export function AppearanceView({ onBack }: AppearanceViewProps) {
     html.classList.toggle('light', next === 'light')
     localStorage.setItem(storageKey(themeKey), next)
     setMode(next)
-  }
-
-  // ── Change brand theme ────────────────────────────────────────────────────
-  async function handleBrandTheme(next: ThemeKey) {
-    if (next === brandTheme) return
-    setChangingTheme(next)
-    try {
-      await fetch('/api/me/brand-theme', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme: next }),
-      })
-      // Apply immediately without reload
-      document.documentElement.dataset.theme = next
-      document.cookie = `user_brand_theme=${next}; max-age=${365 * 24 * 3600}; path=/; SameSite=Lax`
-      // Restore the user's preferred mode for the new theme
-      const stored = localStorage.getItem(storageKey(next))
-      const nextMode: Mode = stored === 'light' ? 'light' : next === 'govbidder' ? 'light' : 'dark'
-      document.documentElement.classList.toggle('dark', nextMode === 'dark')
-      document.documentElement.classList.toggle('light', nextMode === 'light')
-      localStorage.setItem(storageKey(next), nextMode)
-      setBrandTheme(next)
-      setMode(nextMode)
-    } finally {
-      setChangingTheme(null)
-    }
   }
 
   return (
@@ -142,81 +92,9 @@ export function AppearanceView({ onBack }: AppearanceViewProps) {
             />
           </button>
         </div>
-      </section>
-
-      {/* Brand theme */}
-      <section>
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--muted-foreground)' }}>
-          Tema de marca
+        <p className="mt-2 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
+          Para cambiar el tema de marca (Eternity / GovBidder) usá el selector en la barra superior.
         </p>
-        <div className="grid grid-cols-2 gap-2">
-          {(VALID_THEME_KEYS as readonly ThemeKey[]).map((key) => {
-            const meta = THEME_META[key]
-            const isActive = brandTheme === key
-            const isLoading = changingTheme === key
-            return (
-              <button
-                key={key}
-                onClick={() => void handleBrandTheme(key)}
-                disabled={changingTheme !== null}
-                className="relative rounded-xl overflow-hidden text-left transition-all duration-150 cursor-pointer disabled:opacity-60"
-                style={{
-                  border: isActive
-                    ? '2px solid var(--accent)'
-                    : '2px solid var(--border)',
-                  transform: isActive ? 'scale(1.02)' : 'scale(1)',
-                }}
-              >
-                {/* Mini preview */}
-                <div
-                  className="h-16 w-full flex items-center justify-center gap-1.5"
-                  style={{ backgroundColor: meta.bg }}
-                >
-                  <div
-                    className="h-4 w-4 rounded-full"
-                    style={{ backgroundColor: meta.accent }}
-                  />
-                  <div className="flex flex-col gap-1">
-                    <div className="h-1.5 w-10 rounded-full" style={{ backgroundColor: meta.text, opacity: 0.7 }} />
-                    <div className="h-1 w-7 rounded-full" style={{ backgroundColor: meta.text, opacity: 0.3 }} />
-                  </div>
-                </div>
-                {/* Label */}
-                <div
-                  className="px-3 py-2"
-                  style={{ backgroundColor: 'var(--muted)' }}
-                >
-                  <p className="text-xs font-semibold" style={{ color: 'var(--foreground)' }}>
-                    {meta.label}
-                  </p>
-                  <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-                    {meta.desc}
-                  </p>
-                </div>
-                {/* Active check */}
-                {isActive && !isLoading && (
-                  <span
-                    className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full"
-                    style={{ backgroundColor: 'var(--accent)' }}
-                  >
-                    <Check size={11} style={{ color: 'var(--accent-foreground)' }} />
-                  </span>
-                )}
-                {isLoading && (
-                  <span
-                    className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full"
-                    style={{ backgroundColor: 'var(--muted)' }}
-                  >
-                    <span
-                      className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin"
-                      style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}
-                    />
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
       </section>
     </div>
   )
