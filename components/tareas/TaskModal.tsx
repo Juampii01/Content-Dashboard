@@ -7,6 +7,7 @@ import { X, Tag } from 'lucide-react'
 import { Task, TaskColumnId, TaskLabel } from '@/lib/types'
 import { LabelBadge, LABEL_PRESETS } from './LabelBadge'
 import { DatePicker } from '@/components/calendario/DatePicker'
+import { KANBAN_COLUMNS } from './constants'
 
 interface TaskModalProps {
   task?: Task | null
@@ -15,12 +16,6 @@ interface TaskModalProps {
   onDelete?: (id: string) => void
   onClose: () => void
 }
-
-const COLUMNS: { id: TaskColumnId; label: string }[] = [
-  { id: 'por-hacer', label: 'Por hacer' },
-  { id: 'en-proceso', label: 'En proceso' },
-  { id: 'listo', label: 'Listo' },
-]
 
 export function TaskModal({ task, defaultColumnId = 'por-hacer', onSave, onDelete, onClose }: TaskModalProps) {
   const [title, setTitle] = useState(task?.title ?? '')
@@ -129,7 +124,7 @@ export function TaskModal({ task, defaultColumnId = 'por-hacer', onSave, onDelet
               className="w-full text-xs rounded-lg px-3 py-2 outline-none"
               style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
             >
-              {COLUMNS.map((c) => (
+              {KANBAN_COLUMNS.map((c) => (
                 <option key={c.id} value={c.id}>{c.label}</option>
               ))}
             </select>

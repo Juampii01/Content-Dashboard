@@ -1,8 +1,9 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { Plus } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { Task, TaskColumnId } from '@/lib/types'
 import { TaskCard } from './TaskCard'
 
@@ -13,14 +14,47 @@ interface KanbanColumnProps {
   accentColor: string
   onAddTask: (columnId: TaskColumnId) => void
   onEditTask: (task: Task) => void
+  onQuickAdd: (columnId: TaskColumnId, title: string) => void
+  onComplete: (task: Task) => void
 }
 
-export function KanbanColumn({ id, title, tasks, accentColor, onAddTask, onEditTask }: KanbanColumnProps) {
+export function KanbanColumn({
+  id, title, tasks, accentColor,
+  onAddTask, onEditTask, onQuickAdd, onComplete,
+}: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
+
+  const [quickAddOpen, setQuickAddOpen]   = useState(false)
+  const [quickAddValue, setQuickAddValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Focus input when quick-add opens
+  useEffect(() => {
+    if (quickAddOpen) inputRef.current?.focus()
+  }, [quickAddOpen])
+
+  function openQuickAdd() {
+    setQuickAddValue('')
+    setQuickAddOpen(true)
+  }
+
+  function submitQuickAdd() {
+    const val = quickAddValue.trim()
+    if (val) {
+      void onQuickAdd(id, val)
+    }
+    setQuickAddValue('')
+    setQuickAddOpen(false)
+  }
+
+  function cancelQuickAdd() {
+    setQuickAddValue('')
+    setQuickAddOpen(false)
+  }
 
   return (
     <div className="flex flex-col min-h-0" style={{ minWidth: 0 }}>
-      {/* Column header */}
+      {/* ── Column header ── */}
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
           <span
@@ -31,7 +65,7 @@ export function KanbanColumn({ id, title, tasks, accentColor, onAddTask, onEditT
             {title}
           </span>
           <span
-            className="text-[11px] font-medium px-1.5 py-0.5 rounded-full"
+            className="text-[11px] font-medium px-1.5 py-0.5 rounded-full tabular-nums"
             style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)' }}
           >
             {tasks.length}
@@ -40,14 +74,14 @@ export function KanbanColumn({ id, title, tasks, accentColor, onAddTask, onEditT
         <button
           onClick={() => onAddTask(id)}
           aria-label={`Añadir tarea en ${title}`}
-          className="p-1 rounded-lg transition-all hover:opacity-70 hover:rotate-90 duration-200"
-          title="Añadir tarea"
+          className="p-1 rounded-lg transition-all hover:opacity-70 hover:rotate-90 duration-200 cursor-pointer"
+          title="Añadir tarea (modal)"
         >
           <Plus size={14} style={{ color: 'var(--muted-foreground)' }} />
         </button>
       </div>
 
-      {/* Drop zone */}
+      {/* ── Drop zone ── */}
       <div
         ref={setNodeRef}
         className="flex-1 flex flex-col gap-2 rounded-xl p-2 transition-colors min-h-[120px]"
@@ -58,25 +92,88 @@ export function KanbanColumn({ id, title, tasks, accentColor, onAddTask, onEditT
       >
         <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} onClick={onEditTask} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              onClick={onEditTask}
+              onComplete={onComplete}
+            />
           ))}
         </SortableContext>
 
-        {tasks.length === 0 && (
-          <button
-            onClick={() => onAddTask(id)}
-            className="flex-1 flex flex-col items-center justify-center gap-1.5 text-xs rounded-lg transition-all duration-200 py-6 group"
-            style={{ color: 'var(--muted-foreground)' }}
+        {/* ── Quick-add input ── */}
+        {quickAddOpen ? (
+          <div
+            className="rounded-xl p-2.5"
+            style={{ backgroundColor: 'var(--card)', border: '1px solid var(--accent)', boxShadow: '0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent)' }}
+            // Prevent click inside from bubbling to DnD
+            onPointerDown={(e) => e.stopPropagation()}
           >
-            <Plus
-              size={16}
-              className="transition-all duration-200 group-hover:scale-110 group-hover:-translate-y-0.5"
-              style={{ color: accentColor, opacity: 0.5 }}
+            <input
+              ref={inputRef}
+              value={quickAddValue}
+              onChange={(e) => setQuickAddValue(e.target.value)}
+              onKeyDown={(e) => {
+                e.stopPropagation()
+                if (e.key === 'Enter')  { e.preventDefault(); submitQuickAdd() }
+                if (e.key === 'Escape') { e.preventDefault(); cancelQuickAdd() }
+              }}
+              placeholder="Nombre de la tarea…"
+              className="w-full bg-transparent text-sm outline-none placeholder:opacity-40"
+              style={{ color: 'var(--foreground)' }}
             />
-            <span className="transition-all duration-200 group-hover:-translate-y-0.5 group-hover:opacity-100 opacity-60">
-              + Añadir tarea
-            </span>
-          </button>
+            <div className="flex items-center justify-between mt-2.5 gap-2">
+              <span className="text-[10px]" style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}>
+                ↵ crear · Esc cancelar
+              </span>
+              <div className="flex gap-1.5">
+                <button
+                  onPointerDown={(e) => { e.preventDefault(); cancelQuickAdd() }}
+                  className="p-1 rounded-lg cursor-pointer opacity-50 hover:opacity-80 transition-opacity"
+                  style={{ color: 'var(--muted-foreground)' }}
+                >
+                  <X size={12} />
+                </button>
+                <button
+                  onPointerDown={(e) => { e.preventDefault(); submitQuickAdd() }}
+                  disabled={!quickAddValue.trim()}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-semibold disabled:opacity-40 cursor-pointer transition-opacity"
+                  style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+                >
+                  Crear
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ── Empty state / Add button ── */
+          tasks.length === 0 ? (
+            <button
+              onClick={openQuickAdd}
+              className="flex-1 flex flex-col items-center justify-center gap-1.5 text-xs rounded-lg transition-all duration-200 py-6 group cursor-pointer"
+              style={{ color: 'var(--muted-foreground)' }}
+            >
+              <Plus
+                size={16}
+                className="transition-all duration-200 group-hover:scale-110 group-hover:-translate-y-0.5"
+                style={{ color: accentColor, opacity: 0.5 }}
+              />
+              <span className="transition-all duration-200 group-hover:-translate-y-0.5 group-hover:opacity-100 opacity-60">
+                Añadir tarea
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={openQuickAdd}
+              className="flex items-center gap-1.5 w-full px-2 py-2 rounded-lg text-xs transition-all cursor-pointer group opacity-50 hover:opacity-90"
+              style={{ color: 'var(--muted-foreground)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--foreground) 5%, transparent)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+            >
+              <Plus size={12} style={{ color: accentColor }} />
+              Agregar tarea
+            </button>
+          )
         )}
       </div>
     </div>
