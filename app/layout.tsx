@@ -6,6 +6,7 @@ import { GlobalOverlays } from '@/components/layout/GlobalOverlays'
 import { AuthProvider } from '@/components/layout/AuthProvider'
 import { bootstrapAuth } from '@/lib/auth-bootstrap'
 import { getActiveThemeKey } from '@/lib/active-brand'
+import { ThemeInit } from '@/components/layout/ThemeInit'
 
 const firaSans = Fira_Sans({ variable: '--font-sans-eternity', subsets: ['latin'], weight: ['300', '400', '500', '600', '700'] })
 const firaMono = Fira_Code({ variable: '--font-mono', subsets: ['latin'], weight: ['400', '500', '600', '700'] })
@@ -30,6 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <body className="antialiased" style={{ minHeight: '100vh' }}>
+        <ThemeInit />
         <AuthProvider>
           <ConditionalShell>{children}</ConditionalShell>
           <GlobalOverlays />
