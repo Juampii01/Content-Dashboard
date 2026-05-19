@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Shield, Users, UserCog, UserCheck, Building2, ChevronRight } from 'lucide-react'
+import { Shield, Users, UserCheck, ChevronRight } from 'lucide-react'
 import { db } from '@/lib/db'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { requireProfile } from '@/lib/auth-user'
@@ -56,10 +56,8 @@ export default async function AdminOverviewPage() {
     notFound()
   }
 
-  // Fetch profiles with client info
   const profiles = await db.profile.findMany({
     orderBy: { createdAt: 'desc' },
-    include: { client: { select: { id: true, name: true } } },
   })
 
   // Try to enrich with Supabase auth emails
@@ -81,13 +79,12 @@ export default async function AdminOverviewPage() {
     email: authEmailById.get(p.id) ?? p.email ?? null,
     displayName: p.displayName,
     role: p.role,
-    clientName: p.client?.name ?? null,
     createdAt: p.createdAt,
   }))
 
   const totalUsers  = users.length
   const adminCount  = users.filter((u) => u.role === 'ADMIN').length
-  const clientCount = users.filter((u) => u.role === 'CLIENT').length
+  const teamCount   = users.filter((u) => u.role === 'TEAM' || u.role === 'SETTER').length
 
   return (
     <div className="page-shell" style={{ maxWidth: '72rem' }}>
@@ -103,7 +100,7 @@ export default async function AdminOverviewPage() {
         {[
           { label: 'Usuarios totales', value: totalUsers, icon: Users },
           { label: 'Admins',           value: adminCount,  icon: UserCheck },
-          { label: 'Clientes',         value: clientCount, icon: UserCog },
+          { label: 'Equipo',           value: teamCount,   icon: Shield },
         ].map(({ label, value, icon: Icon }) => (
           <div
             key={label}
@@ -172,26 +169,25 @@ export default async function AdminOverviewPage() {
 
         {/* Column headers */}
         <div
-          className="grid grid-cols-12 gap-3 px-5 py-2.5 text-[10px] font-bold uppercase tracking-wider"
+          className="grid grid-cols-9 gap-3 px-5 py-2.5 text-[10px] font-bold uppercase tracking-wider"
           style={{ color: 'var(--muted-foreground)', borderBottom: '1px solid var(--border)', opacity: 0.7 }}
         >
-          <div className="col-span-4">Usuario</div>
+          <div className="col-span-5">Usuario</div>
           <div className="col-span-2">Rol</div>
-          <div className="col-span-3">Organización</div>
-          <div className="col-span-3">Desde</div>
+          <div className="col-span-2">Desde</div>
         </div>
 
         {/* Rows */}
         {users.map((u, i) => (
           <div
             key={u.id}
-            className="grid grid-cols-12 gap-3 px-5 py-3.5 items-center transition-colors"
+            className="grid grid-cols-9 gap-3 px-5 py-3.5 items-center transition-colors"
             style={{
               borderBottom: i < users.length - 1 ? '1px solid var(--border)' : 'none',
             }}
           >
             {/* Avatar + name/email */}
-            <div className="col-span-4 flex items-center gap-3 min-w-0">
+            <div className="col-span-5 flex items-center gap-3 min-w-0">
               <Avatar name={u.displayName} email={u.email} />
               <div className="min-w-0">
                 {u.displayName && (
@@ -213,24 +209,8 @@ export default async function AdminOverviewPage() {
               <RoleBadge role={u.role} />
             </div>
 
-            {/* Client */}
-            <div className="col-span-3 flex items-center gap-1.5 min-w-0">
-              {u.clientName ? (
-                <>
-                  <Building2 size={11} style={{ color: 'var(--muted-foreground)', flexShrink: 0, opacity: 0.6 }} />
-                  <span className="text-xs truncate" style={{ color: 'var(--muted-foreground)' }}>
-                    {u.clientName}
-                  </span>
-                </>
-              ) : (
-                <span className="text-xs" style={{ color: 'var(--muted-foreground)', opacity: 0.35 }}>
-                  Sin asignar
-                </span>
-              )}
-            </div>
-
             {/* Date */}
-            <div className="col-span-3">
+            <div className="col-span-2">
               <span className="text-xs" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
                 {formatDate(u.createdAt)}
               </span>

@@ -24,9 +24,8 @@
 | `/tiktok`      | `app/tiktok/page.tsx` → `TikTokContent`         | TikTok analytics — 2 tabs (Dashboard, Videos) + ConnectButton + sync |
 | `/youtube`     | `app/youtube/page.tsx` → `YouTubeContent`       | YouTube analytics — 3 tabs (Dashboard, Videos, Audiencia) + ConnectButton |
 | `/pending-approval` | `app/pending-approval/page.tsx`            | Landing for PENDING users — shown until a SUPER_ADMIN approves them |
-| `/admin`       | `app/admin/page.tsx`                            | Admin overview — counters (users, pendientes, clientes). SUPER_ADMIN only |
-| `/admin/users` | `app/admin/users/page.tsx` → `UsersAdminClient` | User management — approve, role changes, manage client access. SUPER_ADMIN only |
-| `/admin/clients` | `app/admin/clients/page.tsx` → `ClientsAdminClient` | Tenant management — create / edit / delete clients. SUPER_ADMIN only |
+| `/admin`       | `app/admin/page.tsx`                            | Admin overview — counters (usuarios, admins, pendientes). SUPER_ADMIN only |
+| `/admin/users` | `app/admin/users/page.tsx` → `UsersAdminClient` | User management — approve, role changes. SUPER_ADMIN only |
 
 API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `youtube/*`, `admin/*`, `me/*`) and are not user-facing.
 
@@ -111,8 +110,7 @@ Visual verification — all routes
 - [ ] /youtube     loads, tabs (Dashboard, Videos, Audiencia) renderizan
 - [ ] /pending-approval  PENDING user lands here, sign-out works
 - [ ] /admin       (SUPER_ADMIN) overview cards render; non-admin sees 404
-- [ ] /admin/users (SUPER_ADMIN) table + filter + approve + access modal work
-- [ ] /admin/clients (SUPER_ADMIN) table + create/edit/delete flows work
+- [ ] /admin/users (SUPER_ADMIN) table + filter + approve flow works
 - [ ] Sidebar      TikTok + Ads aparecen correctamente; ClientSwitcher visible
 - [ ] Sidebar      grupo ADMIN aparece solo para SUPER_ADMIN
 - [ ] `npm run check:brand` passes
