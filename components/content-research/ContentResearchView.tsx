@@ -411,10 +411,36 @@ export function ContentResearchView({ platform: platformFilter, embedded = false
     void loadHistory()
   }, [loadHistory])
 
+  // Reset input/error when platform filter changes
+  useEffect(() => {
+    setChannelUrl('')
+    setError(null)
+    setCurrent(null)
+  }, [platformFilter])
+
+  // Platform-specific URL placeholder
+  const urlPlaceholder =
+    platformFilter === 'youtube'
+      ? 'https://www.youtube.com/@canal'
+      : platformFilter === 'instagram'
+      ? 'https://instagram.com/usuario'
+      : 'https://www.youtube.com/@canal  ó  https://instagram.com/usuario'
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = channelUrl.trim()
     if (!trimmed) return
+
+    // Platform-specific URL validation when a filter is active
+    if (platformFilter === 'youtube' && !trimmed.includes('youtube.com') && !trimmed.includes('youtu.be')) {
+      setError('Ingresá una URL de YouTube válida (youtube.com o youtu.be).')
+      return
+    }
+    if (platformFilter === 'instagram' && !trimmed.includes('instagram.com')) {
+      setError('Ingresá una URL de Instagram válida (instagram.com/usuario).')
+      return
+    }
+
     setLoading(true)
     setError(null)
     setCurrent(null)
@@ -499,7 +525,7 @@ export function ContentResearchView({ platform: platformFilter, embedded = false
               type="url"
               value={channelUrl}
               onChange={(e) => setChannelUrl(e.target.value)}
-              placeholder="https://www.youtube.com/@canal  ó  https://instagram.com/usuario"
+              placeholder={urlPlaceholder}
               required
               disabled={loading}
               aria-describedby={error ? 'research-error' : undefined}

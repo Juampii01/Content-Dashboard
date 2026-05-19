@@ -41,7 +41,7 @@ export function DayCell({ dateStr, isToday, isCurrent, date, lane, overflow, isO
       onClick={isCurrent ? (e) => onClick({ x: e.clientX, y: e.clientY }) : undefined}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`min-h-[120px] rounded-lg pt-2 px-2 pb-1.5 flex flex-col${isToday && isCurrent ? ' today-glow' : ''}`}
+      className={`min-h-[80px] rounded-lg pt-2 px-2 pb-1.5 flex flex-col${isToday && isCurrent ? ' today-glow' : ''}`}
       style={{
         backgroundColor: bg,
         border,

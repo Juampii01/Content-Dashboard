@@ -95,84 +95,82 @@ export function TaskModal({ task, defaultColumnId = 'por-hacer', onSave, onDelet
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-5 space-y-4">
-          {/* Title */}
-          <div>
-            <input
-              autoFocus
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Título de la tarea..."
-              className="w-full bg-transparent text-sm font-medium outline-none placeholder:opacity-40"
-              style={{ color: 'var(--foreground)' }}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleSubmit() }}
-            />
-          </div>
-
-          {/* Description */}
+        {/* Body — Section 1: Title + Description */}
+        <div className="px-5 pt-4 pb-4">
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Título de la tarea..."
+            className="w-full bg-transparent text-sm font-semibold outline-none placeholder:opacity-35 mb-2"
+            style={{ color: 'var(--foreground)' }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleSubmit() }}
+          />
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Descripción (opcional)..."
-            rows={3}
-            className="w-full bg-transparent text-sm outline-none resize-none placeholder:opacity-40"
+            placeholder="Agregar descripción..."
+            rows={2}
+            className="w-full bg-transparent text-sm outline-none resize-none placeholder:opacity-35"
             style={{ color: 'var(--muted-foreground)' }}
           />
+        </div>
 
-          {/* Column + Due Date */}
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="text-[11px] font-medium mb-1 block" style={{ color: 'var(--muted-foreground)' }}>Columna</label>
-              <select
-                value={columnId}
-                onChange={(e) => setColumnId(e.target.value as TaskColumnId)}
-                className="w-full text-xs rounded-lg px-3 py-2 outline-none"
-                style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
-              >
-                {COLUMNS.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="text-[11px] font-medium mb-1 block" style={{ color: 'var(--muted-foreground)' }}>
-                Fecha límite
-              </label>
-              <DatePicker
-                value={dueDate}
-                onChange={setDueDate}
-                placeholder="Sin fecha"
-                triggerClassName="w-full text-xs rounded-lg px-3 py-2 text-left"
-                triggerStyle={{
-                  backgroundColor: 'var(--muted)',
-                  color: dueDate ? 'var(--foreground)' : 'var(--muted-foreground)',
-                  border: '1px solid var(--border)',
-                }}
-              />
-            </div>
+        {/* Body — Section 2: Column + Due Date */}
+        <div
+          className="px-5 py-3.5 flex gap-3"
+          style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}
+        >
+          <div className="flex-1">
+            <label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'var(--muted-foreground)' }}>Columna</label>
+            <select
+              value={columnId}
+              onChange={(e) => setColumnId(e.target.value as TaskColumnId)}
+              className="w-full text-xs rounded-lg px-3 py-2 outline-none"
+              style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
+            >
+              {COLUMNS.map((c) => (
+                <option key={c.id} value={c.id}>{c.label}</option>
+              ))}
+            </select>
           </div>
-
-          {/* Label */}
-          <div>
-            <label className="text-[11px] font-medium mb-1.5 flex items-center gap-1" style={{ color: 'var(--muted-foreground)' }}>
-              <Tag size={11} /> Etiqueta
+          <div className="flex-1">
+            <label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'var(--muted-foreground)' }}>
+              Fecha límite
             </label>
-            <div className="flex flex-wrap gap-1.5">
-              {LABEL_PRESETS.map((preset) => {
-                const active = selectedLabel?.text === preset.text
-                return (
-                  <button
-                    key={preset.text}
-                    onClick={() => setSelectedLabel(active ? undefined : preset)}
-                    className="transition-all"
-                    style={{ outline: active ? `2px solid ${preset.color}` : 'none', outlineOffset: '2px', borderRadius: '999px' }}
-                  >
-                    <LabelBadge label={preset} small />
-                  </button>
-                )
-              })}
-            </div>
+            <DatePicker
+              value={dueDate}
+              onChange={setDueDate}
+              placeholder="Sin fecha"
+              triggerClassName="w-full text-xs rounded-lg px-3 py-2 text-left"
+              triggerStyle={{
+                backgroundColor: 'var(--muted)',
+                color: dueDate ? 'var(--foreground)' : 'var(--muted-foreground)',
+                border: '1px solid var(--border)',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Body — Section 3: Label */}
+        <div className="px-5 py-3.5">
+          <label className="text-[10px] font-semibold uppercase tracking-wider mb-2 flex items-center gap-1" style={{ color: 'var(--muted-foreground)' }}>
+            <Tag size={10} /> Etiqueta
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {LABEL_PRESETS.map((preset) => {
+              const active = selectedLabel?.text === preset.text
+              return (
+                <button
+                  key={preset.text}
+                  onClick={() => setSelectedLabel(active ? undefined : preset)}
+                  className="transition-all"
+                  style={{ outline: active ? `2px solid ${preset.color}` : 'none', outlineOffset: '2px', borderRadius: '999px' }}
+                >
+                  <LabelBadge label={preset} small />
+                </button>
+              )
+            })}
           </div>
         </div>
 
