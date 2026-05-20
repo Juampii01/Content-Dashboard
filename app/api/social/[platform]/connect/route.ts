@@ -27,9 +27,8 @@ function buildOAuthUrl(platform: Platform, state: string): string | null {
   const redirect = callbackUrl(platform)
 
   if (platform === 'instagram') {
-    // New Instagram API (api.instagram.com) — uses INSTAGRAM_APP_ID.
-    // instagram_business_manage_insights requires App Review for production;
-    // works immediately for testers in Development mode.
+    // Instagram Graph API via Facebook Login for Business.
+    // Uses facebook.com/dialog/oauth with instagram_business_* scopes.
     const clientId = process.env.INSTAGRAM_APP_ID
     if (!clientId) return null
     const params = new URLSearchParams({
@@ -39,7 +38,7 @@ function buildOAuthUrl(platform: Platform, state: string): string | null {
       state,
       response_type: 'code',
     })
-    return `https://api.instagram.com/oauth/authorize?${params.toString()}`
+    return `https://www.facebook.com/${META_GRAPH_VERSION}/dialog/oauth?${params.toString()}`
   }
 
   if (platform === 'youtube') {
