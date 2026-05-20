@@ -388,7 +388,7 @@ export async function GET(
     const message = e instanceof Error ? e.message : String(e)
     console.error(`[${platform}/callback] token/profile exchange error:`, message)
     const errUrl = new URL(`${returnTo}?connect_error=${platform}`, req.url)
-    errUrl.searchParams.set('connect_error_reason', message.slice(0, 120))
+    errUrl.searchParams.set('connect_error_reason', message.slice(0, 400))
     return NextResponse.redirect(errUrl.toString())
   }
 
