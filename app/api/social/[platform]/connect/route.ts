@@ -34,7 +34,15 @@ function buildOAuthUrl(platform: Platform, state: string): string | null {
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirect,
-      scope: 'instagram_business_basic,instagram_business_manage_insights',
+      scope: [
+        'instagram_business_basic',
+        'instagram_business_manage_insights',
+        'instagram_business_content_publish',
+        'instagram_business_manage_comments',
+        'instagram_manage_insights',
+        'pages_show_list',
+        'pages_read_engagement',
+      ].join(','),
       state,
       response_type: 'code',
     })
