@@ -320,9 +320,8 @@ export async function GET(
   if (oauthError) {
     console.error(`[${platform}/callback] provider error:`, oauthError)
     const errorUrl = new URL(`${returnTo}?connect_error=${platform}`, req.url)
-    if (oauthError === 'access_denied') {
-      errorUrl.searchParams.set('connect_error_reason', 'access_denied')
-    }
+    // Always expose the raw OAuth error code so it's visible in the redirect URL for debugging
+    errorUrl.searchParams.set('connect_error_reason', oauthError)
     return NextResponse.redirect(errorUrl.toString())
   }
 
