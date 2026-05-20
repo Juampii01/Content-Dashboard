@@ -18,13 +18,12 @@ type Platform = z.infer<typeof PlatformSchema>
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function callbackUrl(platform: Platform): string {
-  const base = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/+$/, '')
-  return `${base}/api/social/${platform}/callback`
+function callbackUrl(platform: Platform, req: NextRequest): string {
+  return `${req.nextUrl.origin}/api/social/${platform}/callback`
 }
 
-function buildOAuthUrl(platform: Platform, state: string): string | null {
-  const redirect = callbackUrl(platform)
+function buildOAuthUrl(platform: Platform, state: string, req: NextRequest): string | null {
+  const redirect = callbackUrl(platform, req)
 
   if (platform === 'instagram') {
     // Instagram Business Login (API setup with Instagram login).
@@ -126,7 +125,7 @@ export async function GET(
   await db.oAuthState.create({ data: { userId, clientId, state, platform, returnTo, expiresAt } })
 
   // Build OAuth URL
-  const oauthUrl = buildOAuthUrl(platform, state)
+  const oauthUrl = buildOAuthUrl(platform, state, req)
   if (!oauthUrl) {
     // Credentials not configured — clean up the state record and redirect back with error
     await db.oAuthState.delete({ where: { state } }).catch(() => {})

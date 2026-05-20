@@ -364,7 +364,7 @@ export async function GET(
   )
 
   // Exchange code for tokens
-  const redirectUri = `${(process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/+$/, '')}/api/social/${platform}/callback`
+  const redirectUri = `${req.nextUrl.origin}/api/social/${platform}/callback`
 
   let tokenResult: TokenResult
   let profileResult: ProfileResult
