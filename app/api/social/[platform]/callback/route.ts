@@ -33,10 +33,10 @@ interface ProfileResult {
   accountPic?: string
 }
 
-// ─── Instagram (New Business Login — www.instagram.com/oauth/authorize) ──────
+// ─── Instagram (Facebook Login for Business — Graph API) ─────────────────────
 // Uses INSTAGRAM_APP_ID / INSTAGRAM_APP_SECRET.
-// Flow: short-lived token via api.instagram.com → long-lived via
-// graph.instagram.com ig_exchange_token → profile via graph.instagram.com.
+// Flow: FB code → short-lived FB token → long-lived FB token →
+// Instagram account via /me/accounts (Facebook Pages) or /me.
 
 async function exchangeInstagram(
   code: string,
@@ -45,34 +45,23 @@ async function exchangeInstagram(
   const clientId = process.env.INSTAGRAM_APP_ID!
   const clientSecret = process.env.INSTAGRAM_APP_SECRET!
 
-  // 1. Short-lived token
-  const shortRes = await fetch('https://api.instagram.com/oauth/access_token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: 'authorization_code',
-      redirect_uri: redirectUri,
-      code,
-    }),
-    signal: AbortSignal.timeout(10_000),
-  })
+  // 1. Exchange code for short-lived Facebook user token
+  const shortRes = await fetch(
+    `${META_GRAPH_BASE}/oauth/access_token?` +
+    new URLSearchParams({ client_id: clientId, client_secret: clientSecret, redirect_uri: redirectUri, code }).toString(),
+    { signal: AbortSignal.timeout(10_000) },
+  )
   if (!shortRes.ok) {
     const text = await shortRes.text()
     console.error('[instagram/callback] short-lived token error:', shortRes.status, text.slice(0, 200))
     throw new Error(`Instagram token exchange failed: ${shortRes.status}`)
   }
-  const shortData = (await shortRes.json()) as { access_token: string; user_id: number }
+  const shortData = (await shortRes.json()) as { access_token: string }
 
-  // 2. Long-lived token (60-day expiry)
-  const longParams = new URLSearchParams({
-    grant_type: 'ig_exchange_token',
-    client_secret: clientSecret,
-    access_token: shortData.access_token,
-  })
+  // 2. Exchange for long-lived token (60-day expiry)
   const longRes = await fetch(
-    `https://graph.instagram.com/access_token?${longParams.toString()}`,
+    `${META_GRAPH_BASE}/oauth/access_token?` +
+    new URLSearchParams({ grant_type: 'fb_exchange_token', client_id: clientId, client_secret: clientSecret, fb_exchange_token: shortData.access_token }).toString(),
     { signal: AbortSignal.timeout(10_000) },
   )
   if (!longRes.ok) {
@@ -83,20 +72,32 @@ async function exchangeInstagram(
   const longData = (await longRes.json()) as { access_token: string; expires_in?: number }
   const accessToken = longData.access_token
 
-  // 3. Profile
-  const profileRes = await fetch(
-    `https://graph.instagram.com/me?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
+  // 3. Get Instagram Business Account via Pages
+  const pagesRes = await fetch(
+    `${META_GRAPH_BASE}/me/accounts?fields=instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}`,
     { signal: AbortSignal.timeout(10_000) },
   )
-  if (!profileRes.ok) {
-    const text = await profileRes.text()
-    console.error('[instagram/callback] profile fetch error:', profileRes.status, text.slice(0, 200))
-    throw new Error(`Instagram profile fetch failed: ${profileRes.status}`)
+  let igAccount: { id: string; username?: string; profile_picture_url?: string } | undefined
+  if (pagesRes.ok) {
+    const pagesData = (await pagesRes.json()) as {
+      data?: Array<{ instagram_business_account?: { id: string; username?: string; profile_picture_url?: string } }>
+    }
+    igAccount = pagesData.data?.find((p) => p.instagram_business_account)?.instagram_business_account
   }
-  const profileData = (await profileRes.json()) as {
-    id?: string; name?: string; username?: string; profile_picture_url?: string
+
+  // 4. Fallback: get /me directly
+  if (!igAccount) {
+    const meRes = await fetch(
+      `${META_GRAPH_BASE}/me?fields=id,name&access_token=${accessToken}`,
+      { signal: AbortSignal.timeout(10_000) },
+    )
+    if (meRes.ok) {
+      const meData = (await meRes.json()) as { id: string; name?: string }
+      igAccount = { id: meData.id, username: meData.name }
+    }
   }
-  const igUserId = String(shortData.user_id)
+
+  if (!igAccount) throw new Error('No se encontró una cuenta de Instagram vinculada')
 
   return {
     token: {
@@ -104,9 +105,9 @@ async function exchangeInstagram(
       expiresAt: longData.expires_in ? new Date(Date.now() + longData.expires_in * 1000) : undefined,
     },
     profile: {
-      accountId: igUserId,
-      accountName: profileData.username ?? profileData.name ?? igUserId,
-      accountPic: profileData.profile_picture_url,
+      accountId: igAccount.id,
+      accountName: igAccount.username ?? igAccount.id,
+      accountPic: igAccount.profile_picture_url,
     },
   }
 }

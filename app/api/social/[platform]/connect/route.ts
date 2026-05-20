@@ -27,24 +27,25 @@ function buildOAuthUrl(platform: Platform, state: string): string | null {
   const redirect = callbackUrl(platform)
 
   if (platform === 'instagram') {
-    // New Instagram Business Login (2024 API).
-    // Uses www.instagram.com/oauth/authorize with instagram_business_* scopes.
-    // Token exchange stays on api.instagram.com / graph.instagram.com.
+    // Instagram Graph API via Facebook Login for Business.
+    // Uses facebook.com/dialog/oauth with standard instagram_* scopes.
     const clientId = process.env.INSTAGRAM_APP_ID
     if (!clientId) return null
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirect,
       scope: [
-        'instagram_business_basic',
-        'instagram_business_manage_insights',
-        'instagram_business_content_publish',
-        'instagram_business_manage_comments',
+        'instagram_basic',
+        'instagram_manage_insights',
+        'instagram_content_publish',
+        'instagram_manage_comments',
+        'pages_show_list',
+        'pages_read_engagement',
       ].join(','),
       state,
       response_type: 'code',
     })
-    return `https://www.instagram.com/oauth/authorize?${params.toString()}`
+    return `https://www.facebook.com/${META_GRAPH_VERSION}/dialog/oauth?${params.toString()}`
   }
 
   if (platform === 'youtube') {
