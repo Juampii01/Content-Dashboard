@@ -27,25 +27,24 @@ function buildOAuthUrl(platform: Platform, state: string): string | null {
   const redirect = callbackUrl(platform)
 
   if (platform === 'instagram') {
-    // Instagram Graph API via Facebook Login for Business.
-    // Uses facebook.com/dialog/oauth with standard instagram_* scopes.
+    // Instagram Business Login (API setup with Instagram login).
+    // Uses www.instagram.com/oauth/authorize — App ID is the Instagram-specific
+    // one from Meta's "API setup with Instagram login" section (not the FB app ID).
     const clientId = process.env.INSTAGRAM_APP_ID
     if (!clientId) return null
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirect,
       scope: [
-        'instagram_basic',
-        'instagram_manage_insights',
-        'instagram_content_publish',
-        'instagram_manage_comments',
-        'pages_show_list',
-        'pages_read_engagement',
+        'instagram_business_basic',
+        'instagram_business_manage_insights',
+        'instagram_business_content_publish',
+        'instagram_business_manage_comments',
       ].join(','),
       state,
       response_type: 'code',
     })
-    return `https://www.facebook.com/${META_GRAPH_VERSION}/dialog/oauth?${params.toString()}`
+    return `https://www.instagram.com/oauth/authorize?${params.toString()}`
   }
 
   if (platform === 'youtube') {
