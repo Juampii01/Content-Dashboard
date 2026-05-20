@@ -19,7 +19,7 @@ type Platform = z.infer<typeof PlatformSchema>
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function callbackUrl(platform: Platform): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? ''
+  const base = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/+$/, '')
   return `${base}/api/social/${platform}/callback`
 }
 
