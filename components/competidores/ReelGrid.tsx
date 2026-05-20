@@ -27,7 +27,7 @@ export function ReelGrid({ reels, onOpenDrawer }: ReelGridProps) {
             Sin reels todavía
           </p>
           <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-            Usa "Refrescar" para sincronizar los reels de este competidor.
+            Usá &ldquo;Refrescar&rdquo; para sincronizar los reels de este competidor.
           </p>
         </div>
       </div>

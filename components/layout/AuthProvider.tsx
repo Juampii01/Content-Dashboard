@@ -47,6 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sessionError, setSessionError] = useState(false)
   const retryCount = useRef(0)
 
+  // eslint-disable-next-line react-hooks/immutability
+  const loadRef = useRef<((isRetry?: boolean) => Promise<void>) | null>(null)
+
   const load = useCallback(async (isRetry = false) => {
     if (!isRetry) retryCount.current = 0
     try {
@@ -57,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Only escalate to an error after 2 retries (covers network flakiness).
         if (meRes.status === 401 && retryCount.current < 2) {
           retryCount.current += 1
-          setTimeout(() => void load(true), retryCount.current * 600)
+          setTimeout(() => void loadRef.current?.(true), retryCount.current * 600)
           return // stay in loading state
         }
         setSessionError(true)
@@ -72,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       if (retryCount.current < 2) {
         retryCount.current += 1
-        setTimeout(() => void load(true), retryCount.current * 600)
+        setTimeout(() => void loadRef.current?.(true), retryCount.current * 600)
         return
       }
       logClientError(err, 'AuthProvider:load', { silent: true })
@@ -80,6 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     }
   }, [])
+
+  loadRef.current = load
 
   // Initial load — covers page refresh / direct navigation with existing session.
   useEffect(() => {

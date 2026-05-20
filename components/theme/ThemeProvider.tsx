@@ -65,6 +65,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isAdmin) {
       applyThemeToDom(DEFAULT_THEME_KEY)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentTheme(DEFAULT_THEME_KEY)
       return
     }
@@ -72,6 +73,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem(STORAGE_KEY)
     const localTheme = isValidThemeKey(stored) ? stored : DEFAULT_THEME_KEY
     applyThemeToDom(localTheme)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentTheme(localTheme)
 
     // Then sync from DB (profile.themeKey) as source of truth.

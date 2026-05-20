@@ -25,6 +25,7 @@ export function AppearanceView({ onBack }: AppearanceViewProps) {
   const [mode, setMode] = useState<Mode>('dark')
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMode(readCurrentMode())
   }, [])
 
