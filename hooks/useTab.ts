@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import type { Tab } from '@/lib/types'
 
-const VALID_TABS: Tab[] = ['dashboard', 'reels', 'historias', 'publicaciones', 'competencia', 'referencias', 'demografia']
+const VALID_TABS: Tab[] = ['dashboard', 'reels', 'historias', 'publicaciones', 'competencia', 'referencias', 'demografia', 'publicar', 'comentarios', 'mensajes', 'audiencia']
 
 export function useTab(): [Tab, (t: Tab) => void] {
   const searchParams = useSearchParams()

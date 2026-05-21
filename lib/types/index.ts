@@ -8,6 +8,10 @@ export type Tab =
   | 'competencia'
   | 'referencias'
   | 'demografia'
+  | 'publicar'
+  | 'comentarios'
+  | 'mensajes'
+  | 'audiencia'
 
 export interface GlobalStats {
   views: number

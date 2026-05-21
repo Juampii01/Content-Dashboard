@@ -19,6 +19,10 @@ const PublicacionesTab = dynamic(() => import('@/components/tabs/PublicacionesTa
 const CompetenciaTab   = dynamic(() => import('@/components/tabs/CompetenciaTab').then((m) => m.CompetenciaTab),     { ssr: false })
 const ReferenciasTab   = dynamic(() => import('@/components/tabs/ReferenciasTab').then((m) => m.ReferenciasTab),     { ssr: false })
 const DemografiaTab    = dynamic(() => import('@/components/tabs/DemografiaTab').then((m) => m.DemografiaTab),       { ssr: false })
+const PublicarTab      = dynamic(() => import('@/components/tabs/PublicarTab').then((m) => m.PublicarTab),           { ssr: false })
+const ComentariosTab   = dynamic(() => import('@/components/tabs/ComentariosTab').then((m) => m.ComentariosTab),     { ssr: false })
+const MensajesTab      = dynamic(() => import('@/components/tabs/MensajesTab').then((m) => m.MensajesTab),           { ssr: false })
+const AudienciaTab     = dynamic(() => import('@/components/tabs/AudienciaTab').then((m) => m.AudienciaTab),         { ssr: false })
 
 export function InstagramContent() {
   const [tab] = useTab()
@@ -107,6 +111,10 @@ export function InstagramContent() {
         {tab === 'competencia'   && <CompetenciaTab />}
         {tab === 'referencias'   && <ReferenciasTab />}
         {tab === 'demografia'    && <DemografiaTab />}
+        {tab === 'publicar'      && <PublicarTab />}
+        {tab === 'comentarios'   && <ComentariosTab />}
+        {tab === 'mensajes'      && <MensajesTab />}
+        {tab === 'audiencia'     && <AudienciaTab />}
       </InstagramDataProvider>
     </div>
   )
