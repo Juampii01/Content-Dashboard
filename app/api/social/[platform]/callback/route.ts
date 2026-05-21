@@ -62,9 +62,10 @@ async function exchangeInstagram(
   const shortData = (await shortRes.json()) as { access_token: string; user_id: number; expires_in?: number }
   const accessToken = shortData.access_token
 
-  // 2. Profile
+  // 2. Profile — Business Login API: use /{user-id} with versioned graph.instagram.com
+  const igUserId = String(shortData.user_id)
   const profileRes = await fetch(
-    `https://graph.instagram.com/me?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
+    `https://graph.instagram.com/v21.0/${igUserId}?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
     { signal: AbortSignal.timeout(10_000) },
   )
   if (!profileRes.ok) {
@@ -73,7 +74,6 @@ async function exchangeInstagram(
     throw new Error(`Instagram profile fetch failed: ${profileRes.status} | ${text.slice(0, 250)}`)
   }
   const profileData = (await profileRes.json()) as { id?: string; username?: string; name?: string; profile_picture_url?: string }
-  const igUserId = String(shortData.user_id)
 
   return {
     token: {
