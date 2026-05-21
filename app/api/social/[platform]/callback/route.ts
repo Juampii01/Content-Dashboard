@@ -68,7 +68,7 @@ async function exchangeInstagram(
   if (!longRes.ok) {
     const text = await longRes.text()
     console.error('[instagram/callback] long-lived token error:', longRes.status, text.slice(0, 200))
-    throw new Error(`Instagram long-lived token exchange failed: ${longRes.status}`)
+    throw new Error(`Instagram long-lived token exchange failed: ${longRes.status} | ${text.slice(0, 250)}`)
   }
   const longData = (await longRes.json()) as { access_token: string; expires_in?: number }
   const accessToken = longData.access_token
