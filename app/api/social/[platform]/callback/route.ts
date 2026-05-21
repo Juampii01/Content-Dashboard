@@ -364,7 +364,16 @@ export async function GET(
   )
 
   // Exchange code for tokens
-  const redirectUri = `${req.nextUrl.origin}/api/social/${platform}/callback`
+  // Use NEXT_PUBLIC_APP_URL when available; fall back to x-forwarded-proto to avoid
+  // http:// vs https:// mismatches caused by Vercel's internal HTTP routing
+  const appOrigin = (() => {
+    const envUrl = process.env.NEXT_PUBLIC_APP_URL
+    if (envUrl) return envUrl.replace(/\/+$/, '')
+    const proto = req.headers.get('x-forwarded-proto') ?? req.nextUrl.protocol.replace(/:$/, '')
+    const host = req.headers.get('x-forwarded-host') ?? req.nextUrl.host
+    return `${proto}://${host}`
+  })()
+  const redirectUri = `${appOrigin}/api/social/${platform}/callback`
 
   let tokenResult: TokenResult
   let profileResult: ProfileResult

@@ -18,8 +18,18 @@ type Platform = z.infer<typeof PlatformSchema>
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+function getAppOrigin(req: NextRequest): string {
+  // NEXT_PUBLIC_APP_URL is the most reliable source — always use it if set
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (envUrl) return envUrl.replace(/\/+$/, '')
+  // Vercel Lambda receives HTTP internally; x-forwarded-proto carries the real scheme
+  const proto = req.headers.get('x-forwarded-proto') ?? req.nextUrl.protocol.replace(/:$/, '')
+  const host = req.headers.get('x-forwarded-host') ?? req.nextUrl.host
+  return `${proto}://${host}`
+}
+
 function callbackUrl(platform: Platform, req: NextRequest): string {
-  return `${req.nextUrl.origin}/api/social/${platform}/callback`
+  return `${getAppOrigin(req)}/api/social/${platform}/callback`
 }
 
 function buildOAuthUrl(platform: Platform, state: string, req: NextRequest): string | null {
