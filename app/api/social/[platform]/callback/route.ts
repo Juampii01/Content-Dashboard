@@ -55,7 +55,7 @@ async function exchangeInstagram(
   if (!shortRes.ok) {
     const text = await shortRes.text()
     console.error('[instagram/callback] short-lived token error:', shortRes.status, text.slice(0, 200))
-    throw new Error(`Instagram token exchange failed: ${shortRes.status} | clientId=${clientId} | redirectUri=${redirectUri} | ${text.slice(0, 150)}`)
+    throw new Error(`Instagram token exchange failed: ${shortRes.status}`)
   }
   // Instagram Business Login API returns a long-lived token (60 days) directly from step 1.
   // The ig_exchange_token flow is for the deprecated Basic Display API — skip it.
@@ -392,7 +392,7 @@ export async function GET(
     const message = e instanceof Error ? e.message : String(e)
     console.error(`[${platform}/callback] token/profile exchange error:`, message)
     const errUrl = new URL(`${returnTo}?connect_error=${platform}`, req.url)
-    errUrl.searchParams.set('connect_error_reason', message.slice(0, 400))
+    errUrl.searchParams.set('connect_error_reason', message.slice(0, 120))
     return NextResponse.redirect(errUrl.toString())
   }
 
