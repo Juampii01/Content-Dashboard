@@ -116,6 +116,11 @@ export async function POST(): Promise<NextResponse> {
       console.warn('[instagram/sync] rate-limited', { code, subcode, message })
       return NextResponse.json({ error: 'RATE_LIMITED', detail: message }, { status: 429 })
     }
+    // "Unsupported request - method type: get" → personal account connected via
+    // Business Login. The /me/media endpoint only works for Business/Creator accounts.
+    if (message.toLowerCase().includes('unsupported request') || message.toLowerCase().includes('method type')) {
+      return NextResponse.json({ error: 'PERSONAL_ACCOUNT' }, { status: 422 })
+    }
     console.error('[instagram/sync] media fetch failed', mediaRes.err)
     return NextResponse.json({ error: 'SYNC_FAILED', detail: message }, { status: 502 })
   }

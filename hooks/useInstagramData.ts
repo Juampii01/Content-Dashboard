@@ -108,6 +108,18 @@ export function useInstagramData(): UseInstagramDataReturn {
         toast.error('Instagram está limitando las peticiones. Intenta en unos minutos.')
         return
       }
+      if (res.status === 422) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string }
+        if (body.error === 'PERSONAL_ACCOUNT') {
+          toast.error(
+            'Tu cuenta de Instagram es personal. Para sincronizar contenido necesitás convertirla a cuenta de Creador o Empresa: Configuración → Tipo de cuenta → Cambiar a cuenta profesional.',
+            { duration: 10000 },
+          )
+        } else {
+          toast.error('No pudimos sincronizar Instagram. Inténtalo de nuevo.')
+        }
+        return
+      }
       if (!res.ok) {
         toast.error('No pudimos sincronizar Instagram. Inténtalo de nuevo.')
         return
