@@ -55,7 +55,7 @@ async function exchangeInstagram(
   if (!shortRes.ok) {
     const text = await shortRes.text()
     console.error('[instagram/callback] short-lived token error:', shortRes.status, text.slice(0, 200))
-    throw new Error(`Instagram token exchange failed: ${shortRes.status} | redirectUri=${redirectUri} | ${text.slice(0, 200)}`)
+    throw new Error(`Instagram token exchange failed: ${shortRes.status} | clientId=${clientId} | redirectUri=${redirectUri} | ${text.slice(0, 150)}`)
   }
   const shortData = (await shortRes.json()) as { access_token: string; user_id: number }
 
