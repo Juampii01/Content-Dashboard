@@ -70,7 +70,7 @@ async function exchangeInstagram(
   if (!profileRes.ok) {
     const text = await profileRes.text()
     console.error('[instagram/callback] profile error:', profileRes.status, text.slice(0, 200))
-    throw new Error(`Instagram profile fetch failed: ${profileRes.status}`)
+    throw new Error(`Instagram profile fetch failed: ${profileRes.status} | ${text.slice(0, 250)}`)
   }
   const profileData = (await profileRes.json()) as { id?: string; username?: string; name?: string; profile_picture_url?: string }
   const igUserId = String(shortData.user_id)
