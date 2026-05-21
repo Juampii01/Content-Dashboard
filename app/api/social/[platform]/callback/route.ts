@@ -59,12 +59,13 @@ async function exchangeInstagram(
   }
   const shortData = (await shortRes.json()) as { access_token: string; user_id: number }
 
-  // 2. Long-lived token (60-day expiry)
-  const longRes = await fetch(
-    `https://graph.instagram.com/access_token?` +
-    new URLSearchParams({ grant_type: 'ig_exchange_token', client_secret: clientSecret, access_token: shortData.access_token }).toString(),
-    { signal: AbortSignal.timeout(10_000) },
-  )
+  // 2. Long-lived token (60-day expiry) — Meta now requires POST
+  const longRes = await fetch('https://graph.instagram.com/access_token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'ig_exchange_token', client_secret: clientSecret, access_token: shortData.access_token }),
+    signal: AbortSignal.timeout(10_000),
+  })
   if (!longRes.ok) {
     const text = await longRes.text()
     console.error('[instagram/callback] long-lived token error:', longRes.status, text.slice(0, 200))
