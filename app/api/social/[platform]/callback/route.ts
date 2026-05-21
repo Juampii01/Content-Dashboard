@@ -57,24 +57,12 @@ async function exchangeInstagram(
     console.error('[instagram/callback] short-lived token error:', shortRes.status, text.slice(0, 200))
     throw new Error(`Instagram token exchange failed: ${shortRes.status} | clientId=${clientId} | redirectUri=${redirectUri} | ${text.slice(0, 150)}`)
   }
-  const shortData = (await shortRes.json()) as { access_token: string; user_id: number }
+  // Instagram Business Login API returns a long-lived token (60 days) directly from step 1.
+  // The ig_exchange_token flow is for the deprecated Basic Display API — skip it.
+  const shortData = (await shortRes.json()) as { access_token: string; user_id: number; expires_in?: number }
+  const accessToken = shortData.access_token
 
-  // 2. Long-lived token (60-day expiry) — Meta now requires POST
-  const longRes = await fetch('https://graph.instagram.com/access_token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'ig_exchange_token', client_secret: clientSecret, access_token: shortData.access_token }),
-    signal: AbortSignal.timeout(10_000),
-  })
-  if (!longRes.ok) {
-    const text = await longRes.text()
-    console.error('[instagram/callback] long-lived token error:', longRes.status, text.slice(0, 200))
-    throw new Error(`Instagram long-lived token exchange failed: ${longRes.status} | ${text.slice(0, 250)}`)
-  }
-  const longData = (await longRes.json()) as { access_token: string; expires_in?: number }
-  const accessToken = longData.access_token
-
-  // 3. Profile
+  // 2. Profile
   const profileRes = await fetch(
     `https://graph.instagram.com/me?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
     { signal: AbortSignal.timeout(10_000) },
@@ -90,7 +78,7 @@ async function exchangeInstagram(
   return {
     token: {
       accessToken,
-      expiresAt: longData.expires_in ? new Date(Date.now() + longData.expires_in * 1000) : undefined,
+      expiresAt: shortData.expires_in ? new Date(Date.now() + shortData.expires_in * 1000) : undefined,
     },
     profile: {
       accountId: igUserId,
