@@ -63,17 +63,23 @@ async function exchangeInstagram(
   const accessToken = shortData.access_token
 
   // 2. Profile — Business Login API: use /{user-id} with versioned graph.instagram.com
+  // Profile fetch is best-effort; if it fails we fall back to the user_id from step 1
   const igUserId = String(shortData.user_id)
+  let accountName = igUserId
+  let accountPic: string | undefined
+
   const profileRes = await fetch(
     `https://graph.instagram.com/v21.0/${igUserId}?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
     { signal: AbortSignal.timeout(10_000) },
   )
-  if (!profileRes.ok) {
+  if (profileRes.ok) {
+    const profileData = (await profileRes.json()) as { id?: string; username?: string; name?: string; profile_picture_url?: string }
+    accountName = profileData.username ?? profileData.name ?? igUserId
+    accountPic = profileData.profile_picture_url
+  } else {
     const text = await profileRes.text()
-    console.error('[instagram/callback] profile error:', profileRes.status, text.slice(0, 200))
-    throw new Error(`Instagram profile fetch failed: ${profileRes.status} | ${text.slice(0, 250)}`)
+    console.warn('[instagram/callback] profile fetch failed (non-fatal):', profileRes.status, text.slice(0, 200))
   }
-  const profileData = (await profileRes.json()) as { id?: string; username?: string; name?: string; profile_picture_url?: string }
 
   return {
     token: {
@@ -82,8 +88,8 @@ async function exchangeInstagram(
     },
     profile: {
       accountId: igUserId,
-      accountName: profileData.username ?? profileData.name ?? igUserId,
-      accountPic: profileData.profile_picture_url,
+      accountName,
+      accountPic,
     },
   }
 }
