@@ -45,7 +45,7 @@ async function exchangeInstagram(
   const clientId = process.env.INSTAGRAM_APP_ID!
   const clientSecret = process.env.INSTAGRAM_APP_SECRET!
 
-  // 1. Short-lived token
+  // 1. Short-lived token (valid ~1 hour)
   const shortRes = await fetch('https://api.instagram.com/oauth/access_token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -57,19 +57,45 @@ async function exchangeInstagram(
     console.error('[instagram/callback] short-lived token error:', shortRes.status, text.slice(0, 400))
     throw new Error(`IG400 redirectUri=${redirectUri} body=${text.slice(0, 150)}`)
   }
-  // Instagram Business Login API returns a long-lived token (60 days) directly from step 1.
-  // The ig_exchange_token flow is for the deprecated Basic Display API — skip it.
   const shortData = (await shortRes.json()) as { access_token: string; user_id: number; expires_in?: number }
-  const accessToken = shortData.access_token
+  let accessToken = shortData.access_token
+  let expiresAt: Date | undefined = shortData.expires_in
+    ? new Date(Date.now() + shortData.expires_in * 1000)
+    : undefined
 
-  // 2. Profile — Business Login API: use /{user-id} with versioned graph.instagram.com
-  // Profile fetch is best-effort; if it fails we fall back to the user_id from step 1
+  // 2. Exchange short-lived → long-lived token (60 days).
+  // Required for both Instagram Business Login and Basic Display API.
+  // Without this step, the token only lasts 1 hour and the Graph API may reject it.
+  const longRes = await fetch(
+    `https://graph.instagram.com/access_token?` +
+      new URLSearchParams({
+        grant_type: 'ig_exchange_token',
+        client_secret: clientSecret,
+        access_token: accessToken,
+      }).toString(),
+    { signal: AbortSignal.timeout(10_000) },
+  )
+  if (longRes.ok) {
+    const longData = (await longRes.json()) as { access_token?: string; token_type?: string; expires_in?: number }
+    if (longData.access_token) {
+      accessToken = longData.access_token
+      expiresAt = longData.expires_in
+        ? new Date(Date.now() + longData.expires_in * 1000)
+        : expiresAt
+      console.log('[instagram/callback] long-lived token obtained, expires_in:', longData.expires_in)
+    }
+  } else {
+    const text = await longRes.text()
+    console.warn('[instagram/callback] long-lived exchange failed (using short-lived):', longRes.status, text.slice(0, 200))
+  }
+
+  // 3. Profile — versioned graph.instagram.com endpoint (required for IGAA tokens)
   const igUserId = String(shortData.user_id)
   let accountName = igUserId
   let accountPic: string | undefined
 
   const profileRes = await fetch(
-    `https://graph.instagram.com/v21.0/me?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
+    `https://graph.instagram.com/v21.0/me?fields=id,username,name,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
     { signal: AbortSignal.timeout(10_000) },
   )
   if (profileRes.ok) {
@@ -84,7 +110,7 @@ async function exchangeInstagram(
   return {
     token: {
       accessToken,
-      expiresAt: shortData.expires_in ? new Date(Date.now() + shortData.expires_in * 1000) : undefined,
+      expiresAt,
     },
     profile: {
       accountId: igUserId,

@@ -15,7 +15,7 @@ import { db } from '@/lib/db'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
 import { decryptToken } from '@/lib/crypto'
 
-const GRAPH = 'https://graph.instagram.com'
+const GRAPH = 'https://graph.instagram.com/v21.0'
 
 async function safeGet(url: string): Promise<{ status: number; body: unknown }> {
   try {
