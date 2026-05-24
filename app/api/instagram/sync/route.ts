@@ -117,9 +117,20 @@ export async function POST(): Promise<NextResponse> {
       return NextResponse.json({ error: 'RATE_LIMITED', detail: message }, { status: 429 })
     }
     // "Unsupported request - method type: get" → personal account connected via
-    // Business Login. The /me/media endpoint only works for Business/Creator accounts.
+    // Business Login. The /me/media endpoint only works for Business/Creator accounts
+    // that are properly connected.
+    // Log the full error details (code, subcode) for diagnosing account type issues.
     if (message.toLowerCase().includes('unsupported request') || message.toLowerCase().includes('method type')) {
-      return NextResponse.json({ error: 'PERSONAL_ACCOUNT' }, { status: 422 })
+      console.warn('[instagram/sync] PERSONAL_ACCOUNT detected', { code, subcode, status, message })
+      // Try to still fetch account info so we know account_type from Instagram's perspective
+      const diagUrl =
+        `${GRAPH}/me` +
+        `?fields=id,username,name,account_type,profile_picture_url,followers_count,media_count` +
+        `&access_token=${encodeURIComponent(accessToken)}`
+      const diagRes = await graphGet<{ account_type?: string; username?: string; id?: string }>(diagUrl)
+      const accountType = diagRes.ok ? (diagRes.data as Record<string, unknown>).account_type : 'UNKNOWN'
+      console.warn('[instagram/sync] account_type from Instagram:', accountType, 'diagRes.ok:', diagRes.ok)
+      return NextResponse.json({ error: 'PERSONAL_ACCOUNT', detail: message, account_type: accountType }, { status: 422 })
     }
     console.error('[instagram/sync] media fetch failed', mediaRes.err)
     return NextResponse.json({ error: 'SYNC_FAILED', detail: message }, { status: 502 })
