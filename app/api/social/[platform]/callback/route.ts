@@ -358,17 +358,20 @@ export async function GET(
     console.error(`[${platform}/callback] failed to delete state:`, e),
   )
 
-  // Exchange code for tokens
-  // Use NEXT_PUBLIC_APP_URL when available; fall back to x-forwarded-proto to avoid
-  // http:// vs https:// mismatches caused by Vercel's internal HTTP routing
-  const appOrigin = (() => {
+  // Exchange code for tokens.
+  // INSTAGRAM_REDIRECT_URI pins the exact URI registered in Meta Developer so there
+  // is no runtime-header calculation that could differ between connect and callback.
+  // Falls back to NEXT_PUBLIC_APP_URL, then x-forwarded-proto header derivation.
+  const redirectUri = (() => {
+    if (platform === 'instagram' && process.env.INSTAGRAM_REDIRECT_URI) {
+      return process.env.INSTAGRAM_REDIRECT_URI
+    }
     const envUrl = process.env.NEXT_PUBLIC_APP_URL
-    if (envUrl) return envUrl.replace(/\/+$/, '')
+    if (envUrl) return `${envUrl.replace(/\/+$/, '')}/api/social/${platform}/callback`
     const proto = req.headers.get('x-forwarded-proto') ?? req.nextUrl.protocol.replace(/:$/, '')
     const host = req.headers.get('x-forwarded-host') ?? req.nextUrl.host
-    return `${proto}://${host}`
+    return `${proto}://${host}/api/social/${platform}/callback`
   })()
-  const redirectUri = `${appOrigin}/api/social/${platform}/callback`
 
   let tokenResult: TokenResult
   let profileResult: ProfileResult

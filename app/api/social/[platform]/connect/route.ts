@@ -29,6 +29,11 @@ function getAppOrigin(req: NextRequest): string {
 }
 
 function callbackUrl(platform: Platform, req: NextRequest): string {
+  // INSTAGRAM_REDIRECT_URI lets you pin the exact URI registered in Meta Developer,
+  // avoiding any runtime-header calculation mismatch (http vs https, etc.)
+  if (platform === 'instagram' && process.env.INSTAGRAM_REDIRECT_URI) {
+    return process.env.INSTAGRAM_REDIRECT_URI
+  }
   return `${getAppOrigin(req)}/api/social/${platform}/callback`
 }
 
