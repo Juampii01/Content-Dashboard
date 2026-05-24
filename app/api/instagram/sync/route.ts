@@ -97,7 +97,7 @@ export async function POST(): Promise<NextResponse> {
   // 3. Fetch latest media (25)
   const mediaUrl =
     `${GRAPH}/me/media` +
-    `?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,video_views,shortcode` +
+    `?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode` +
     `&limit=25&access_token=${encodeURIComponent(accessToken)}`
 
   const mediaRes = await graphGet<unknown>(mediaUrl)
