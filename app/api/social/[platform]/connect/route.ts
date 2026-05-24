@@ -34,6 +34,7 @@ function callbackUrl(platform: Platform, req: NextRequest): string {
 
 function buildOAuthUrl(platform: Platform, state: string, req: NextRequest): string | null {
   const redirect = callbackUrl(platform, req)
+  console.log(`[${platform}/connect] redirect_uri=${redirect}`)
 
   if (platform === 'instagram') {
     // Instagram Business Login (API setup with Instagram login).
