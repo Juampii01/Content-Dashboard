@@ -69,7 +69,7 @@ async function exchangeInstagram(
   let accountPic: string | undefined
 
   const profileRes = await fetch(
-    `https://graph.instagram.com/v21.0/${igUserId}?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
+    `https://graph.instagram.com/v21.0/me?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
     { signal: AbortSignal.timeout(10_000) },
   )
   if (profileRes.ok) {
