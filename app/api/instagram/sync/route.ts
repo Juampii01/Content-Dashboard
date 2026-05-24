@@ -279,10 +279,13 @@ export async function POST(): Promise<NextResponse> {
         })
         snapshotWritten = true
 
-        // Refresh accountName/pic on the connection if they changed
+        // Refresh accountName/pic on the connection.
+        // Always update if current accountName looks like a numeric ID (fallback
+        // from failed profile fetch during OAuth) so it self-heals on first sync.
+        const accountNameIsNumeric = /^\d+$/.test(conn.accountName ?? '')
         if (
           accountParsed.data.username &&
-          accountParsed.data.username !== conn.accountName
+          (accountParsed.data.username !== conn.accountName || accountNameIsNumeric)
         ) {
           await db.socialConnection.update({
             where: { clientId_platform: { clientId, platform: 'instagram' } },
@@ -292,6 +295,7 @@ export async function POST(): Promise<NextResponse> {
               updatedBy: userId,
             },
           })
+          console.log('[instagram/sync] accountName updated to', accountParsed.data.username)
         }
       } catch (e) {
         console.error('[instagram/sync] snapshot upsert failed', e)
