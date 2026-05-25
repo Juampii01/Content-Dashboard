@@ -25,6 +25,7 @@ import {
   InstagramAccountSchema,
   InstagramGraphErrorSchema,
   InstagramMediaListSchema,
+  type InstagramMedia,
 } from '@/lib/schemas/instagram'
 import { accountToSnapshot, mediaToUserReel } from '@/lib/instagram/transform'
 import { decryptToken } from '@/lib/crypto'
@@ -97,19 +98,18 @@ export async function POST(): Promise<NextResponse> {
 
   const accessToken = decryptToken(conn.accessToken)
 
-  // 3. Fetch latest media (up to 50 posts, covers accounts with <50 posts fully).
-  // conn.accountId = the IG user_id returned by the token exchange — used as
-  // the path segment (graph.instagram.com/{user_id}/media).
+  // 3. Fetch ALL media with cursor-based pagination (100 per page, max 5 pages = 500).
+  // conn.accountId = the IG user_id returned by the token exchange.
   const igUserId = conn.accountId
-  const mediaUrl =
+  const FIELDS = 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode'
+  const firstUrl =
     `${GRAPH}/${igUserId}/media` +
-    `?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode` +
-    `&limit=50&access_token=${encodeURIComponent(accessToken)}`
+    `?fields=${FIELDS}&limit=100&access_token=${encodeURIComponent(accessToken)}`
 
-  const mediaRes = await graphGet<unknown>(mediaUrl)
-  if (!mediaRes.ok) {
-    const { code, subcode, status, message } = mediaRes.err
-    // Token invalidated: 190 = invalid/expired OAuth token
+  // First page — errors here are fatal
+  const firstRes = await graphGet<unknown>(firstUrl)
+  if (!firstRes.ok) {
+    const { code, subcode, status, message } = firstRes.err
     if (code === 190) {
       await db.socialConnection.update({
         where: { clientId_platform: { clientId, platform: 'instagram' } },
@@ -117,36 +117,45 @@ export async function POST(): Promise<NextResponse> {
       })
       return NextResponse.json({ error: 'TOKEN_EXPIRED', detail: message }, { status: 401 })
     }
-    // Rate limited: code 4 (app) / 17 (user) / 32 (page), or 429
     if (status === 429 || code === 4 || code === 17 || code === 32 || subcode === 2446079) {
       console.warn('[instagram/sync] rate-limited', { code, subcode, message })
       return NextResponse.json({ error: 'RATE_LIMITED', detail: message }, { status: 429 })
     }
-    // "Unsupported request - method type: get" → personal account connected via
-    // Business Login. The /me/media endpoint only works for Business/Creator accounts
-    // that are properly connected.
-    // Log the full error details (code, subcode) for diagnosing account type issues.
     if (message.toLowerCase().includes('unsupported request') || message.toLowerCase().includes('method type')) {
       console.warn('[instagram/sync] PERSONAL_ACCOUNT detected', { code, subcode, status, message })
-      // Try to still fetch account info so we know account_type from Instagram's perspective
-      const diagUrl =
-        `${GRAPH}/${igUserId}` +
-        `?fields=id,username,name,account_type,profile_picture_url,followers_count,media_count` +
-        `&access_token=${encodeURIComponent(accessToken)}`
-      const diagRes = await graphGet<{ account_type?: string; username?: string; id?: string }>(diagUrl)
+      const diagUrl = `${GRAPH}/${igUserId}?fields=id,username,name,account_type,profile_picture_url,followers_count,media_count&access_token=${encodeURIComponent(accessToken)}`
+      const diagRes = await graphGet<{ account_type?: string }>(diagUrl)
       const accountType = diagRes.ok ? (diagRes.data as Record<string, unknown>).account_type : 'UNKNOWN'
       console.warn('[instagram/sync] account_type from Instagram:', accountType, 'diagRes.ok:', diagRes.ok)
       return NextResponse.json({ error: 'PERSONAL_ACCOUNT', detail: message, account_type: accountType }, { status: 422 })
     }
-    console.error('[instagram/sync] media fetch failed', mediaRes.err)
+    console.error('[instagram/sync] media fetch failed', firstRes.err)
     return NextResponse.json({ error: 'SYNC_FAILED', detail: message }, { status: 502 })
   }
 
-  const mediaParsed = InstagramMediaListSchema.safeParse(mediaRes.data)
-  if (!mediaParsed.success) {
-    console.error('[instagram/sync] media payload did not match schema', mediaParsed.error.flatten())
+  const firstParsed = InstagramMediaListSchema.safeParse(firstRes.data)
+  if (!firstParsed.success) {
+    console.error('[instagram/sync] media payload did not match schema', firstParsed.error.flatten())
     return NextResponse.json({ error: 'SYNC_FAILED', detail: 'invalid_media_payload' }, { status: 502 })
   }
+
+  // Paginate: follow paging.next until exhausted (max 4 more pages = 500 total)
+  const allMedia: InstagramMedia[] = [...firstParsed.data.data]
+  let nextUrl: string | undefined = firstParsed.data.paging?.next
+  let pageCount = 1
+  while (nextUrl && pageCount < 5) {
+    const pageRes = await graphGet<unknown>(nextUrl)
+    if (!pageRes.ok) break // non-fatal: stop pagination, keep what we have
+    const pageParsed = InstagramMediaListSchema.safeParse(pageRes.data)
+    if (!pageParsed.success) break
+    allMedia.push(...pageParsed.data.data)
+    nextUrl = pageParsed.data.paging?.next
+    pageCount++
+  }
+  console.log(`[instagram/sync] fetched ${allMedia.length} media items across ${pageCount} page(s)`)
+
+  // Wrap into the shape the rest of the handler expects
+  const mediaParsed = { data: { data: allMedia } }
 
   // If the API returned 0 items, the account is likely personal (not Business/Creator).
   // We still write the snapshot so followers show up, but we tell the client why media is empty.
