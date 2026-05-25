@@ -32,7 +32,10 @@ import { checkRateLimit } from '@/lib/utils/ratelimit'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const GRAPH = 'https://graph.instagram.com/v21.0'
+// Instagram Business Login tokens use unversioned graph.instagram.com endpoints.
+// /v21.0/me and /me both 404 in this flow — correct form is /{user_id}.
+// The user_id is stored in SocialConnection.accountId at OAuth time.
+const GRAPH = 'https://graph.instagram.com'
 
 interface GraphErrorInfo {
   status: number
@@ -94,9 +97,12 @@ export async function POST(): Promise<NextResponse> {
 
   const accessToken = decryptToken(conn.accessToken)
 
-  // 3. Fetch latest media (25)
+  // 3. Fetch latest media (25).
+  // conn.accountId = the IG user_id returned by the token exchange — used as
+  // the path segment (graph.instagram.com/{user_id}/media).
+  const igUserId = conn.accountId
   const mediaUrl =
-    `${GRAPH}/me/media` +
+    `${GRAPH}/${igUserId}/media` +
     `?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode` +
     `&limit=25&access_token=${encodeURIComponent(accessToken)}`
 
@@ -124,7 +130,7 @@ export async function POST(): Promise<NextResponse> {
       console.warn('[instagram/sync] PERSONAL_ACCOUNT detected', { code, subcode, status, message })
       // Try to still fetch account info so we know account_type from Instagram's perspective
       const diagUrl =
-        `${GRAPH}/me` +
+        `${GRAPH}/${igUserId}` +
         `?fields=id,username,name,account_type,profile_picture_url,followers_count,media_count` +
         `&access_token=${encodeURIComponent(accessToken)}`
       const diagRes = await graphGet<{ account_type?: string; username?: string; id?: string }>(diagUrl)
@@ -147,7 +153,7 @@ export async function POST(): Promise<NextResponse> {
   if (mediaParsed.data.data.length === 0) {
     // Still try to write account snapshot
     const accountUrl2 =
-      `${GRAPH}/me` +
+      `${GRAPH}/${igUserId}` +
       `?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count` +
       `&access_token=${encodeURIComponent(accessToken)}`
     const accountRes2 = await graphGet<unknown>(accountUrl2)
@@ -236,7 +242,7 @@ export async function POST(): Promise<NextResponse> {
 
   // 5. Fetch account info
   const accountUrl =
-    `${GRAPH}/me` +
+    `${GRAPH}/${igUserId}` +
     `?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count` +
     `&access_token=${encodeURIComponent(accessToken)}`
   const accountRes = await graphGet<unknown>(accountUrl)

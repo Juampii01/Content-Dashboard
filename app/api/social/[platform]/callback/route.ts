@@ -89,13 +89,15 @@ async function exchangeInstagram(
     console.warn('[instagram/callback] long-lived exchange failed (using short-lived):', longRes.status, text.slice(0, 200))
   }
 
-  // 3. Profile — versioned graph.instagram.com endpoint (required for IGAA tokens)
+  // 3. Profile — graph.instagram.com/{user_id} (unversioned, no /me).
+  // Instagram Business Login tokens use the numeric user_id returned by the
+  // token exchange. /me and /v21.0/me both return 404 in this flow.
   const igUserId = String(shortData.user_id)
   let accountName = igUserId
   let accountPic: string | undefined
 
   const profileRes = await fetch(
-    `https://graph.instagram.com/v21.0/me?fields=id,username,name,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
+    `https://graph.instagram.com/${igUserId}?fields=id,username,name,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
     { signal: AbortSignal.timeout(10_000) },
   )
   if (profileRes.ok) {
