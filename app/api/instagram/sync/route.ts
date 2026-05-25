@@ -97,14 +97,14 @@ export async function POST(): Promise<NextResponse> {
 
   const accessToken = decryptToken(conn.accessToken)
 
-  // 3. Fetch latest media (25).
+  // 3. Fetch latest media (up to 50 posts, covers accounts with <50 posts fully).
   // conn.accountId = the IG user_id returned by the token exchange — used as
   // the path segment (graph.instagram.com/{user_id}/media).
   const igUserId = conn.accountId
   const mediaUrl =
     `${GRAPH}/${igUserId}/media` +
     `?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode` +
-    `&limit=25&access_token=${encodeURIComponent(accessToken)}`
+    `&limit=50&access_token=${encodeURIComponent(accessToken)}`
 
   const mediaRes = await graphGet<unknown>(mediaUrl)
   if (!mediaRes.ok) {
@@ -168,10 +168,12 @@ export async function POST(): Promise<NextResponse> {
           create: { clientId, platform: 'instagram', createdBy: userId, updatedBy: userId, date: today2, followers: snap2.followers, posts: snap2.posts },
           update: { updatedBy: userId, followers: snap2.followers, posts: snap2.posts },
         }).catch(() => {})
-        if (accountParsed2.data.username && accountParsed2.data.username !== conn.accountName) {
+        const resolvedName2 = accountParsed2.data.username ?? accountParsed2.data.name
+        const isNumeric2 = /^\d+$/.test(conn.accountName ?? '')
+        if (resolvedName2 && (resolvedName2 !== conn.accountName || isNumeric2)) {
           await db.socialConnection.update({
             where: { clientId_platform: { clientId, platform: 'instagram' } },
-            data: { accountName: accountParsed2.data.username, accountPic: accountParsed2.data.profile_picture_url ?? conn.accountPic, updatedBy: userId },
+            data: { accountName: resolvedName2, accountPic: accountParsed2.data.profile_picture_url ?? conn.accountPic, updatedBy: userId },
           }).catch(() => {})
         }
       }
@@ -288,20 +290,22 @@ export async function POST(): Promise<NextResponse> {
         // Refresh accountName/pic on the connection.
         // Always update if current accountName looks like a numeric ID (fallback
         // from failed profile fetch during OAuth) so it self-heals on first sync.
+        // Use username first; fall back to name if username not returned by API.
+        const resolvedName = accountParsed.data.username ?? accountParsed.data.name
         const accountNameIsNumeric = /^\d+$/.test(conn.accountName ?? '')
         if (
-          accountParsed.data.username &&
-          (accountParsed.data.username !== conn.accountName || accountNameIsNumeric)
+          resolvedName &&
+          (resolvedName !== conn.accountName || accountNameIsNumeric)
         ) {
           await db.socialConnection.update({
             where: { clientId_platform: { clientId, platform: 'instagram' } },
             data: {
-              accountName: accountParsed.data.username,
+              accountName: resolvedName,
               accountPic: accountParsed.data.profile_picture_url ?? conn.accountPic,
               updatedBy: userId,
             },
           })
-          console.log('[instagram/sync] accountName updated to', accountParsed.data.username)
+          console.log('[instagram/sync] accountName updated to', resolvedName)
         }
       } catch (e) {
         console.error('[instagram/sync] snapshot upsert failed', e)
