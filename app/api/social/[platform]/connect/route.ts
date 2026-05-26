@@ -47,14 +47,22 @@ function buildOAuthUrl(platform: Platform, state: string, req: NextRequest): str
     // one from Meta's "API setup with Instagram login" section (not the FB app ID).
     const clientId = process.env.INSTAGRAM_APP_ID
     if (!clientId) return null
+    // scope must be literal commas — URLSearchParams encodes them as %2C which
+    // Instagram OAuth does not accept. Append scope as a raw string.
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirect,
-      scope: 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights',
       state,
       response_type: 'code',
     })
-    return `https://www.instagram.com/oauth/authorize?${params.toString()}`
+    const scope = [
+      'instagram_business_basic',
+      'instagram_business_manage_messages',
+      'instagram_business_manage_comments',
+      'instagram_business_content_publish',
+      'instagram_business_manage_insights',
+    ].join(',')
+    return `https://www.instagram.com/oauth/authorize?${params.toString()}&scope=${scope}`
   }
 
   if (platform === 'youtube') {
