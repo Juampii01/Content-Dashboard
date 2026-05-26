@@ -680,3 +680,24 @@ model IncomeRecord {
   @@index([clientId, source])
   @@index([reelId])
 }
+
+// InstagramComment: cached comments + replies per media (reel/post).
+// Synced on demand from GET /api/instagram/comments?mediaId=.
+model InstagramComment {
+  id         String   @id @default(cuid())
+  clientId   String
+  mediaId    String   // Instagram media ID (reel/post)
+  commentId  String   // Instagram comment ID (unique per account)
+  username   String   @default("")
+  text       String
+  timestamp  DateTime
+  likeCount  Int      @default(0)
+  hidden     Boolean  @default(false)
+  parentId   String?  // set for replies — points to parent commentId on Instagram
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([clientId, commentId])
+  @@index([clientId, mediaId])
+  @@index([clientId, parentId])
+}
