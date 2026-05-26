@@ -47,14 +47,10 @@ function buildOAuthUrl(platform: Platform, state: string, req: NextRequest): str
     // one from Meta's "API setup with Instagram login" section (not the FB app ID).
     const clientId = process.env.INSTAGRAM_APP_ID
     if (!clientId) return null
-    // Only request instagram_business_basic. The other permissions
-    // (manage_insights, content_publish, manage_comments) require Meta App
-    // Review and cause Instagram to issue a restricted token even in Development
-    // mode, breaking /me/media calls for Creator accounts.
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirect,
-      scope: 'instagram_business_basic',
+      scope: 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights',
       state,
       response_type: 'code',
     })
