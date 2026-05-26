@@ -89,24 +89,34 @@ async function exchangeInstagram(
     console.warn('[instagram/callback] long-lived exchange failed (using short-lived):', longRes.status, text.slice(0, 200))
   }
 
-  // 3. Profile — graph.instagram.com/{user_id} (unversioned, no /me).
-  // Instagram Business Login tokens use the numeric user_id returned by the
-  // token exchange. /me and /v21.0/me both return 404 in this flow.
+  // 3. Profile — /v21.0/me is the correct endpoint for Instagram Login tokens.
+  // Returns user_id + username + account_type. The `name` field does NOT exist
+  // in the Instagram Login flow (only in Facebook Login). Do NOT use /{user_id}.
   const igUserId = String(shortData.user_id)
   let accountName = igUserId
   let accountPic: string | undefined
 
   const profileRes = await fetch(
-    `https://graph.instagram.com/${igUserId}?fields=id,username,name,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
+    `https://graph.instagram.com/v21.0/me?fields=user_id,username,account_type,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
     { signal: AbortSignal.timeout(10_000) },
   )
   if (profileRes.ok) {
-    const profileData = (await profileRes.json()) as { id?: string; username?: string; name?: string; profile_picture_url?: string }
-    accountName = profileData.username ?? profileData.name ?? igUserId
+    const profileData = (await profileRes.json()) as { user_id?: string; username?: string; account_type?: string; profile_picture_url?: string }
+    accountName = profileData.username ?? igUserId
     accountPic = profileData.profile_picture_url
+    console.log('[instagram/callback] profile fetched:', { username: profileData.username, account_type: profileData.account_type })
   } else {
-    const text = await profileRes.text()
-    console.warn('[instagram/callback] profile fetch failed (non-fatal):', profileRes.status, text.slice(0, 200))
+    const body = await profileRes.text()
+    let parsed: { error?: { code?: number; error_subcode?: number; message?: string; type?: string } } = {}
+    try { parsed = JSON.parse(body) } catch { /* non-JSON response */ }
+    console.error('[instagram/callback] profile fetch failed:', {
+      status: profileRes.status,
+      code: parsed.error?.code,
+      error_subcode: parsed.error?.error_subcode,
+      message: parsed.error?.message,
+      type: parsed.error?.type,
+      raw: body.slice(0, 300),
+    })
   }
 
   return {

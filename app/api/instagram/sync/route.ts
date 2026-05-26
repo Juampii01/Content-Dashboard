@@ -99,11 +99,12 @@ export async function POST(): Promise<NextResponse> {
   const accessToken = decryptToken(conn.accessToken)
 
   // 3. Fetch ALL media with cursor-based pagination (100 per page, max 5 pages = 500).
-  // conn.accountId = the IG user_id returned by the token exchange.
+  // /v21.0/me/media is the correct endpoint for Instagram Login tokens.
+  // Do NOT use /{user_id}/media — that path fails with "unsupported request".
   const igUserId = conn.accountId
   const FIELDS = 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode'
   const firstUrl =
-    `${GRAPH}/${igUserId}/media` +
+    `${GRAPH}/v21.0/me/media` +
     `?fields=${FIELDS}&limit=100&access_token=${encodeURIComponent(accessToken)}`
 
   // First page — errors here are fatal
@@ -121,15 +122,25 @@ export async function POST(): Promise<NextResponse> {
       console.warn('[instagram/sync] rate-limited', { code, subcode, message })
       return NextResponse.json({ error: 'RATE_LIMITED', detail: message }, { status: 429 })
     }
-    if (message.toLowerCase().includes('unsupported request') || message.toLowerCase().includes('method type')) {
-      console.warn('[instagram/sync] PERSONAL_ACCOUNT detected', { code, subcode, status, message })
-      const diagUrl = `${GRAPH}/${igUserId}?fields=id,username,name,account_type,profile_picture_url,followers_count,media_count&access_token=${encodeURIComponent(accessToken)}`
-      const diagRes = await graphGet<{ account_type?: string }>(diagUrl)
-      const accountType = diagRes.ok ? (diagRes.data as Record<string, unknown>).account_type : 'UNKNOWN'
-      console.warn('[instagram/sync] account_type from Instagram:', accountType, 'diagRes.ok:', diagRes.ok)
-      return NextResponse.json({ error: 'PERSONAL_ACCOUNT', detail: message, account_type: accountType }, { status: 422 })
+    // For any other error: check the real account_type before assuming personal.
+    // "unsupported request"/"method type" means bad endpoint — NOT necessarily personal account.
+    // Only return PERSONAL_ACCOUNT if account_type is actually PERSONAL.
+    const diagUrl = `${GRAPH}/v21.0/me?fields=user_id,username,account_type&access_token=${encodeURIComponent(accessToken)}`
+    const diagRes = await graphGet<{ user_id?: string; username?: string; account_type?: string }>(diagUrl)
+    if (diagRes.ok) {
+      const accountType = (diagRes.data as Record<string, unknown>).account_type as string | undefined
+      if (accountType && accountType !== 'BUSINESS' && accountType !== 'MEDIA_CREATOR') {
+        console.warn('[instagram/sync] PERSONAL_ACCOUNT confirmed via account_type', { accountType, code, subcode, status, message })
+        return NextResponse.json({ error: 'PERSONAL_ACCOUNT', detail: message, account_type: accountType }, { status: 422 })
+      }
+      // Account IS professional but sync still failed — log full details for diagnosis
+      console.error('[instagram/sync] media fetch failed for professional account', { accountType, code, subcode, status, message })
+    } else {
+      console.error('[instagram/sync] media fetch failed AND diag call failed', {
+        mediaErr: { code, subcode, status, message },
+        diagErr: diagRes.err,
+      })
     }
-    console.error('[instagram/sync] media fetch failed', firstRes.err)
     return NextResponse.json({ error: 'SYNC_FAILED', detail: message }, { status: 502 })
   }
 
@@ -162,8 +173,8 @@ export async function POST(): Promise<NextResponse> {
   if (mediaParsed.data.data.length === 0) {
     // Still try to write account snapshot
     const accountUrl2 =
-      `${GRAPH}/${igUserId}` +
-      `?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count` +
+      `${GRAPH}/v21.0/me` +
+      `?fields=user_id,username,account_type,profile_picture_url,followers_count,follows_count,media_count` +
       `&access_token=${encodeURIComponent(accessToken)}`
     const accountRes2 = await graphGet<unknown>(accountUrl2)
     if (accountRes2.ok) {
@@ -177,7 +188,7 @@ export async function POST(): Promise<NextResponse> {
           create: { clientId, platform: 'instagram', createdBy: userId, updatedBy: userId, date: today2, followers: snap2.followers, posts: snap2.posts },
           update: { updatedBy: userId, followers: snap2.followers, posts: snap2.posts },
         }).catch(() => {})
-        const resolvedName2 = accountParsed2.data.username ?? accountParsed2.data.name
+        const resolvedName2 = accountParsed2.data.username
         const isNumeric2 = /^\d+$/.test(conn.accountName ?? '')
         if (resolvedName2 && (resolvedName2 !== conn.accountName || isNumeric2)) {
           await db.socialConnection.update({
@@ -251,10 +262,10 @@ export async function POST(): Promise<NextResponse> {
   const totalViews = allReels.reduce((s, r) => s + r.viewsCount, 0)
   const totalInteractions = allReels.reduce((s, r) => s + r.likesCount + r.commentsCount, 0)
 
-  // 5. Fetch account info
+  // 5. Fetch account info — /v21.0/me for Instagram Login tokens.
   const accountUrl =
-    `${GRAPH}/${igUserId}` +
-    `?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count` +
+    `${GRAPH}/v21.0/me` +
+    `?fields=user_id,username,account_type,profile_picture_url,followers_count,follows_count,media_count` +
     `&access_token=${encodeURIComponent(accessToken)}`
   const accountRes = await graphGet<unknown>(accountUrl)
 
@@ -300,7 +311,7 @@ export async function POST(): Promise<NextResponse> {
         // Always update if current accountName looks like a numeric ID (fallback
         // from failed profile fetch during OAuth) so it self-heals on first sync.
         // Use username first; fall back to name if username not returned by API.
-        const resolvedName = accountParsed.data.username ?? accountParsed.data.name
+        const resolvedName = accountParsed.data.username
         const accountNameIsNumeric = /^\d+$/.test(conn.accountName ?? '')
         if (
           resolvedName &&

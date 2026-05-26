@@ -35,12 +35,16 @@ export const InstagramMediaListSchema = z.object({
     .optional(),
 })
 
-// ─── Account (from /{ig-user-id}?fields=...) ─────────────────────────────────
+// ─── Account (from /v21.0/me?fields=...) ─────────────────────────────────────
+// The Instagram Login flow returns `user_id` (not `id`) and `account_type`.
+// `name` does NOT exist in this flow — only `username`.
 
 export const InstagramAccountSchema = z.object({
-  id: z.string(),
+  id: z.string().optional(),       // present in legacy /{user_id} calls
+  user_id: z.string().optional(),  // present in /v21.0/me calls
   username: z.string().optional(),
-  name: z.string().optional(),
+  name: z.string().optional(),     // @deprecated — solo presente en flujo Facebook Login antiguo, no en Instagram Login
+  account_type: z.enum(['PERSONAL', 'BUSINESS', 'MEDIA_CREATOR']).optional(),
   profile_picture_url: z.string().url().optional(),
   followers_count: z.number().int().nonnegative().optional(),
   follows_count: z.number().int().nonnegative().optional(),
