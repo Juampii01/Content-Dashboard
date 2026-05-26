@@ -2,7 +2,7 @@
  * GET /api/debug-ig
  * TEMPORARY — delete after diagnosis. SUPER_ADMIN only.
  *
- * Diagnoses the Instagram token stored for the active client.
+ * Full token diagnosis: API calls + debug_token introspection + raw token for local curl tests.
  */
 
 import { NextResponse } from 'next/server'
@@ -42,7 +42,7 @@ export async function GET() {
   const raw = conn.accessToken
   const isEncrypted = raw.startsWith('v1.')
   const token = decryptToken(raw)
-  const decryptOk = !token.startsWith('v1.')  // if still v1. → decrypt failed
+  const decryptOk = !token.startsWith('v1.')
 
   const t = encodeURIComponent(token)
   const igUserId = conn.accountId
@@ -52,7 +52,9 @@ export async function GET() {
     fetchIG('b) /me (unversioned)', `https://graph.instagram.com/me?fields=id,username,account_type&access_token=${t}`),
     fetchIG('c) /v21.0/me/media', `https://graph.instagram.com/v21.0/me/media?fields=id,caption&limit=3&access_token=${t}`),
     fetchIG(`d) /${igUserId} (stored user_id)`, `https://graph.instagram.com/${igUserId}?fields=id,username,account_type&access_token=${t}`),
-    fetchIG('e) graph.facebook.com/v21.0/me (token type check)', `https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${t}`),
+    fetchIG('e) graph.facebook.com/v21.0/me', `https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${t}`),
+    // debug_token — introspects the token: app_id, scopes, expires_at, is_valid, user_id
+    fetchIG('f) graph.facebook.com/debug_token', `https://graph.facebook.com/v21.0/debug_token?input_token=${t}&access_token=${t}`),
   ])
 
   return NextResponse.json({
@@ -64,6 +66,8 @@ export async function GET() {
       decryptOk,
       tokenPrefix: token.slice(0, 25) + '...',
       tokenLength: token.length,
+      // ⚠️ FULL TOKEN — for local curl testing only. Remove this endpoint after diagnosis.
+      tokenFull: token,
     },
     calls,
   })
