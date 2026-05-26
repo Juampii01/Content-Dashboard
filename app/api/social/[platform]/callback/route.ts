@@ -52,31 +52,18 @@ async function exchangeInstagram(
     body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, grant_type: 'authorization_code', redirect_uri: redirectUri, code }),
     signal: AbortSignal.timeout(10_000),
   })
-  // [DIAG] log raw response before any processing
   const shortRawText = await shortRes.text()
-  console.log('[instagram/callback][DIAG] step1 status:', shortRes.status)
-  console.log('[instagram/callback][DIAG] step1 content-type:', shortRes.headers.get('content-type'))
-  console.log('[instagram/callback][DIAG] step1 raw body:', shortRawText.slice(0, 600))
   if (!shortRes.ok) {
     console.error('[instagram/callback] short-lived token error:', shortRes.status, shortRawText.slice(0, 400))
     throw new Error(`IG400 redirectUri=${redirectUri} body=${shortRawText.slice(0, 150)}`)
   }
-  let shortData: { access_token: string; user_id: number; expires_in?: number; permissions?: unknown; token_type?: string; [k: string]: unknown }
+  let shortData: { access_token: string; user_id: number; expires_in?: number }
   try {
     shortData = JSON.parse(shortRawText)
   } catch {
     console.error('[instagram/callback] step1 JSON parse failed, raw:', shortRawText.slice(0, 400))
     throw new Error(`IG_PARSE_FAILED body=${shortRawText.slice(0, 150)}`)
   }
-  console.log('[instagram/callback][DIAG] step1 parsed:', {
-    user_id: shortData.user_id,
-    token_type: shortData.token_type,
-    expires_in: shortData.expires_in,
-    permissions: shortData.permissions,
-    access_token_prefix: String(shortData.access_token ?? '').slice(0, 25),
-    access_token_length: String(shortData.access_token ?? '').length,
-    all_keys: Object.keys(shortData),
-  })
   let accessToken = shortData.access_token
   let expiresAt: Date | undefined = shortData.expires_in
     ? new Date(Date.now() + shortData.expires_in * 1000)
@@ -95,18 +82,9 @@ async function exchangeInstagram(
     { signal: AbortSignal.timeout(10_000) },
   )
   const longRawText = await longRes.text()
-  console.log('[instagram/callback][DIAG] step2 status:', longRes.status)
-  console.log('[instagram/callback][DIAG] step2 content-type:', longRes.headers.get('content-type'))
-  console.log('[instagram/callback][DIAG] step2 raw body:', longRawText.slice(0, 600))
   if (longRes.ok) {
     let longData: { access_token?: string; token_type?: string; expires_in?: number } = {}
     try { longData = JSON.parse(longRawText) } catch { /* non-JSON */ }
-    console.log('[instagram/callback][DIAG] step2 parsed:', {
-      token_type: longData.token_type,
-      expires_in: longData.expires_in,
-      access_token_prefix: String(longData.access_token ?? '').slice(0, 25),
-      access_token_length: String(longData.access_token ?? '').length,
-    })
     if (longData.access_token) {
       accessToken = longData.access_token
       expiresAt = longData.expires_in
@@ -118,7 +96,7 @@ async function exchangeInstagram(
     console.warn('[instagram/callback] long-lived exchange failed (using short-lived):', longRes.status, longRawText.slice(0, 200))
   }
 
-  // 3. Profile — /v21.0/me is the correct endpoint for Instagram Login tokens.
+  // 3. Profile — /v23.0/me is the correct endpoint for Instagram Login tokens.
   // Returns user_id + username + account_type. The `name` field does NOT exist
   // in the Instagram Login flow (only in Facebook Login). Do NOT use /{user_id}.
   const igUserId = String(shortData.user_id)
@@ -126,7 +104,7 @@ async function exchangeInstagram(
   let accountPic: string | undefined
 
   const profileRes = await fetch(
-    `https://graph.instagram.com/v21.0/me?fields=user_id,username,account_type,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
+    `https://graph.instagram.com/v23.0/me?fields=user_id,username,account_type,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
     { signal: AbortSignal.timeout(10_000) },
   )
   if (profileRes.ok) {
