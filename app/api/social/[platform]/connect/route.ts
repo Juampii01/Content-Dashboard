@@ -50,6 +50,7 @@ function buildOAuthUrl(platform: Platform, state: string, req: NextRequest): str
     // scope must be literal commas — URLSearchParams encodes them as %2C which
     // Instagram OAuth does not accept. Append scope as a raw string.
     const params = new URLSearchParams({
+      force_reauth: 'true',
       client_id: clientId,
       redirect_uri: redirect,
       state,
