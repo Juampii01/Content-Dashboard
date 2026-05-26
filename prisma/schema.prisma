@@ -531,6 +531,27 @@ model AccountSnapshot {
   @@index([clientId, platform, date])
 }
 
+// AudienceSnapshot: cached Instagram audience demographics from the Insights API.
+// One row per (clientId, platform, date). Refreshed at most once per day.
+model AudienceSnapshot {
+  id              String   @id @default(cuid())
+  clientId        String
+  platform        String   @default("instagram")
+  date            DateTime
+  genderAge       Json     @default("{}")  // { "F.18-24": 12, "M.25-34": 45, ... }
+  country         Json     @default("{}")  // { "AR": 120, "US": 80, ... }
+  city            Json     @default("{}")  // { "Buenos Aires": 60, ... }
+  followerHistory Json     @default("[]") // [{ date: "2024-01-01", value: 5 }, ...]
+  reachHistory    Json     @default("[]") // [{ date: "2024-01-01", value: 300 }, ...]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  updatedBy       String?
+
+  @@unique([clientId, platform, date])
+  @@index([clientId, platform, date])
+}
+
 // ContentResearchHistory: /content-research — saved channel-level research runs.
 // Each row stores the channel info + a JSON array of top videos with their AI
 // analysis. Ported from Smart-Scale's `content_research_history` table.

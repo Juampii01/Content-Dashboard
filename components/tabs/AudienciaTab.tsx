@@ -8,6 +8,9 @@ import {
   TrendingUp,
   Trophy,
   ExternalLink,
+  Globe,
+  MapPin,
+  AlertCircle,
 } from 'lucide-react'
 import {
   LineChart,
@@ -24,6 +27,7 @@ import {
   Cell,
 } from 'recharts'
 import { useAudienceStats } from '@/hooks/useAudienceStats'
+import { useAudienceDemographics } from '@/hooks/useAudienceDemographics'
 import { useInstagramDataContext } from '@/components/instagram/InstagramDataContext'
 import { formatK } from '@/lib/utils/formatters'
 
@@ -127,6 +131,226 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+// ─── Demographics section ─────────────────────────────────────────────────────
+
+function DemographicsSection() {
+  const demo = useAudienceDemographics()
+
+  if (demo.status === 'loading') {
+    return (
+      <div className="grid grid-cols-3 gap-4">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="rounded-xl p-5" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+            <Skeleton className="h-3 w-28 mb-4" />
+            <div className="space-y-2">{[0,1,2,3,4].map(j => <Skeleton key={j} className="h-6 w-full" />)}</div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (demo.status === 'insufficient_followers') {
+    return (
+      <div className="rounded-xl p-5 flex items-start gap-3" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+        <AlertCircle size={16} style={{ color: 'var(--muted-foreground)', flexShrink: 0, marginTop: 2 }} />
+        <div>
+          <p className="text-sm font-medium mb-1" style={{ color: 'var(--foreground)' }}>Demografía no disponible</p>
+          <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+            Instagram requiere mínimo 100 seguidores para mostrar datos demográficos de audiencia.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (demo.status === 'error') {
+    return (
+      <div className="rounded-xl p-5 flex items-start gap-3" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+        <AlertCircle size={16} style={{ color: 'var(--muted-foreground)', flexShrink: 0, marginTop: 2 }} />
+        <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+          No se pudieron cargar los datos demográficos. Intentá de nuevo más tarde.
+        </p>
+      </div>
+    )
+  }
+
+  if (demo.status !== 'ok') return null
+
+  const { genderAge, country, city, followerHistory } = demo.data
+  const hasDemo = genderAge.length > 0 || country.length > 0 || city.length > 0
+  if (!hasDemo) return null
+
+  // Gender breakdown
+  const femaleTotal = genderAge.filter(d => d.gender === 'F').reduce((s, d) => s + d.value, 0)
+  const maleTotal   = genderAge.filter(d => d.gender === 'M').reduce((s, d) => s + d.value, 0)
+  const totalGender = femaleTotal + maleTotal
+  const fPct = totalGender > 0 ? Math.round((femaleTotal / totalGender) * 100) : 0
+  const mPct = 100 - fPct
+
+  // Top age ranges (merge M+F)
+  const byAge: Record<string, number> = {}
+  for (const d of genderAge) {
+    byAge[d.ageRange] = (byAge[d.ageRange] ?? 0) + d.value
+  }
+  const ageData = Object.entries(byAge)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 6)
+    .map(([range, value]) => ({ range, value }))
+  const maxAge = Math.max(...ageData.map(d => d.value), 1)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--muted-foreground)' }}>
+          DEMOGRAFÍA DE AUDIENCIA
+        </p>
+        {demo.data.cached && (
+          <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)' }}>
+            Cache del día
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+
+        {/* Gender + Age */}
+        <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <Users size={13} style={{ color: 'var(--muted-foreground)' }} />
+            <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--muted-foreground)' }}>
+              GÉNERO Y EDAD
+            </p>
+          </div>
+          {/* Gender bar */}
+          <div className="mb-4">
+            <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>
+              <span>Mujer {fPct}%</span>
+              <span>Hombre {mPct}%</span>
+            </div>
+            <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+              <div className="h-full rounded-full" style={{ width: `${fPct}%`, backgroundColor: 'var(--accent)' }} />
+            </div>
+          </div>
+          {/* Age bars */}
+          <div className="space-y-2">
+            {ageData.map(({ range, value }) => (
+              <div key={range}>
+                <div className="flex justify-between text-xs mb-0.5" style={{ color: 'var(--muted-foreground)' }}>
+                  <span>{range}</span>
+                  <span>{value.toLocaleString()}</span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${Math.round((value / maxAge) * 100)}%`, backgroundColor: 'var(--accent)', opacity: 0.7 }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top countries */}
+        <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <Globe size={13} style={{ color: 'var(--muted-foreground)' }} />
+            <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--muted-foreground)' }}>
+              TOP PAÍSES
+            </p>
+          </div>
+          {country.length === 0
+            ? <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Sin datos</p>
+            : (
+              <div className="space-y-3">
+                {country.map((c) => (
+                  <div key={c.code}>
+                    <div className="flex justify-between text-xs mb-0.5">
+                      <span style={{ color: 'var(--foreground)' }}>{c.code}</span>
+                      <span style={{ color: 'var(--muted-foreground)' }}>{c.pct}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${c.pct}%`, backgroundColor: 'var(--accent)' }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          }
+        </div>
+
+        {/* Top cities */}
+        <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin size={13} style={{ color: 'var(--muted-foreground)' }} />
+            <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--muted-foreground)' }}>
+              TOP CIUDADES
+            </p>
+          </div>
+          {city.length === 0
+            ? <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Sin datos</p>
+            : (
+              <div className="space-y-3">
+                {city.map((c) => (
+                  <div key={c.name}>
+                    <div className="flex justify-between text-xs mb-0.5">
+                      <span className="truncate mr-2" style={{ color: 'var(--foreground)' }}>{c.name}</span>
+                      <span className="flex-shrink-0" style={{ color: 'var(--muted-foreground)' }}>{c.pct}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${c.pct}%`, backgroundColor: 'var(--accent)', opacity: 0.75 }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          }
+        </div>
+      </div>
+
+      {/* Follower history from insights */}
+      {followerHistory.length > 1 && (
+        <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+          <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
+            NUEVOS SEGUIDORES (últimos 30 días)
+          </p>
+          <ResponsiveContainer width="100%" height={120}>
+            <BarChart data={followerHistory} margin={{ top: 0, right: 4, bottom: 0, left: -16 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(v: string) => { const d = new Date(v); return `${d.getDate()}/${d.getMonth() + 1}` }}
+                tick={{ fontSize: 9, fill: 'var(--muted-foreground)' }}
+                axisLine={false} tickLine={false}
+                interval="preserveStartEnd"
+              />
+              <YAxis tick={{ fontSize: 9, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} width={28} />
+              <Tooltip
+                content={({ active, payload, label }) =>
+                  active && payload?.length ? (
+                    <div className="rounded-lg px-2.5 py-1.5 text-xs shadow" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}>
+                      <p style={{ color: 'var(--muted-foreground)' }}>{label}</p>
+                      <p style={{ color: 'var(--accent)' }}>+{payload[0].value} seguidores</p>
+                    </div>
+                  ) : null
+                }
+              />
+              <Bar dataKey="value" fill="var(--accent)" radius={[3, 3, 0, 0]} opacity={0.85} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export function AudienciaTab() {
   const { hasLoaded, summary } = useInstagramDataContext()
   const { data, loading } = useAudienceStats()
@@ -161,6 +385,9 @@ export function AudienciaTab() {
 
   return (
     <div className="space-y-5">
+
+      {/* ── Demographics from Instagram Insights API ──────────────────────── */}
+      <DemographicsSection />
 
       {/* ── Row 1: Stat cards ───────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-4">
