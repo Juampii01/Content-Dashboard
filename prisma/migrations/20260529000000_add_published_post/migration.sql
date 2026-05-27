@@ -1,5 +1,5 @@
--- CreateTable
-CREATE TABLE "PublishedPost" (
+-- CreateTable (idempotent)
+CREATE TABLE IF NOT EXISTS "PublishedPost" (
     "id" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
     "createdBy" TEXT,
@@ -18,7 +18,7 @@ CREATE TABLE "PublishedPost" (
 );
 
 -- CreateIndex
-CREATE INDEX "PublishedPost_clientId_createdAt_idx" ON "PublishedPost"("clientId", "createdAt");
+CREATE INDEX IF NOT EXISTS "PublishedPost_clientId_createdAt_idx" ON "PublishedPost"("clientId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "PublishedPost_clientId_status_idx" ON "PublishedPost"("clientId", "status");
+CREATE INDEX IF NOT EXISTS "PublishedPost_clientId_status_idx" ON "PublishedPost"("clientId", "status");

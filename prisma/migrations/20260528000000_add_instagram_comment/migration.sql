@@ -1,5 +1,5 @@
--- CreateTable
-CREATE TABLE "InstagramComment" (
+-- CreateTable (idempotent)
+CREATE TABLE IF NOT EXISTS "InstagramComment" (
     "id" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
     "mediaId" TEXT NOT NULL,
@@ -17,10 +17,10 @@ CREATE TABLE "InstagramComment" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "InstagramComment_clientId_commentId_key" ON "InstagramComment"("clientId", "commentId");
+CREATE UNIQUE INDEX IF NOT EXISTS "InstagramComment_clientId_commentId_key" ON "InstagramComment"("clientId", "commentId");
 
 -- CreateIndex
-CREATE INDEX "InstagramComment_clientId_mediaId_idx" ON "InstagramComment"("clientId", "mediaId");
+CREATE INDEX IF NOT EXISTS "InstagramComment_clientId_mediaId_idx" ON "InstagramComment"("clientId", "mediaId");
 
 -- CreateIndex
-CREATE INDEX "InstagramComment_clientId_parentId_idx" ON "InstagramComment"("clientId", "parentId");
+CREATE INDEX IF NOT EXISTS "InstagramComment_clientId_parentId_idx" ON "InstagramComment"("clientId", "parentId");

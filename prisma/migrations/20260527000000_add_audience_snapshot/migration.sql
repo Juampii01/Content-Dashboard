@@ -1,5 +1,5 @@
--- CreateTable
-CREATE TABLE "AudienceSnapshot" (
+-- CreateTable (idempotent)
+CREATE TABLE IF NOT EXISTS "AudienceSnapshot" (
     "id" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
     "platform" TEXT NOT NULL DEFAULT 'instagram',
@@ -17,8 +17,8 @@ CREATE TABLE "AudienceSnapshot" (
     CONSTRAINT "AudienceSnapshot_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "AudienceSnapshot_clientId_platform_date_key" ON "AudienceSnapshot"("clientId", "platform", "date");
+-- CreateIndex (idempotent)
+CREATE UNIQUE INDEX IF NOT EXISTS "AudienceSnapshot_clientId_platform_date_key" ON "AudienceSnapshot"("clientId", "platform", "date");
 
--- CreateIndex
-CREATE INDEX "AudienceSnapshot_clientId_platform_date_idx" ON "AudienceSnapshot"("clientId", "platform", "date");
+-- CreateIndex (idempotent)
+CREATE INDEX IF NOT EXISTS "AudienceSnapshot_clientId_platform_date_idx" ON "AudienceSnapshot"("clientId", "platform", "date");

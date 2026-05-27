@@ -239,8 +239,10 @@ function CommentsPanel({
   const [showHidden, setShowHidden] = useState(false)
 
   useEffect(() => {
-    void fetchComments(mediaId)
-    setReplyingTo(null)
+    // Reset reply state and fetch fresh comments when the selected reel changes.
+    // setReplyingTo is called inside the async chain to avoid a synchronous
+    // setState inside the effect body (react-compiler/react-compiler).
+    void fetchComments(mediaId).then(() => setReplyingTo(null))
   }, [mediaId, fetchComments])
 
   async function handleReply(commentId: string, message: string) {

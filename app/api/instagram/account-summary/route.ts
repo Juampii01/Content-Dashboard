@@ -34,13 +34,22 @@ export async function GET(): Promise<NextResponse<Response>> {
   })
   if (!conn) return NextResponse.json({ connected: false })
 
-  const [snapshot, reelCount] = await Promise.all([
-    db.accountSnapshot.findFirst({
-      where: { clientId, platform: 'instagram' },
-      orderBy: { date: 'desc' },
-    }),
-    db.userReel.count({ where: { clientId } }),
-  ])
+  // Fetch snapshot + reelCount separately so a DB schema mismatch (e.g. during
+  // a rolling deploy before migrations complete) degrades gracefully instead of
+  // returning a 500 that makes the whole page show "not connected".
+  let snapshot = null
+  let reelCount = 0
+  try {
+    ;[snapshot, reelCount] = await Promise.all([
+      db.accountSnapshot.findFirst({
+        where: { clientId, platform: 'instagram' },
+        orderBy: { date: 'desc' },
+      }),
+      db.userReel.count({ where: { clientId } }),
+    ])
+  } catch (e) {
+    console.error('[instagram/account-summary] snapshot/reelCount query failed:', e)
+  }
 
   const tokenExpired = conn.expiresAt ? conn.expiresAt.getTime() <= Date.now() : false
 

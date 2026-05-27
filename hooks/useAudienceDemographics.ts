@@ -66,11 +66,12 @@ function parseTopN(raw: Record<string, number>, n = 5): Array<{ code?: string; n
 }
 
 export function useAudienceDemographics(): State {
-  const [state, setState] = useState<State>({ status: 'idle' })
+  // Initialize as 'loading' so we don't need a synchronous setState at the
+  // top of the effect (react-compiler/react-compiler lint rule).
+  const [state, setState] = useState<State>({ status: 'loading' })
 
   useEffect(() => {
     let cancelled = false
-    setState({ status: 'loading' })
 
     fetch('/api/instagram/audience')
       .then(async (res) => {

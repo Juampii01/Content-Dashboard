@@ -84,7 +84,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  loadRef.current = load
+  // Keep the ref in sync with the latest `load` function without triggering
+  // a re-render. useLayoutEffect runs synchronously after DOM mutations, so
+  // the ref is always up-to-date before any async callbacks fire.
+  // (Updating refs during render is disallowed by react-hooks/refs.)
+  useEffect(() => {
+    loadRef.current = load
+  })
 
   // Initial load — covers page refresh / direct navigation with existing session.
   useEffect(() => {

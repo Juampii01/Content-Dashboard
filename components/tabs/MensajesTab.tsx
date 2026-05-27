@@ -196,9 +196,12 @@ function ThreadPanel({ conversationId }: { conversationId: string }) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    void loadThread(conversationId)
-    setText('')
-    setSendError('')
+    // Clear text/error AFTER loadThread resolves so there's no synchronous
+    // setState in the effect body (react-compiler/react-compiler lint rule).
+    void loadThread(conversationId).then(() => {
+      setText('')
+      setSendError('')
+    })
   }, [conversationId, loadThread])
 
   // Scroll to bottom when messages load/update
@@ -351,8 +354,10 @@ export function MensajesTab() {
   const { connected } = useInstagramDataContext()
   const { convsState, syncing, loadConversations, sync } = useInstagramMessages()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  // Track whether we've already attempted an auto-sync so we don't loop.
-  const [autoSyncAttempted, setAutoSyncAttempted] = useState(false)
+  // Use a ref (not state) for the auto-sync flag — it's a one-time guard that
+  // doesn't affect render output, so a ref avoids the synchronous-setState-in-
+  // effect lint error (react-compiler/react-compiler).
+  const autoSyncAttemptedRef = useRef(false)
 
   // On mount (when connected), load conversations from DB.
   useEffect(() => {
@@ -366,12 +371,12 @@ export function MensajesTab() {
       connected &&
       convsState.status === 'ok' &&
       convsState.conversations.length === 0 &&
-      !autoSyncAttempted
+      !autoSyncAttemptedRef.current
     ) {
-      setAutoSyncAttempted(true)
+      autoSyncAttemptedRef.current = true
       void sync()
     }
-  }, [connected, convsState, autoSyncAttempted, sync])
+  }, [connected, convsState, sync])
 
   if (!connected) {
     return (

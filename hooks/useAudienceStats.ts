@@ -48,7 +48,8 @@ export function useAudienceStats(): { data: AudienceStats | null; loading: boole
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
+    // `loading` initializes as `true` — no need to set it again synchronously
+    // in the effect body (react-compiler/react-compiler lint rule).
     fetch('/api/instagram/audience-stats')
       .then((r) => (r.ok ? r.json() : null))
       .then((json) => {

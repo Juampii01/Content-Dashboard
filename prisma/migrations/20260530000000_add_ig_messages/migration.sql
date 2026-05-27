@@ -1,5 +1,5 @@
 -- CreateTable: IGConversation
-CREATE TABLE "IGConversation" (
+CREATE TABLE IF NOT EXISTS "IGConversation" (
     "id" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
     "conversationId" TEXT NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE "IGConversation" (
 );
 
 -- CreateTable: IGMessage
-CREATE TABLE "IGMessage" (
+CREATE TABLE IF NOT EXISTS "IGMessage" (
     "id" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
     "conversationId" TEXT NOT NULL,
@@ -32,9 +32,9 @@ CREATE TABLE "IGMessage" (
 );
 
 -- Unique indexes
-CREATE UNIQUE INDEX "IGConversation_clientId_conversationId_key" ON "IGConversation"("clientId", "conversationId");
-CREATE UNIQUE INDEX "IGMessage_clientId_messageId_key" ON "IGMessage"("clientId", "messageId");
+CREATE UNIQUE INDEX IF NOT EXISTS "IGConversation_clientId_conversationId_key" ON "IGConversation"("clientId", "conversationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "IGMessage_clientId_messageId_key" ON "IGMessage"("clientId", "messageId");
 
 -- Regular indexes
-CREATE INDEX "IGConversation_clientId_lastMessageAt_idx" ON "IGConversation"("clientId", "lastMessageAt");
-CREATE INDEX "IGMessage_clientId_conversationId_timestamp_idx" ON "IGMessage"("clientId", "conversationId", "timestamp");
+CREATE INDEX IF NOT EXISTS "IGConversation_clientId_lastMessageAt_idx" ON "IGConversation"("clientId", "lastMessageAt");
+CREATE INDEX IF NOT EXISTS "IGMessage_clientId_conversationId_timestamp_idx" ON "IGMessage"("clientId", "conversationId", "timestamp");
