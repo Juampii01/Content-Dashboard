@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/instagram/messages/sync",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

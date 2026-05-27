@@ -722,3 +722,39 @@ model PublishedPost {
   @@index([clientId, createdAt])
   @@index([clientId, status])
 }
+
+// IGConversation: one row per Instagram DM thread per client.
+// Synced every 5 min via Vercel cron → POST /api/instagram/messages/sync
+model IGConversation {
+  id                  String    @id @default(cuid())
+  clientId            String
+  conversationId      String    // Instagram conversation ID
+  participantId       String    @default("") // other party's Instagram-scoped ID
+  participantUsername String    @default("")
+  participantPic      String    @default("")
+  lastMessageAt       DateTime?
+  lastUserMessageAt   DateTime? // used for 24h window check
+  unreadCount         Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([clientId, conversationId])
+  @@index([clientId, lastMessageAt])
+}
+
+// IGMessage: individual messages within a conversation.
+model IGMessage {
+  id             String   @id @default(cuid())
+  clientId       String
+  conversationId String   // references IGConversation.conversationId
+  messageId      String   // Instagram message ID
+  fromId         String   @default("")
+  fromUsername   String   @default("")
+  text           String   @default("")
+  isFromBusiness Boolean  @default(false)
+  timestamp      DateTime
+  createdAt      DateTime @default(now())
+
+  @@unique([clientId, messageId])
+  @@index([clientId, conversationId, timestamp])
+}
