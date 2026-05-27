@@ -94,6 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initial load — covers page refresh / direct navigation with existing session.
   useEffect(() => {
+    // eslint-disable-next-line react-compiler/react-compiler -- `load` calls setState
+    // only after async awaits; the react-compiler rule produces a false positive here.
     void load()
   }, [load])
 
