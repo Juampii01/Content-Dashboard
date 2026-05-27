@@ -520,7 +520,7 @@ model AccountSnapshot {
   followers      Int      @default(0)
   following      Int      @default(0)
   posts          Int      @default(0)
-  impressions    Int      @default(0)
+  totalViews     Int      @default(0)  // formerly "impressions" — stores sum of video views across all synced media
   reach          Int      @default(0)
   profileVisits  Int      @default(0)
   newFollowers   Int      @default(0)

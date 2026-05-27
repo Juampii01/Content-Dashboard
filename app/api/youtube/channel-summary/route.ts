@@ -57,7 +57,7 @@ export async function GET(): Promise<NextResponse> {
       ? {
           date: snapshot.date.toISOString(),
           subscribers: snapshot.followers,
-          totalViews: snapshot.impressions,
+          totalViews: snapshot.totalViews,
           videoCount: snapshot.posts,
         }
       : null,

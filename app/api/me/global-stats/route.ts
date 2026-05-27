@@ -45,7 +45,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<GlobalStatsRes
       where: { clientId, platform: { in: connectedPlatforms } },
       orderBy: [{ platform: 'asc' }, { date: 'desc' }],
       distinct: ['platform'],
-      select: { followers: true, impressions: true, engagementRate: true },
+      select: { followers: true, totalViews: true, engagementRate: true },
     })
 
     if (snaps.length === 0) {
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<GlobalStatsRes
     }
 
     const followers = snaps.reduce((sum, s) => sum + s.followers, 0)
-    const views = snaps.reduce((sum, s) => sum + s.impressions, 0)
+    const views = snaps.reduce((sum, s) => sum + s.totalViews, 0)
     const engagementRate =
       snaps.reduce((sum, s) => sum + s.engagementRate, 0) / snaps.length
 

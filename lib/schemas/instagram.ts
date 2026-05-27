@@ -21,7 +21,9 @@ export const InstagramMediaSchema = z.object({
   shortcode: z.string().optional(),
   like_count: z.number().int().nonnegative().optional(),
   comments_count: z.number().int().nonnegative().optional(),
-  video_views: z.number().int().nonnegative().optional(),
+  // `views` is the v23.0+ field for Reel plays. `video_views` is deprecated since July 2024.
+  views: z.number().int().nonnegative().optional(),
+  video_views: z.number().int().nonnegative().optional(), // kept for legacy compatibility
 })
 export type InstagramMedia = z.infer<typeof InstagramMediaSchema>
 

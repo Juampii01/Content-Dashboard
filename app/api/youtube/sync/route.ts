@@ -92,13 +92,13 @@ export async function POST(): Promise<NextResponse> {
         updatedBy: userId,
         date: today,
         followers: subscribers,
-        impressions: totalViews,
+        totalViews,
         posts: videoCount,
       },
       update: {
         updatedBy: userId,
         followers: subscribers,
-        impressions: totalViews,
+        totalViews,
         posts: videoCount,
       },
     })

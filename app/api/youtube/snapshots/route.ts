@@ -36,7 +36,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     select: {
       date: true,
       followers: true,
-      impressions: true,
+      totalViews: true,
       posts: true,
     },
   })
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     .map((r) => ({
       date: r.date.toISOString(),
       subscribers: r.followers,
-      totalViews: r.impressions,
+      totalViews: r.totalViews,
       videoCount: r.posts,
     }))
 

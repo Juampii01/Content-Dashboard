@@ -106,7 +106,7 @@ export async function GET(): Promise<NextResponse> {
       date: s.date.toISOString(),
       followers: s.followers,
       engagementRate: s.engagementRate ?? 0,
-      impressions: s.impressions ?? 0,
+      impressions: s.totalViews ?? 0,
     })),
     reelStats: {
       totalLikes,

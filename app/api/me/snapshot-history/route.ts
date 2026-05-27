@@ -67,7 +67,7 @@ export async function GET(
       select: {
         date: true,
         platform: true,
-        impressions: true,
+        totalViews: true,
         reach: true,
         followers: true,
         engagementRate: true,
@@ -83,14 +83,14 @@ export async function GET(
     // Aggregate by date string (YYYY-MM-DD) summing across platforms
     const byDate = new Map<
       string,
-      { impressions: number; reach: number; followers: number; engagementRateSum: number; platformCount: number; profileVisits: number; newFollowers: number }
+      { totalViews: number; reach: number; followers: number; engagementRateSum: number; platformCount: number; profileVisits: number; newFollowers: number }
     >()
 
     for (const snap of snapshots) {
       const key = snap.date.toISOString().slice(0, 10)
       const existing = byDate.get(key)
       if (existing) {
-        existing.impressions += snap.impressions
+        existing.totalViews += snap.totalViews
         existing.reach += snap.reach
         existing.followers += snap.followers
         existing.engagementRateSum += snap.engagementRate
@@ -99,7 +99,7 @@ export async function GET(
         existing.newFollowers += snap.newFollowers
       } else {
         byDate.set(key, {
-          impressions: snap.impressions,
+          totalViews: snap.totalViews,
           reach: snap.reach,
           followers: snap.followers,
           engagementRateSum: snap.engagementRate,
@@ -118,7 +118,7 @@ export async function GET(
       const label = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
       return {
         date: label,
-        impressions: row.impressions,
+        impressions: row.totalViews, // chart key kept as 'impressions' for Recharts dataKey compatibility
         reach: row.reach,
       }
     })

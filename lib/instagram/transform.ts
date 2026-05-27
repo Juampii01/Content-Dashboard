@@ -43,7 +43,8 @@ export function mediaToUserReel(m: InstagramMedia): UserReelUpsert {
     caption: m.caption ?? null,
     likesCount: m.like_count ?? 0,
     commentsCount: m.comments_count ?? 0,
-    viewsCount: m.video_views ?? 0,
+    // `views` is the v23.0+ field. `video_views` is the deprecated fallback (pre-July 2024).
+    viewsCount: m.views ?? m.video_views ?? 0,
     publishedAt: m.timestamp ? new Date(m.timestamp) : null,
   }
 }

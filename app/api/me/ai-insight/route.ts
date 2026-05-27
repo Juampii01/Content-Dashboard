@@ -44,7 +44,7 @@ export async function POST(
         platform: true,
         date: true,
         followers: true,
-        impressions: true,
+        totalViews: true,
         reach: true,
         engagementRate: true,
         profileVisits: true,
@@ -74,7 +74,7 @@ export async function POST(
     const snapshotLines = snapshots
       .map(
         (s) =>
-          `- ${s.platform}: ${s.followers} seguidores, ${s.impressions} impresiones, ${s.reach} alcance, ${s.engagementRate.toFixed(2)}% engagement, ${s.profileVisits} visitas al perfil, ${s.newFollowers} nuevos seguidores (${s.date.toISOString().slice(0, 10)})`
+          `- ${s.platform}: ${s.followers} seguidores, ${s.totalViews} vistas, ${s.reach} alcance, ${s.engagementRate.toFixed(2)}% engagement, ${s.profileVisits} visitas al perfil, ${s.newFollowers} nuevos seguidores (${s.date.toISOString().slice(0, 10)})`
       )
       .join('\n')
 

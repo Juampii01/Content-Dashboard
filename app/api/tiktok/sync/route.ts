@@ -297,7 +297,7 @@ export async function POST(): Promise<NextResponse> {
         followers,
         following,
         posts: videoCount,
-        impressions: totalViews,
+        totalViews,
         engagementRate,
       },
       update: {
@@ -305,7 +305,7 @@ export async function POST(): Promise<NextResponse> {
         followers,
         following,
         posts: videoCount,
-        impressions: totalViews,
+        totalViews,
         engagementRate,
       },
     })

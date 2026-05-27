@@ -103,7 +103,10 @@ export async function POST(): Promise<NextResponse> {
   // /v21.0/me/media is the correct endpoint for Instagram Login tokens.
   // Do NOT use /{user_id}/media — that path fails with "unsupported request".
   const igUserId = conn.accountId
-  const FIELDS = 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode'
+  // `views` is the v23.0+ field for total plays on Reels (replaces deprecated `video_views`).
+  // NOTE: `reach`, `impressions`, `saved`, `shares` require scope `instagram_manage_insights`
+  // which is pending Meta App Review. Add them here once approved.
+  const FIELDS = 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,shortcode,views'
   const firstUrl =
     `${GRAPH}/${GRAPH_VERSION}/me/media` +
     `?fields=${FIELDS}&limit=100&access_token=${encodeURIComponent(accessToken)}`
@@ -258,10 +261,10 @@ export async function POST(): Promise<NextResponse> {
   // TopBar can show real numbers (AccountSnapshot.impressions / engagementRate).
   const allReels = await db.userReel.findMany({
     where: { clientId },
+    orderBy: { publishedAt: 'desc' },
     select: { viewsCount: true, likesCount: true, commentsCount: true },
   })
   const totalViews = allReels.reduce((s, r) => s + r.viewsCount, 0)
-  const totalInteractions = allReels.reduce((s, r) => s + r.likesCount + r.commentsCount, 0)
 
   // 5. Fetch account info — /v21.0/me for Instagram Login tokens.
   const accountUrl =
@@ -275,8 +278,12 @@ export async function POST(): Promise<NextResponse> {
     const accountParsed = InstagramAccountSchema.safeParse(accountRes.data)
     if (accountParsed.success) {
       const snap = accountToSnapshot(accountParsed.data)
-      const engagementRate = snap.followers > 0
-        ? (totalInteractions / snap.followers) * 100
+      // Engagement rate: average per-reel engagement of last 30 reels.
+      // Formula: avg((likes + comments) / followers * 100) per reel.
+      // Previous formula summed ALL historical interactions → produced values >100%.
+      const last30 = allReels.slice(0, 30)
+      const engagementRate = snap.followers > 0 && last30.length > 0
+        ? last30.reduce((s, r) => s + ((r.likesCount + r.commentsCount) / snap.followers) * 100, 0) / last30.length
         : 0
       // Normalise to midnight UTC so @@unique([clientId, platform, date]) collapses repeated syncs per day.
       // Scoped by platform='instagram' so YouTube sync can write its own row for the same day without collision.
@@ -295,14 +302,14 @@ export async function POST(): Promise<NextResponse> {
             date: today,
             followers: snap.followers,
             posts: snap.posts,
-            impressions: totalViews,
+            totalViews,
             engagementRate,
           },
           update: {
             updatedBy: userId,
             followers: snap.followers,
             posts: snap.posts,
-            impressions: totalViews,
+            totalViews,
             engagementRate,
           },
         })

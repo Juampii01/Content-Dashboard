@@ -61,7 +61,7 @@ export async function GET(): Promise<NextResponse> {
           followers: snapshot.followers,
           following: snapshot.following,
           posts: snapshot.posts,
-          impressions: snapshot.impressions,
+          totalViews: snapshot.totalViews,
           engagementRate: snapshot.engagementRate,
           date: snapshot.date.toISOString(),
         }
