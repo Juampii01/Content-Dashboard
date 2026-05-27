@@ -10,8 +10,9 @@ export function usePeriod(): [Period, (p: Period) => void] {
   const router = useRouter()
   const pathname = usePathname()
 
-  const raw = Number(searchParams.get('period'))
-  const period: Period = (VALID_PERIODS.includes(raw as Period) ? raw : 30) as Period
+  const rawParam = searchParams.get('period')
+  const raw = rawParam !== null ? Number(rawParam) : null
+  const period: Period = (raw !== null && VALID_PERIODS.includes(raw as Period) ? raw : 30) as Period
 
   function setPeriod(p: Period) {
     const params = new URLSearchParams(searchParams.toString())
