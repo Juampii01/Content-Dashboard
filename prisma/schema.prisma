@@ -701,3 +701,24 @@ model InstagramComment {
   @@index([clientId, mediaId])
   @@index([clientId, parentId])
 }
+
+// PublishedPost: Instagram content published via the dashboard.
+// status: PENDING (container created, not yet published) | PUBLISHED | FAILED
+model PublishedPost {
+  id           String   @id @default(cuid())
+  clientId     String
+  createdBy    String?
+  containerId  String   @default("") // IG container ID (step 1)
+  postId       String   @default("") // IG media ID (after publish)
+  mediaType    String   @default("IMAGE") // IMAGE | REEL
+  mediaUrl     String
+  caption      String   @default("")
+  status       String   @default("PENDING") // PENDING | PUBLISHED | FAILED
+  errorMessage String   @default("")
+  publishedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([clientId, createdAt])
+  @@index([clientId, status])
+}
