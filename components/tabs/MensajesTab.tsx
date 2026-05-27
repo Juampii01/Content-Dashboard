@@ -68,18 +68,31 @@ function ConversationList({
   conversations,
   selectedId,
   onSelect,
+  syncing,
 }: {
   conversations: IGConversation[]
   selectedId: string | null
   onSelect: (id: string) => void
+  syncing: boolean
 }) {
   if (conversations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-2 px-4">
-        <Inbox size={24} style={{ color: 'var(--muted-foreground)' }} />
-        <p className="text-xs text-center" style={{ color: 'var(--muted-foreground)' }}>
-          No hay conversaciones. Hacé sync para cargar los DMs.
-        </p>
+        {syncing ? (
+          <>
+            <Loader2 size={24} className="animate-spin" style={{ color: 'var(--muted-foreground)' }} />
+            <p className="text-xs text-center" style={{ color: 'var(--muted-foreground)' }}>
+              Cargando conversaciones…
+            </p>
+          </>
+        ) : (
+          <>
+            <Inbox size={24} style={{ color: 'var(--muted-foreground)' }} />
+            <p className="text-xs text-center" style={{ color: 'var(--muted-foreground)' }}>
+              No hay conversaciones. Hacé sync para cargar los DMs.
+            </p>
+          </>
+        )}
       </div>
     )
   }
@@ -338,10 +351,27 @@ export function MensajesTab() {
   const { connected } = useInstagramDataContext()
   const { convsState, syncing, loadConversations, sync } = useInstagramMessages()
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  // Track whether we've already attempted an auto-sync so we don't loop.
+  const [autoSyncAttempted, setAutoSyncAttempted] = useState(false)
 
+  // On mount (when connected), load conversations from DB.
   useEffect(() => {
     if (connected) void loadConversations()
   }, [connected, loadConversations])
+
+  // Auto-sync the first time we get an empty result, so the user doesn't
+  // have to click the refresh button manually on first visit.
+  useEffect(() => {
+    if (
+      connected &&
+      convsState.status === 'ok' &&
+      convsState.conversations.length === 0 &&
+      !autoSyncAttempted
+    ) {
+      setAutoSyncAttempted(true)
+      void sync()
+    }
+  }, [connected, convsState, autoSyncAttempted, sync])
 
   if (!connected) {
     return (
@@ -415,6 +445,7 @@ export function MensajesTab() {
               conversations={convsState.conversations}
               selectedId={selectedId}
               onSelect={setSelectedId}
+              syncing={syncing}
             />
           )}
         </div>
