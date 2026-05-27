@@ -18,6 +18,8 @@
  *   }
  */
 
+import 'server-only'
+
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { db } from '@/lib/db'

@@ -57,7 +57,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <head>
         {/* FOUC prevention — must be synchronous, before any paint */}
-        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: FOUC_PREVENTION_SCRIPT }} />
       </head>
       <body className="antialiased" style={{ minHeight: '100vh' }}>

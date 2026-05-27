@@ -4,6 +4,7 @@
  * Server-side only. Uses SUPABASE_SERVICE_ROLE_KEY which bypasses RLS and
  * allows reading auth.users. NEVER import this from client components.
  */
+import 'server-only'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 let cached: SupabaseClient | null = null

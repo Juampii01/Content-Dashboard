@@ -102,7 +102,8 @@ export async function POST(): Promise<NextResponse> {
   // 3. Fetch ALL media with cursor-based pagination (100 per page, max 5 pages = 500).
   // /v21.0/me/media is the correct endpoint for Instagram Login tokens.
   // Do NOT use /{user_id}/media — that path fails with "unsupported request".
-  const igUserId = conn.accountId
+  // conn.accountId (igUserId) is not used in the URL: /me/media works with Instagram Login
+  // tokens and avoids the "unsupported request" error from /{user_id}/media.
   // `views` is the v23.0+ field for total plays on Reels (replaces deprecated `video_views`).
   // NOTE: `reach`, `impressions`, `saved`, `shares` require scope `instagram_manage_insights`
   // which is pending Meta App Review. Add them here once approved.

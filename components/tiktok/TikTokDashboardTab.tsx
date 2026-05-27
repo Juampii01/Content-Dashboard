@@ -47,12 +47,12 @@ interface Props {
   hasData: boolean
 }
 
-export function TikTokDashboardTab({ connected, hasData }: Props) {
+export function TikTokDashboardTab({ connected, hasData: _hasData }: Props) {
   const { data: summary, loading } = useTikTokChannelSummary()
 
   const snapshot = summary?.latestSnapshot ?? null
   const followers = snapshot?.followers ?? 0
-  const totalViews = snapshot?.impressions ?? 0
+  const totalViews = snapshot?.totalViews ?? 0
   const videoCount = snapshot?.posts ?? 0
   const engagementRate = snapshot?.engagementRate ?? 0
 

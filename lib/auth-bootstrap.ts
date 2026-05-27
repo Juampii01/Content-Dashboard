@@ -1,7 +1,6 @@
 import 'server-only'
 
 import { headers } from 'next/headers'
-import { redirect } from 'next/navigation'
 import { db as prisma } from '@/lib/db'
 import { createClient } from '@/lib/supabase/server'
 

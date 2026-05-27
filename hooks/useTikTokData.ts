@@ -27,7 +27,7 @@ export interface TikTokAccountSummary {
     followers: number
     following: number
     posts: number
-    impressions: number
+    totalViews: number
     engagementRate: number
     date: string
   } | null

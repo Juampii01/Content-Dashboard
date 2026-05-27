@@ -16,9 +16,11 @@ function readStorage(): ViewAsRole {
 
 export function setViewAsRole(role: ViewAsRole) {
   if (typeof window === 'undefined') return
-  role
-    ? window.localStorage.setItem(STORAGE_KEY, role)
-    : window.localStorage.removeItem(STORAGE_KEY)
+  if (role) {
+    window.localStorage.setItem(STORAGE_KEY, role)
+  } else {
+    window.localStorage.removeItem(STORAGE_KEY)
+  }
   window.dispatchEvent(new Event(EVENT_NAME))
 }
 

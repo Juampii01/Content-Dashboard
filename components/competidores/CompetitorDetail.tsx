@@ -55,16 +55,6 @@ function sortReels(reels: ReelDTO[], field: ReelSortField, dir: ReelSortDir): Re
   })
 }
 
-function InitialsAvatar({ username }: { username: string }) {
-  return (
-    <div
-      className="flex items-center justify-center w-14 h-14 rounded-full text-xl font-semibold flex-shrink-0"
-      style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
-    >
-      {username.charAt(0).toUpperCase()}
-    </div>
-  )
-}
 
 export function CompetitorDetail({ username }: Props) {
   const router = useRouter()

@@ -41,11 +41,18 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    // Supabase unreachable — treat as unauthenticated but let API routes handle it
+  }
 
-  if (!user && !isPublicPath(pathname)) {
+  // API routes self-protect via requireActiveClient() / requireUserId() and
+  // return JSON 401/403. Never redirect them to /login (frontend would receive
+  // HTML instead of JSON and silently swallow the error).
+  if (!user && !isPublicPath(pathname) && !pathname.startsWith('/api/')) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

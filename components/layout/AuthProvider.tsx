@@ -47,7 +47,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sessionError, setSessionError] = useState(false)
   const retryCount = useRef(0)
 
-  // eslint-disable-next-line react-hooks/immutability
   const loadRef = useRef<((isRetry?: boolean) => Promise<void>) | null>(null)
 
   const load = useCallback(async (isRetry = false) => {

@@ -85,12 +85,6 @@ async function igGet<T>(url: string): Promise<
   }
 }
 
-function mapIGError(code: number, subcode: number | null, status: number, message: string, clientId: string, userId: string) {
-  if (code === 190) return { tokenExpired: true }
-  if (status === 429 || code === 4 || code === 17 || code === 32 || subcode === 2446079) return { rateLimited: true }
-  return { fetchFailed: message }
-}
-
 // ─── GET — list recent published posts ────────────────────────────────────────
 
 export async function GET(): Promise<NextResponse> {
