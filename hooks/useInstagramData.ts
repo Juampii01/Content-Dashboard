@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
+// Swallows AbortError on unmount so hooks don't log/toast on cancelled fetches.
+function isAbortError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === 'AbortError'
+}
+
 export interface InstagramAccountSummary {
   connected: boolean
   accountName?: string
@@ -41,9 +46,9 @@ interface UseInstagramDataReturn {
 /**
  * Loads Instagram connection summary + UserReel list for the active client.
  *
- * Uses a request counter so only the latest in-flight refresh commits its
- * result to state — concurrent calls from React Strict Mode double-effects
- * are silently discarded instead of causing a flash-then-disappear.
+ * Uses AbortController so only the latest in-flight refresh commits its
+ * result to state — concurrent calls and unmounts abort previous fetches
+ * instead of causing a flash-then-disappear or state updates on dead components.
  */
 export function useInstagramData(): UseInstagramDataReturn {
   const [summary, setSummary] = useState<InstagramAccountSummary | null>(null)
@@ -52,21 +57,20 @@ export function useInstagramData(): UseInstagramDataReturn {
   const [hasLoaded, setHasLoaded] = useState(false)
   const [syncing, setSyncing] = useState(false)
 
-  // Incremented on every refresh() call. If the counter has moved on by the
-  // time a fetch resolves, that response is stale and gets discarded.
-  const reqRef = useRef(0)
+  const abortRef = useRef<AbortController | null>(null)
 
   const refresh = useCallback(async () => {
-    const seq = ++reqRef.current
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
     setLoading(true)
     try {
       const [sumRes, reelsRes] = await Promise.all([
-        fetch('/api/instagram/account-summary'),
-        fetch('/api/instagram/reels'),
+        fetch('/api/instagram/account-summary', { signal: controller.signal }),
+        fetch('/api/instagram/reels', { signal: controller.signal }),
       ])
 
-      // Discard if a newer refresh was started while we were fetching
-      if (seq !== reqRef.current) return
+      if (controller.signal.aborted) return
 
       if (sumRes.ok) {
         setSummary((await sumRes.json()) as InstagramAccountSummary)
@@ -76,15 +80,19 @@ export function useInstagramData(): UseInstagramDataReturn {
         setReels(json.reels ?? [])
       }
       setHasLoaded(true)
-    } catch {
-      if (seq === reqRef.current) setHasLoaded(true)
+    } catch (err) {
+      if (isAbortError(err)) return
+      setHasLoaded(true)
     } finally {
-      if (seq === reqRef.current) setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [])
 
   useEffect(() => {
     void refresh()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [refresh])
 
   const sync = useCallback(async () => {

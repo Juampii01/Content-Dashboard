@@ -64,6 +64,7 @@ async function fetchContentItems(): Promise<ContentPiece[]> {
 export function invalidateContentItems(): void {
   cache.items = []
   cache.ts = 0
+  cache.inflight = null
 }
 
 export interface UseContentItemsResult {

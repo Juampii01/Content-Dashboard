@@ -100,6 +100,16 @@ export function KanbanBoard() {
     return () => { cancelled = true }
   }, [])
 
+  // ── Cleanup debounce timer on unmount ─────────────────────────────────────
+
+  useEffect(() => {
+    return () => {
+      if (reorderTimerRef.current) {
+        clearTimeout(reorderTimerRef.current)
+      }
+    }
+  }, [])
+
   // ── Batch persist helper ──────────────────────────────────────────────────
 
   /**

@@ -4,7 +4,7 @@ import { headers } from 'next/headers'
 import { db as prisma } from '@/lib/db'
 import { createClient } from '@/lib/supabase/server'
 
-const PUBLIC_PATHS = ['/login']
+const PUBLIC_PATHS = ['/login', '/pending-approval', '/auth/reset-password']
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))

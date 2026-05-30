@@ -103,25 +103,29 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const { username, limit } = parsed.data
 
-  // Upsert Competitor by (clientId, username)
-  const competitor = await db.competitor.upsert({
-    where: { clientId_username: { clientId, username } },
-    create: { clientId, createdBy: userId, updatedBy: userId, username },
-    update: {},
-  })
+  // Upsert Competitor + create ScrapeJob atomically so a crash between the two
+  // calls never leaves a Competitor with no ScrapeJob.
+  const { competitor, job } = await db.$transaction(async (tx) => {
+    const competitor = await tx.competitor.upsert({
+      where: { clientId_username: { clientId, username } },
+      create: { clientId, createdBy: userId, updatedBy: userId, username },
+      update: {},
+    })
 
-  // Create ScrapeJob row (status: pending)
-  const job = await db.scrapeJob.create({
-    data: {
-      clientId,
-      createdBy: userId,
-      updatedBy: userId,
-      competitorId: competitor.id,
-      username,
-      requestedCount: limit,
-      status: 'pending',
-      kind: 'initial',
-    },
+    const job = await tx.scrapeJob.create({
+      data: {
+        clientId,
+        createdBy: userId,
+        updatedBy: userId,
+        competitorId: competitor.id,
+        username,
+        requestedCount: limit,
+        status: 'pending',
+        kind: 'initial',
+      },
+    })
+
+    return { competitor, job }
   })
 
   // Build response immediately

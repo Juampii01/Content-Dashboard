@@ -48,7 +48,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const parsed = GenerateSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request', issues: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Invalid request', ...(process.env.NODE_ENV !== 'production' ? { issues: parsed.error.flatten() } : {}) },
+      { status: 400 },
+    )
   }
 
   const { topic, type, tone = 'conversacional y directo' } = parsed.data

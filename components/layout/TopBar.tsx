@@ -10,6 +10,7 @@ import { MobileSidebarContext } from './LayoutShell'
 import { useAuth } from './AuthProvider'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { isAdmin as checkIsAdmin } from '@/lib/auth/permissions'
 
 interface GlobalStats {
   followers: number
@@ -50,7 +51,7 @@ export function TopBar() {
   const [viewAsUserId, setViewAsUserId] = useState<string | null>(null)
   const [viewAsLoading, setViewAsLoading] = useState(false)
 
-  const isAdmin = profile?.role === 'admin'
+  const isAdmin = checkIsAdmin(profile?.role)
 
   // Initials & display for the current identity shown in the pill
   const viewAsUser = viewAsUserId
@@ -89,14 +90,16 @@ export function TopBar() {
   // Fetch all users (admin only) + read existing view-as cookie
   useEffect(() => {
     if (!isAdmin) return
+    let cancelled = false
     fetch('/api/admin/users')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data?.users) setAllUsers(data.users)
+        if (!cancelled && data?.users) setAllUsers(data.users)
       })
       .catch(() => {})
     // Read cookie after users load
     setViewAsUserId(readViewAsCookie())
+    return () => { cancelled = true }
   }, [isAdmin])
 
   // Close dropdown on outside click
@@ -328,9 +331,10 @@ export function TopBar() {
                       const letter      = name.slice(0, 1).toUpperCase()
 
                       return (
-                        <div
+                        <button
                           key={u.id}
-                          className="group flex items-center gap-2.5 px-3 py-2 mx-1 rounded-lg cursor-pointer transition-colors"
+                          type="button"
+                          className="group flex items-center gap-2.5 px-3 py-2 mx-1 rounded-lg cursor-pointer transition-colors w-full text-left"
                           style={{ backgroundColor: isViewingAs ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'transparent' }}
                           onClick={() => !isSelf && !viewAsLoading && handleViewAs(u)}
                           onMouseEnter={(e) => {
@@ -394,7 +398,7 @@ export function TopBar() {
                               Ver
                             </span>
                           )}
-                        </div>
+                        </button>
                       )
                     })}
                   </div>

@@ -6,7 +6,7 @@ import { Loader2, RefreshCw, Music } from 'lucide-react'
 import { TimeFilter } from '@/components/layout/TimeFilter'
 import { TikTokTabNav, useTikTokTab } from './TikTokTabNav'
 import { ConnectButton } from '@/components/shared/ConnectButton'
-import { useTikTokChannelSummary, triggerTikTokSync } from '@/hooks/useTikTokData'
+import { useTikTokChannelSummary, useTikTokVideos, triggerTikTokSync } from '@/hooks/useTikTokData'
 import { PageHeader } from '@/components/ui/PageHeader'
 
 const TikTokDashboardTab = dynamic(
@@ -20,7 +20,7 @@ const TikTokVideosTab = dynamic(
 
 export function TikTokContent() {
   const [tab] = useTikTokTab()
-  const { data: summary, loading, refresh } = useTikTokChannelSummary()
+  const { data: summary, loading, refresh: refreshSummary } = useTikTokChannelSummary()
   const [syncing, setSyncing] = useState(false)
 
   const connected = summary?.connected ?? false
@@ -28,10 +28,21 @@ export function TikTokContent() {
   const videosCount = summary?.videosCount ?? 0
   const hasData = connected && videosCount > 0
 
+  const {
+    videos,
+    loading: videosLoading,
+    loadingMore,
+    hasMore,
+    loadMore,
+    refresh: refreshVideos,
+  } = useTikTokVideos({ enabled: connected, pageSize: 25 })
+
   async function handleSync() {
     setSyncing(true)
     const ok = await triggerTikTokSync()
-    if (ok) await refresh()
+    if (ok) {
+      await Promise.all([refreshSummary(), refreshVideos()])
+    }
     setSyncing(false)
   }
 
@@ -113,7 +124,17 @@ export function TikTokContent() {
 
       {/* Content */}
       {tab === 'dashboard' && <TikTokDashboardTab connected={connected} hasData={hasData} />}
-      {tab === 'videos'    && <TikTokVideosTab    connected={connected} hasData={hasData} />}
+      {tab === 'videos'    && (
+        <TikTokVideosTab
+          connected={connected}
+          hasData={hasData}
+          videos={videos}
+          loading={videosLoading}
+          loadingMore={loadingMore}
+          hasMore={hasMore}
+          loadMore={loadMore}
+        />
+      )}
     </div>
   )
 }

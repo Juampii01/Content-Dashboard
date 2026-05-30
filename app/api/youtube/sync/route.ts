@@ -71,9 +71,18 @@ export async function POST(): Promise<NextResponse> {
     }
 
     const stats = channel.statistics
-    const subscribers = parseInt(stats?.subscriberCount ?? '0', 10) || 0
-    const totalViews = parseInt(stats?.viewCount ?? '0', 10) || 0
-    const videoCount = parseInt(stats?.videoCount ?? '0', 10) || 0
+    const rawSubscribers = stats?.subscriberCount ?? '0'
+    const rawTotalViews = stats?.viewCount ?? '0'
+    const rawVideoCount = stats?.videoCount ?? '0'
+    const parsedSubscribers = parseInt(rawSubscribers, 10)
+    const parsedTotalViews = parseInt(rawTotalViews, 10)
+    const parsedVideoCount = parseInt(rawVideoCount, 10)
+    if (isNaN(parsedSubscribers)) console.warn('[youtube:sync] non-numeric field value', 'subscriberCount', rawSubscribers)
+    if (isNaN(parsedTotalViews)) console.warn('[youtube:sync] non-numeric field value', 'viewCount', rawTotalViews)
+    if (isNaN(parsedVideoCount)) console.warn('[youtube:sync] non-numeric field value', 'videoCount', rawVideoCount)
+    const subscribers = parsedSubscribers || 0
+    const totalViews = parsedTotalViews || 0
+    const videoCount = parsedVideoCount || 0
     const uploadsPlaylistId = channel.contentDetails?.relatedPlaylists?.uploads
     const channelId = channel.id
 
@@ -159,7 +168,6 @@ export async function POST(): Promise<NextResponse> {
             const hasValidChannelId = typeof videoChannelId === 'string' && videoChannelId.trim().length > 0
             const resolvedChannelId = hasValidChannelId ? videoChannelId : channelId
             const updateData: {
-              clientId: string
               updatedBy: string
               title: string
               description: string
@@ -175,7 +183,6 @@ export async function POST(): Promise<NextResponse> {
               syncedAt: Date
               channelId?: string
             } = {
-              clientId,
               updatedBy: userId,
               title: data.title,
               description: data.description,
@@ -195,7 +202,7 @@ export async function POST(): Promise<NextResponse> {
             }
             return db.youTubeVideo
               .upsert({
-                where: { videoId: data.videoId },
+                where: { clientId_videoId: { clientId, videoId: data.videoId } },
                 create: {
                   clientId,
                   createdBy: userId,
@@ -232,7 +239,10 @@ export async function POST(): Promise<NextResponse> {
     }
     const message = err instanceof Error ? err.message : String(err)
     console.error('[youtube/sync] error:', message)
-    return NextResponse.json({ error: 'SYNC_FAILED', message }, { status: 500 })
+    return NextResponse.json(
+      { error: 'SYNC_FAILED', message: process.env.NODE_ENV !== 'production' ? message : 'Internal error' },
+      { status: 500 },
+    )
   }
 }
 

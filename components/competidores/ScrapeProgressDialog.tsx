@@ -42,6 +42,7 @@ export function ScrapeProgressDialog({
   const [status, setStatus] = useState<'pending' | 'running' | 'completed' | 'failed'>('pending')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const errorCountRef = useRef(0)
 
   useEffect(() => {
     if (!open || !jobId) return
@@ -50,6 +51,7 @@ export function ScrapeProgressDialog({
     setActualCount(0)
     setStatus('pending')
     setErrorMessage(null)
+    errorCountRef.current = 0
 
     async function pollJob() {
       try {
@@ -59,6 +61,7 @@ export function ScrapeProgressDialog({
           throw new Error(body.error ?? `Error ${res.status}`)
         }
         const data = (await res.json()) as GetJobResponse
+        errorCountRef.current = 0
         setProgressPct(data.progressPct)
         setActualCount(data.job.actualCount)
         setStatus(data.job.status)
@@ -77,8 +80,17 @@ export function ScrapeProgressDialog({
           toast.error('Falló el scraping')
         }
       } catch (err) {
-        // Network error — keep polling, don't abort
-        console.error('[ScrapeProgressDialog] poll error:', err)
+        // Network error — keep polling, but abort after 5 consecutive failures
+        errorCountRef.current++
+        console.warn(`[ScrapeProgressDialog] poll error (${errorCountRef.current}/5):`, err)
+        if (errorCountRef.current >= 5) {
+          clearInterval(intervalRef.current!)
+          intervalRef.current = null
+          removeActive(jobId)
+          setErrorMessage('No se pudo conectar con el servidor tras varios intentos.')
+          setStatus('failed')
+          toast.error('Error de conexión al verificar el estado del scraping')
+        }
       }
     }
 

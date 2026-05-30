@@ -90,6 +90,7 @@ export function useTikTokVideos(options: UseVideosOptions = {}): {
   loadingMore: boolean
   hasMore: boolean
   loadMore: () => Promise<void>
+  refresh: () => Promise<void>
 } {
   const { enabled = true, pageSize = 25 } = options
   const [videos, setVideos] = useState<TikTokVideoRow[]>([])
@@ -168,7 +169,7 @@ export function useTikTokVideos(options: UseVideosOptions = {}): {
     }
   }, [enabled, refresh])
 
-  return { videos, loading, loadingMore, hasMore, loadMore }
+  return { videos, loading, loadingMore, hasMore, loadMore, refresh }
 }
 
 export async function triggerTikTokSync(): Promise<boolean> {

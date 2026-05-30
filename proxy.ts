@@ -42,17 +42,21 @@ export async function proxy(request: NextRequest) {
   )
 
   let user = null
+  let authNetworkError = false
   try {
     const { data } = await supabase.auth.getUser()
     user = data.user
-  } catch {
-    // Supabase unreachable — treat as unauthenticated but let API routes handle it
+  } catch (err) {
+    console.error('[proxy] supabase.auth.getUser() failed — failing open:', err)
+    authNetworkError = true
   }
 
   // API routes self-protect via requireActiveClient() / requireUserId() and
   // return JSON 401/403. Never redirect them to /login (frontend would receive
   // HTML instead of JSON and silently swallow the error).
-  if (!user && !isPublicPath(pathname) && !pathname.startsWith('/api/')) {
+  // When a network error prevents us from confirming auth state, fail open
+  // (pass through) rather than redirecting valid sessions to /login.
+  if (!authNetworkError && !user && !isPublicPath(pathname) && !pathname.startsWith('/api/')) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

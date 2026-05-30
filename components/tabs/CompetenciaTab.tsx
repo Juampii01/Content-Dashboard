@@ -83,14 +83,14 @@ export function CompetenciaTab() {
             Sin competidores añadidos
           </p>
           <p className="text-xs leading-relaxed mb-4" style={{ color: 'var(--muted-foreground)' }}>
-            Añade competidores desde la sección Competidores para verlos aquí.
+            Añade competidores desde la sección Investigación para verlos aquí.
           </p>
           <Link
-            href="/competidores"
+            href="/investigacion"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium"
             style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
           >
-            Ir a Competidores →
+            Ir a Investigación →
           </Link>
         </div>
       </div>

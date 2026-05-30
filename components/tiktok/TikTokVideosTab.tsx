@@ -8,6 +8,11 @@ import { useTikTokVideos, type TikTokVideoRow } from '@/hooks/useTikTokData'
 interface Props {
   connected: boolean
   hasData: boolean
+  videos?: TikTokVideoRow[]
+  loading?: boolean
+  loadingMore?: boolean
+  hasMore?: boolean
+  loadMore?: () => Promise<void>
 }
 
 function formatDuration(sec: number): string {
@@ -18,12 +23,32 @@ function formatDuration(sec: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-export function TikTokVideosTab({ connected, hasData }: Props) {
+export function TikTokVideosTab({
+  connected,
+  hasData,
+  videos: videosProp,
+  loading: loadingProp,
+  loadingMore: loadingMoreProp,
+  hasMore: hasMoreProp,
+  loadMore: loadMoreProp,
+}: Props) {
   const [period] = usePeriod()
-  const { videos, loading, loadingMore, hasMore, loadMore } = useTikTokVideos({
-    enabled: connected,
+  const {
+    videos: videosOwn,
+    loading: loadingOwn,
+    loadingMore: loadingMoreOwn,
+    hasMore: hasMoreOwn,
+    loadMore: loadMoreOwn,
+  } = useTikTokVideos({
+    enabled: connected && videosProp === undefined,
     pageSize: 25,
   })
+
+  const videos = videosProp ?? videosOwn
+  const loading = loadingProp ?? loadingOwn
+  const loadingMore = loadingMoreProp ?? loadingMoreOwn
+  const hasMore = hasMoreProp ?? hasMoreOwn
+  const loadMore = loadMoreProp ?? loadMoreOwn
 
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - period)

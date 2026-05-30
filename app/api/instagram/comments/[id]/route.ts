@@ -76,7 +76,11 @@ export async function DELETE(
       signal: AbortSignal.timeout(12_000),
     })
   } catch (e) {
-    return NextResponse.json({ error: 'FETCH_FAILED', detail: String(e) }, { status: 502 })
+    console.error('[instagram/comments] fetch error:', e)
+    return NextResponse.json({
+      error: 'FETCH_FAILED',
+      ...(process.env.NODE_ENV !== 'production' ? { detail: String(e) } : {}),
+    }, { status: 502 })
   }
 
   const igJson = await igRes.json().catch(() => null)

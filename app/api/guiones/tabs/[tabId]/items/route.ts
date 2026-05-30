@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, ctx: RouteContext): Promise<NextRes
   const parsed = CreateItemSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(
-      { error: 'Invalid request', issues: parsed.error.flatten() },
+      { error: 'Invalid request', ...(process.env.NODE_ENV !== 'production' ? { issues: parsed.error.flatten() } : {}) },
       { status: 400 },
     )
   }

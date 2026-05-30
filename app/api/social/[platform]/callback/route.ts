@@ -371,12 +371,12 @@ export async function GET(
     )
   }
 
-  // Validate CSRF state
-  let stateRow: { userId: string; clientId: string; returnTo: string; expiresAt: Date } | null = null
+  // Validate CSRF state — atomic delete so concurrent callbacks both fail after the first
+  let stateRow: { userId: string; clientId: string; returnTo: string; expiresAt: Date; platform: string } | null = null
   try {
-    stateRow = await db.oAuthState.findUnique({ where: { state } })
+    stateRow = await db.oAuthState.delete({ where: { state } }).catch(() => null)
   } catch (e: unknown) {
-    console.error(`[${platform}/callback] state lookup error:`, e)
+    console.error(`[${platform}/callback] state delete error:`, e)
     return NextResponse.redirect(new URL(`/?connect_error=${platform}`, req.url))
   }
 
@@ -389,19 +389,18 @@ export async function GET(
   const userId = stateRow.userId
   const clientId = stateRow.clientId
 
+  // Bug fix H-4: reject state tokens issued for a different platform
+  if (stateRow.platform !== platform) {
+    console.error(`[${platform}/callback] platform mismatch: state was for ${stateRow.platform}`)
+    return NextResponse.json({ error: 'STATE_PLATFORM_MISMATCH' }, { status: 400 })
+  }
+
   if (stateRow.expiresAt < new Date()) {
-    // One-time delete even if expired
-    await db.oAuthState.delete({ where: { state } }).catch(() => null)
     console.error(`[${platform}/callback] state expired`)
     return NextResponse.redirect(
       new URL(`${returnTo}?connect_error=${platform}`, req.url),
     )
   }
-
-  // Consume the state (one-time use)
-  await db.oAuthState.delete({ where: { state } }).catch((e: unknown) =>
-    console.error(`[${platform}/callback] failed to delete state:`, e),
-  )
 
   // Exchange code for tokens.
   // INSTAGRAM_REDIRECT_URI pins the exact URI registered in Meta Developer so there
@@ -437,10 +436,9 @@ export async function GET(
     tokenResult = exchange.token
     profileResult = exchange.profile
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : String(e)
-    console.error(`[${platform}/callback] token/profile exchange error:`, message)
+    console.error('[social/callback] token exchange error:', e)
     const errUrl = new URL(`${returnTo}?connect_error=${platform}`, req.url)
-    errUrl.searchParams.set('connect_error_reason', message.slice(0, 120))
+    errUrl.searchParams.set('connect_error_reason', 'exchange_failed')
     return NextResponse.redirect(errUrl.toString())
   }
 
@@ -467,7 +465,9 @@ export async function GET(
         accountName: profileResult.accountName,
         accountPic: profileResult.accountPic,
         accessToken: encryptToken(tokenResult.accessToken),
-        refreshToken: tokenResult.refreshToken ? encryptToken(tokenResult.refreshToken) : null,
+        ...(tokenResult.refreshToken !== undefined && tokenResult.refreshToken !== null
+          ? { refreshToken: encryptToken(tokenResult.refreshToken) }
+          : {}),
         expiresAt: tokenResult.expiresAt ?? null,
         scopes: tokenResult.scopes ?? '',
       },

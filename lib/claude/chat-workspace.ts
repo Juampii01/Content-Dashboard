@@ -51,6 +51,7 @@ export interface StreamWorkspaceChatInput {
     outputTokens: number
     costUsd: number
   }) => Promise<void>
+  onError?: (err: unknown) => Promise<void>
 }
 
 const MAX_HISTORY_MESSAGES = 20
@@ -208,7 +209,7 @@ function buildSystemPrompt(
 }
 
 export function streamWorkspaceChat(input: StreamWorkspaceChatInput): ReadableStream<Uint8Array> {
-  const { workspace, competitors, history, userMessage, model, onComplete } = input
+  const { workspace, competitors, history, userMessage, model, onComplete, onError } = input
   const encoder = new TextEncoder()
 
   let anthropicStream: ReturnType<typeof Anthropic.prototype.messages.stream> | null = null
@@ -267,6 +268,9 @@ export function streamWorkspaceChat(input: StreamWorkspaceChatInput): ReadableSt
 
         controller.close()
       } catch (e) {
+        if (onError) {
+          await onError(e).catch(() => {})
+        }
         const message = e instanceof Error ? e.message : String(e)
         const safe = process.env.NODE_ENV === 'production' ? 'Error procesando la solicitud' : message
         controller.enqueue(encoder.encode(`[ERROR] ${safe}`))

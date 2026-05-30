@@ -9,7 +9,6 @@
  */
 
 import { NextResponse } from 'next/server'
-import { headers } from 'next/headers'
 import { db } from '@/lib/db'
 import { requireActiveClient, UnauthorizedError, ForbiddenError } from '@/lib/auth-user'
 import { checkRateLimit } from '@/lib/utils/ratelimit'
@@ -25,14 +24,6 @@ const TIKTOK_VIDEO_LIST_URL =
   'https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,duration,cover_image_url,share_url,create_time,like_count,comment_count,share_count,view_count'
 
 export async function POST(): Promise<NextResponse> {
-  // ── Rate limit ────────────────────────────────────────────────────────────
-  const headersList = await headers()
-  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
-  const rl = await checkRateLimit(ip, 'tiktok-sync', 5, '60 s')
-  if (rl && !rl.success) {
-    return NextResponse.json({ error: 'RATE_LIMITED', message: 'Demasiadas solicitudes. Espera un momento.' }, { status: 429 })
-  }
-
   // ── Auth ───────────────────────────────────────────────────────────────────
   let userId: string
   let clientId: string
@@ -42,6 +33,12 @@ export async function POST(): Promise<NextResponse> {
     if (err instanceof UnauthorizedError) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
     if (err instanceof ForbiddenError) return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
     throw err
+  }
+
+  // ── Rate limit ────────────────────────────────────────────────────────────
+  const rl = await checkRateLimit(clientId, `tiktok-sync:${clientId}`, 5, '60 s')
+  if (rl && !rl.success) {
+    return NextResponse.json({ error: 'RATE_LIMITED', message: 'Demasiadas solicitudes. Espera un momento.' }, { status: 429 })
   }
 
   // ── Connection ─────────────────────────────────────────────────────────────
@@ -231,7 +228,7 @@ export async function POST(): Promise<NextResponse> {
       allVideos.map((v) =>
         db.tikTokVideo
           .upsert({
-            where: { videoId: v.videoId },
+            where: { clientId_videoId: { clientId, videoId: v.videoId } },
             create: {
               clientId,
               createdBy: userId,
@@ -250,7 +247,6 @@ export async function POST(): Promise<NextResponse> {
               syncedAt,
             },
             update: {
-              clientId,
               updatedBy: userId,
               title: v.title,
               description: v.description,
@@ -320,7 +316,7 @@ export async function POST(): Promise<NextResponse> {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error('[tiktok/sync] error:', message)
-    return NextResponse.json({ error: 'SYNC_FAILED', message }, { status: 500 })
+    return NextResponse.json({ error: 'SYNC_FAILED', message: process.env.NODE_ENV !== 'production' ? message : 'Internal error' }, { status: 500 })
   }
 }
 

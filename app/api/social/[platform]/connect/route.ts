@@ -126,7 +126,10 @@ export async function GET(
   } catch (err) {
     if (err instanceof UnauthorizedError) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
     if (err instanceof ForbiddenError) return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
-    throw err
+    // DB unreachable (Prisma connection error, Supabase pooler down, wrong credentials, etc.)
+    // Return 503 instead of letting the error propagate as an unhandled 500.
+    console.error('[social/connect] DB error in requireActiveClient:', err)
+    return NextResponse.json({ error: 'SERVICE_UNAVAILABLE', detail: 'Database temporarily unavailable' }, { status: 503 })
   }
   const { platform: rawPlatform } = await params
   const parsed = PlatformSchema.safeParse(rawPlatform)

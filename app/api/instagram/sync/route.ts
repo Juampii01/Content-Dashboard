@@ -168,6 +168,9 @@ export async function POST(): Promise<NextResponse> {
     nextUrl = pageParsed.data.paging?.next
     pageCount++
   }
+  if (nextUrl) {
+    console.warn(`[instagram:sync] truncated at 500 reels for client ${clientId} — account has more posts`)
+  }
   console.log(`[instagram/sync] fetched ${allMedia.length} media items across ${pageCount} page(s)`)
 
   // Wrap into the shape the rest of the handler expects

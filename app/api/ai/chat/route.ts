@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Persist user message
-  await db.aIMessage.create({
+  const userMessage = await db.aIMessage.create({
     data: {
       clientId,
       createdBy: userId,
@@ -107,6 +107,7 @@ export async function POST(req: NextRequest) {
       content,
     },
   })
+  const userMessageId = userMessage.id
 
   // Build stream
   const stream = streamWorkspaceChat({
@@ -115,6 +116,10 @@ export async function POST(req: NextRequest) {
     history,
     userMessage: content,
     model,
+    onError: async () => {
+      // Clean up orphaned user message if stream never completed
+      await db.aIMessage.delete({ where: { id: userMessageId } }).catch(() => {})
+    },
     onComplete: async ({ text, inputTokens, outputTokens, costUsd }) => {
       await db.aIMessage.create({
         data: {

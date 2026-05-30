@@ -73,28 +73,29 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const { title, description, dueDate, labelText, labelColor, columnId, order } = parsed.data
 
   try {
-    // Determine order: if not provided, append at end of column
-    let taskOrder = order ?? 0
-    if (order === undefined) {
-      const count = await db.task.count({
-        where: { clientId, columnId: columnId ?? 'por-hacer' },
-      })
-      taskOrder = count
-    }
+    const resolvedColumnId = columnId ?? 'por-hacer'
 
-    const task = await db.task.create({
-      data: {
-        clientId,
-        createdBy: userId,
-        updatedBy: userId,
-        title,
-        description: description ?? '',
-        dueDate: dueDate ? new Date(dueDate) : null,
-        labelText: labelText ?? '',
-        labelColor: labelColor ?? '',
-        columnId: columnId ?? 'por-hacer',
-        order: taskOrder,
-      },
+    const task = await db.$transaction(async (tx) => {
+      // Determine order atomically to avoid TOCTOU race when two requests
+      // read the same count and assign duplicate order values.
+      const taskOrder = order !== undefined
+        ? order
+        : await tx.task.count({ where: { clientId, columnId: resolvedColumnId } })
+
+      return tx.task.create({
+        data: {
+          clientId,
+          createdBy: userId,
+          updatedBy: userId,
+          title,
+          description: description ?? '',
+          dueDate: dueDate ? new Date(dueDate) : null,
+          labelText: labelText ?? '',
+          labelColor: labelColor ?? '',
+          columnId: resolvedColumnId,
+          order: taskOrder,
+        },
+      })
     })
 
     return NextResponse.json({ task }, { status: 201 })

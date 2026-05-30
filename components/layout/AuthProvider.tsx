@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { logClientError } from '@/lib/client-errors'
 
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [sessionError, setSessionError] = useState(false)
   const retryCount = useRef(0)
+  const router = useRouter()
 
   const loadRef = useRef<((isRetry?: boolean) => Promise<void>) | null>(null)
 
@@ -65,6 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSessionError(true)
         setProfile(null)
         setLoading(false)
+        // All retries exhausted — session is definitively expired, redirect to login
+        router.push('/login')
         return
       }
       const meData = (await meRes.json()) as AuthProfile
@@ -81,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSessionError(true)
       setLoading(false)
     }
-  }, [])
+  }, [router])
 
   // Keep the ref in sync with the latest `load` function without triggering
   // a re-render. useLayoutEffect runs synchronously after DOM mutations, so

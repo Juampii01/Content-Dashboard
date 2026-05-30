@@ -20,15 +20,30 @@ export async function GET(): Promise<NextResponse> {
     throw err
   }
 
-  const connection = await db.socialConnection.findUnique({
-    where: { clientId_platform: { clientId, platform: 'tiktok' } },
-    select: {
-      accountName: true,
-      accountPic: true,
-      expiresAt: true,
-      refreshToken: true,
-    },
-  })
+  const [connection, snapshot, videosCount] = await Promise.all([
+    db.socialConnection.findUnique({
+      where: { clientId_platform: { clientId, platform: 'tiktok' } },
+      select: {
+        accountName: true,
+        accountPic: true,
+        expiresAt: true,
+        refreshToken: true,
+      },
+    }),
+    db.accountSnapshot.findFirst({
+      where: { clientId, platform: 'tiktok' },
+      orderBy: { date: 'desc' },
+      select: {
+        followers: true,
+        following: true,
+        posts: true,
+        totalViews: true,
+        engagementRate: true,
+        date: true,
+      },
+    }),
+    db.tikTokVideo.count({ where: { clientId } }),
+  ])
 
   if (!connection) {
     return NextResponse.json({
@@ -41,13 +56,6 @@ export async function GET(): Promise<NextResponse> {
   }
 
   const tokenExpired = connection.expiresAt ? connection.expiresAt < new Date() && !connection.refreshToken : false
-
-  const snapshot = await db.accountSnapshot.findFirst({
-    where: { clientId, platform: 'tiktok' },
-    orderBy: { date: 'desc' },
-  })
-
-  const videosCount = await db.tikTokVideo.count({ where: { clientId } })
 
   return NextResponse.json({
     connected: true,

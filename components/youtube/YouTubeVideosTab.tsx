@@ -17,11 +17,16 @@ export function YouTubeVideosTab({ connected, hasData }: Props) {
     pageSize: 25,
   })
 
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - period)
-  const filtered: YouTubeVideoRow[] = videos.filter(
-    (v) => !v.publishedAt || new Date(v.publishedAt) >= cutoff,
-  )
+  const filtered: YouTubeVideoRow[] =
+    period === 0
+      ? videos
+      : (() => {
+          const cutoff = new Date()
+          cutoff.setDate(cutoff.getDate() - period)
+          return videos.filter(
+            (v) => !v.publishedAt || new Date(v.publishedAt) >= cutoff,
+          )
+        })()
 
   if (!connected) {
     return (
@@ -83,7 +88,7 @@ export function YouTubeVideosTab({ connected, hasData }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-          {filtered.length} video{filtered.length === 1 ? '' : 's'} en los últimos {period} días
+          {filtered.length} video{filtered.length === 1 ? '' : 's'}{period === 0 ? ' en total' : ` en los últimos ${period} días`}
           {videos.length !== filtered.length ? ` · ${videos.length} totales sincronizados` : ''}
         </span>
       </div>
@@ -112,7 +117,7 @@ export function YouTubeVideosTab({ connected, hasData }: Props) {
                   className="px-4 py-8 text-center text-xs"
                   style={{ color: 'var(--muted-foreground)' }}
                 >
-                  No hay videos publicados en los últimos {period} días.
+                  {period === 0 ? 'No hay videos sincronizados.' : `No hay videos publicados en los últimos ${period} días.`}
                 </td>
               </tr>
             ) : (

@@ -52,10 +52,13 @@ export function HomeContent() {
   const [igSummary, setIgSummary] = useState<InstagramAccountSummary | null>(null)
 
   useEffect(() => {
+    let cancelled = false
+    setFetchError(false)
+
     fetch('/api/bases/icp')
       .then((r) => r.ok ? r.json() : null)
       .then((row) => {
-        if (row?.nombre && typeof row.nombre === 'string') setIcpName(row.nombre.trim())
+        if (!cancelled && row?.nombre && typeof row.nombre === 'string') setIcpName(row.nombre.trim())
       })
       .catch(() => {})
 
@@ -68,15 +71,15 @@ export function HomeContent() {
           produccion = data.items.filter(i => i.status === 'en-proceso').length
           programado = data.items.filter(i => i.status === 'programado').length
         }
-      } catch { setFetchError(true) }
+      } catch { if (!cancelled) setFetchError(true) }
       try {
         const res = await fetch('/api/ideas')
         if (res.ok) {
           const data = await res.json() as { ideas: unknown[] }
           ideasCount = data.ideas?.length ?? 0
         }
-      } catch { setFetchError(true) }
-      setClientData({ produccion, programado, ideasCount, loaded: true })
+      } catch { if (!cancelled) setFetchError(true) }
+      if (!cancelled) setClientData({ produccion, programado, ideasCount, loaded: true })
     }
 
     const loadIgStats = async () => {
@@ -87,18 +90,22 @@ export function HomeContent() {
         ])
         const reels: UserReelRow[] = reelsRes.ok ? ((await reelsRes.json()) as { reels: UserReelRow[] }).reels ?? [] : []
         const summary: InstagramAccountSummary | null = sumRes.ok ? (await sumRes.json()) as InstagramAccountSummary : null
+        if (cancelled) return
         if (!summary?.connected || summary?.tokenExpired) return
         setIgReels(reels)
         setIgSummary(summary)
-      } catch { setFetchError(true) }
+      } catch { if (!cancelled) setFetchError(true) }
     }
 
     loadContentStats()
     loadIgStats()
+    return () => { cancelled = true }
   }, [])
 
   // Fetch snapshot history whenever period changes
   useEffect(() => {
+    let cancelled = false
+    setFetchError(false)
     const loadSnapshotHistory = async () => {
       try {
         const res = await fetch(`/api/me/snapshot-history?days=${period}`)
@@ -112,10 +119,11 @@ export function HomeContent() {
           latestAvgDailyReach: number
           hasData: boolean
         }
-        setSnapshotData(data)
-      } catch { setFetchError(true) }
+        if (!cancelled) setSnapshotData(data)
+      } catch { if (!cancelled) setFetchError(true) }
     }
     loadSnapshotHistory()
+    return () => { cancelled = true }
   }, [period])
 
   // Recompute stats whenever the period selector changes

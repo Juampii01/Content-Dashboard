@@ -31,6 +31,7 @@ export function encryptToken(plaintext: string): string {
   if (!raw) {
     // Encryption key not configured — storing token as plaintext (legacy mode).
     // Set OAUTH_TOKEN_ENCRYPTION_KEY in production to enable encryption at rest.
+    console.warn('[crypto] OAUTH_TOKEN_ENCRYPTION_KEY not set — token will be stored as plaintext. Set the key in production to enable encryption at rest.')
     return plaintext
   }
   if (!/^[0-9a-f]{64}$/i.test(raw)) {
@@ -66,13 +67,12 @@ export function decryptToken(payload: string): string {
   }
   const raw = process.env[KEY_ENV]
   if (!raw) {
-    // Key not available — return payload as-is (should not happen in normal operation)
-    console.error(`[crypto] ${KEY_ENV} not set but encountered encrypted token — cannot decrypt`)
-    return payload
+    console.error('[crypto] OAUTH_TOKEN_ENCRYPTION_KEY not set — cannot decrypt token')
+    throw new Error('DECRYPTION_KEY_MISSING')
   }
   if (!/^[0-9a-f]{64}$/i.test(raw)) {
     console.error(`[crypto] ${KEY_ENV} malformed — cannot decrypt`)
-    return payload
+    throw new Error('DECRYPTION_KEY_MALFORMED')
   }
   const [, ivB64, tagB64, cipherB64] = parts
   const key = Buffer.from(raw, 'hex')

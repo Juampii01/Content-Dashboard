@@ -41,7 +41,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   res.cookies.set('admin_view_as_user', userId, {
-    httpOnly: false, // readable by client JS for display
+    httpOnly: true,
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 8, // 8 hours

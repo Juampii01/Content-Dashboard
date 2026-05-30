@@ -173,7 +173,7 @@ export function AnalizadorContent() {
             aria-label="Nombre de usuario"
             className="flex-1 bg-transparent text-sm outline-none"
             style={{ color: 'var(--foreground)' }}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { if (loading) return; handleSearch() } }}
           />
         </div>
 
@@ -183,7 +183,7 @@ export function AnalizadorContent() {
               className="text-xs px-3 py-2.5 font-medium transition-all"
               style={{
                 backgroundColor: limit === l ? 'var(--accent)' : 'var(--muted)',
-                color: limit === l ? '#fff' : 'var(--muted-foreground)',
+                color: limit === l ? 'var(--accent-foreground)' : 'var(--muted-foreground)',
               }}
             >
               {l} reels
@@ -195,7 +195,7 @@ export function AnalizadorContent() {
           onClick={handleSearch}
           disabled={loading || !username.trim()}
           className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 flex-shrink-0"
-          style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
+          style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
         >
           {loading ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
           {loading ? 'Analizando...' : 'Analizar'}
