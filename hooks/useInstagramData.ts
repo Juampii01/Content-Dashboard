@@ -72,6 +72,15 @@ export function useInstagramData(): UseInstagramDataReturn {
 
       if (controller.signal.aborted) return
 
+      if (!sumRes.ok || !reelsRes.ok) {
+        if (!controller.signal.aborted) {
+          const status = !sumRes.ok ? sumRes.status : reelsRes.status
+          toast.error(status === 401 ? 'Sesión expirada — vuelve a iniciar sesión' : 'Error al cargar datos de Instagram')
+          setLoading(false)
+        }
+        return
+      }
+
       if (sumRes.ok) {
         setSummary((await sumRes.json()) as InstagramAccountSummary)
       }

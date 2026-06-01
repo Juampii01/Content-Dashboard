@@ -18,6 +18,7 @@ const PlatformSchema = z.enum(['instagram', 'tiktok', 'youtube', 'meta-ads'])
 
 interface StatusResponse {
   connected: boolean
+  tokenExpired?: boolean
   accountName?: string
   accountPic?: string
   connectedAt?: string
@@ -53,8 +54,11 @@ export async function GET(
       return NextResponse.json({ connected: false })
     }
 
+    const isExpired = connection.expiresAt ? connection.expiresAt <= new Date() : false
+
     const response: StatusResponse = {
-      connected: true,
+      connected: !isExpired,
+      tokenExpired: isExpired,
       accountName: connection.accountName,
       accountPic: connection.accountPic ?? undefined,
       connectedAt: connection.connectedAt.toISOString(),

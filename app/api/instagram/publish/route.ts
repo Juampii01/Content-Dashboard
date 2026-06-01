@@ -97,6 +97,13 @@ export async function GET(): Promise<NextResponse> {
     throw err
   }
 
+  // Clean up stale PENDING records older than 10 minutes
+  const staleCutoff = new Date(); staleCutoff.setMinutes(staleCutoff.getMinutes() - 10);
+  await db.publishedPost.updateMany({
+    where: { clientId, status: 'PENDING', createdAt: { lt: staleCutoff } },
+    data: { status: 'FAILED', errorMessage: 'STALE_PENDING' },
+  })
+
   const posts = await db.publishedPost.findMany({
     where: { clientId },
     orderBy: { createdAt: 'desc' },
@@ -139,6 +146,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const token = decryptToken(conn.accessToken)
 
+  // ── Daily quota check ──────────────────────────────────────────────────────
+  const ago24 = new Date(); ago24.setHours(ago24.getHours() - 24);
+  const dailyCount = await db.publishedPost.count({
+    where: { clientId, status: { in: ['PUBLISHED', 'PENDING'] }, createdAt: { gte: ago24 } },
+  })
+  if (dailyCount >= 24) {
+    return NextResponse.json(
+      { error: 'DAILY_LIMIT_REACHED', detail: 'Límite de 25 publicaciones/día de Instagram alcanzado.' },
+      { status: 429 },
+    )
+  }
+
+  // ── MIME preflight (non-fatal) ─────────────────────────────────────────────
+  const headRes = await fetch(mediaUrl, { method: 'HEAD' }).catch(() => null)
+  if (headRes) {
+    const ct = headRes.headers.get('content-type') ?? ''
+    const ok = mediaType === 'REEL' ? ct.includes('video/') : ct.includes('image/')
+    if (!ok) {
+      return NextResponse.json(
+        { error: 'INVALID_MEDIA_TYPE', detail: 'Tipo de archivo no compatible con Meta.' },
+        { status: 422 },
+      )
+    }
+  }
+
   // ── Step 1: Create container ───────────────────────────────────────────────
   const containerParams = new URLSearchParams({ caption, access_token: token })
   if (mediaType === 'IMAGE') {
@@ -167,6 +199,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (status === 429 || code === 4 || code === 17 || code === 32 || subcode === 2446079) {
       return NextResponse.json({ error: 'RATE_LIMITED', detail: message }, { status: 429 })
     }
+    if (code === 9007) {
+      return NextResponse.json({ error: 'MEDIA_NOT_READY', detail: message }, { status: 503 })
+    }
+    if (code === 24) {
+      return NextResponse.json({ error: 'INVALID_MEDIA_TYPE', detail: message }, { status: 422 })
+    }
     return NextResponse.json({ error: 'FETCH_FAILED', detail: message }, { status: 502 })
   }
 
@@ -192,6 +230,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const MAX_POLLS = 10
   const POLL_INTERVAL_MS = 3_000
   let statusCode = 'IN_PROGRESS'
+  let networkErrorCount = 0
 
   for (let i = 0; i < MAX_POLLS; i++) {
     await new Promise(r => setTimeout(r, POLL_INTERVAL_MS))
@@ -202,9 +241,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     if (!statusRes.ok) {
       console.warn('[instagram/publish] status poll failed (non-fatal)', statusRes.message)
+      networkErrorCount++
+      if (networkErrorCount >= 3) break
       continue
     }
 
+    networkErrorCount = 0
     statusCode = statusRes.data.status_code
 
     if (statusCode === 'FINISHED') break
@@ -215,6 +257,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       })
       return NextResponse.json({ error: 'CONTAINER_FAILED', detail: statusCode }, { status: 502 })
     }
+  }
+
+  if (networkErrorCount >= 3) {
+    return NextResponse.json({ error: 'NETWORK_ERROR', detail: 'Status polling failed due to repeated network errors' }, { status: 503 })
   }
 
   if (statusCode !== 'FINISHED') {
@@ -251,12 +297,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'FETCH_FAILED', detail: message }, { status: 502 })
   }
 
-  const postId = publishRes.data.id
+  const publishedId = publishRes.data.id
   const now = new Date()
+
+  // Fetch permalink from Meta
+  let permalink: string | null = null
+  try {
+    const permalinkRes = await fetch(
+      `${GRAPH}/${GRAPH_VERSION}/${publishedId}?fields=permalink`,
+      { headers: { Authorization: 'Bearer ' + token } },
+    )
+    if (permalinkRes.ok) {
+      const d = await permalinkRes.json() as { permalink?: string }
+      permalink = d.permalink ?? null
+    }
+  } catch {}
 
   const post = await db.publishedPost.update({
     where: { id: record.id },
-    data: { postId, status: 'PUBLISHED', publishedAt: now, updatedAt: now },
+    data: { postId: publishedId, status: 'PUBLISHED', publishedAt: now, updatedAt: now, permalink },
   })
 
   return NextResponse.json({ post })

@@ -717,6 +717,7 @@ model PublishedPost {
   caption      String   @default("")
   status       String   @default("PENDING") // PENDING | PUBLISHED | FAILED
   errorMessage String   @default("")
+  permalink    String?  // Instagram post permalink (fetched after publish)
   publishedAt  DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -728,17 +729,18 @@ model PublishedPost {
 // IGConversation: one row per Instagram DM thread per client.
 // Synced every 5 min via Vercel cron → POST /api/instagram/messages/sync
 model IGConversation {
-  id                  String    @id @default(cuid())
+  id                  String      @id @default(cuid())
   clientId            String
-  conversationId      String    // Instagram conversation ID
-  participantId       String    @default("") // other party's Instagram-scoped ID
-  participantUsername String    @default("")
-  participantPic      String    @default("")
+  conversationId      String      @unique // Instagram conversation ID
+  participantId       String      @default("") // other party's Instagram-scoped ID
+  participantUsername String      @default("")
+  participantPic      String      @default("")
   lastMessageAt       DateTime?
-  lastUserMessageAt   DateTime? // used for 24h window check
-  unreadCount         Int       @default(0)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  lastUserMessageAt   DateTime?   // used for 24h window check
+  unreadCount         Int         @default(0)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  messages            IGMessage[]
 
   @@unique([clientId, conversationId])
   @@index([clientId, lastMessageAt])
@@ -746,16 +748,17 @@ model IGConversation {
 
 // IGMessage: individual messages within a conversation.
 model IGMessage {
-  id             String   @id @default(cuid())
+  id             String         @id @default(cuid())
   clientId       String
-  conversationId String   // references IGConversation.conversationId
-  messageId      String   // Instagram message ID
-  fromId         String   @default("")
-  fromUsername   String   @default("")
-  text           String   @default("")
-  isFromBusiness Boolean  @default(false)
+  conversationId String         // references IGConversation.conversationId
+  messageId      String         // Instagram message ID
+  fromId         String         @default("")
+  fromUsername   String         @default("")
+  text           String         @default("")
+  isFromBusiness Boolean        @default(false)
   timestamp      DateTime
-  createdAt      DateTime @default(now())
+  createdAt      DateTime       @default(now())
+  conversation   IGConversation @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
 
   @@unique([clientId, messageId])
   @@index([clientId, conversationId, timestamp])

@@ -23,6 +23,7 @@ interface PublishedPost {
   caption: string
   status: string
   postId: string
+  permalink?: string | null
   errorMessage: string
   publishedAt: string | null
   createdAt: string
@@ -44,7 +45,7 @@ function timeAgo(iso: string): string {
 function StatusBadge({ status }: { status: string }) {
   if (status === 'PUBLISHED') {
     return (
-      <span className="flex items-center gap-1 text-xs font-medium" style={{ color: '#16a34a' }}>
+      <span className="flex items-center gap-1 text-xs font-medium text-green-600">
         <CheckCircle size={11} /> Publicado
       </span>
     )
@@ -57,7 +58,7 @@ function StatusBadge({ status }: { status: string }) {
     )
   }
   return (
-    <span className="flex items-center gap-1 text-xs" style={{ color: '#dc2626' }}>
+    <span className="flex items-center gap-1 text-xs text-red-600">
       <XCircle size={11} /> Fallido
     </span>
   )
@@ -192,7 +193,7 @@ function PublishForm({ onPublished }: { onPublished: (post: PublishedPost) => vo
             className="rounded-lg px-4 py-3 flex items-center gap-2"
             style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}
           >
-            <CheckCircle size={14} style={{ color: '#16a34a', flexShrink: 0 }} />
+            <CheckCircle size={14} className="text-green-600 flex-shrink-0" />
             <p className="text-xs" style={{ color: 'var(--foreground)' }}>
               ¡Publicado! ID de post: <span className="font-mono">{state.post.postId}</span>
             </p>
@@ -204,7 +205,7 @@ function PublishForm({ onPublished }: { onPublished: (post: PublishedPost) => vo
             className="rounded-lg px-4 py-3 flex items-start gap-2"
             style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}
           >
-            <AlertCircle size={14} style={{ color: '#dc2626', flexShrink: 0, marginTop: 1 }} />
+            <AlertCircle size={14} className="text-red-600 flex-shrink-0 mt-px" />
             <p className="text-xs" style={{ color: 'var(--foreground)' }}>
               {state.status === 'error' && state.message}
             </p>
@@ -281,7 +282,7 @@ function PublishHistory({ posts }: { posts: PublishedPost[] }) {
                   {timeAgo(p.createdAt)}
                 </span>
                 {p.status === 'FAILED' && p.errorMessage && (
-                  <span className="text-xs truncate max-w-xs" style={{ color: '#dc2626' }}>
+                  <span className="text-xs truncate max-w-xs text-red-600">
                     {p.errorMessage}
                   </span>
                 )}
@@ -290,7 +291,7 @@ function PublishHistory({ posts }: { posts: PublishedPost[] }) {
 
             {p.status === 'PUBLISHED' && p.postId && (
               <a
-                href={`https://www.instagram.com/p/${p.postId}/`}
+                href={p.permalink ?? `https://www.instagram.com/p/${p.postId}/`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-shrink-0"

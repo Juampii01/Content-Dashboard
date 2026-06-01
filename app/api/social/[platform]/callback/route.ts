@@ -72,7 +72,7 @@ async function exchangeInstagram(
   // 2. Exchange short-lived → long-lived token (60 days).
   // Required for both Instagram Business Login and Basic Display API.
   // Without this step, the token only lasts 1 hour and the Graph API may reject it.
-  const longRes = await fetch(
+  const llRes = await fetch(
     `https://graph.instagram.com/access_token?` +
       new URLSearchParams({
         grant_type: 'ig_exchange_token',
@@ -81,19 +81,19 @@ async function exchangeInstagram(
       }).toString(),
     { signal: AbortSignal.timeout(10_000) },
   )
-  const longRawText = await longRes.text()
-  if (longRes.ok) {
-    let longData: { access_token?: string; token_type?: string; expires_in?: number } = {}
-    try { longData = JSON.parse(longRawText) } catch { /* non-JSON */ }
-    if (longData.access_token) {
-      accessToken = longData.access_token
-      expiresAt = longData.expires_in
-        ? new Date(Date.now() + longData.expires_in * 1000)
-        : expiresAt
-      console.log('[instagram/callback] long-lived token obtained, expires_in:', longData.expires_in)
-    }
-  } else {
-    console.warn('[instagram/callback] long-lived exchange failed (using short-lived):', longRes.status, longRawText.slice(0, 200))
+  const longRawText = await llRes.text()
+  if (!llRes.ok) {
+    console.error('[instagram/callback] long-lived exchange failed:', llRes.status, longRawText.slice(0, 200))
+    throw new Error('IG_TOKEN_EXCHANGE_FAILED: ' + llRes.status)
+  }
+  let longData: { access_token?: string; token_type?: string; expires_in?: number } = {}
+  try { longData = JSON.parse(longRawText) } catch { /* non-JSON */ }
+  if (longData.access_token) {
+    accessToken = longData.access_token
+    expiresAt = longData.expires_in
+      ? new Date(Date.now() + longData.expires_in * 1000)
+      : expiresAt
+    console.log('[instagram/callback] long-lived token obtained, expires_in:', longData.expires_in)
   }
 
   // 3. Profile — /v23.0/me is the correct endpoint for Instagram Login tokens.
@@ -130,6 +130,7 @@ async function exchangeInstagram(
     token: {
       accessToken,
       expiresAt,
+      scopes: (longData as { scopes?: string }).scopes ?? '',
     },
     profile: {
       accountId: igUserId,
@@ -356,10 +357,17 @@ export async function GET(
     console.error('[oauth/callback] cleanupExpiredStates error:', e)
   }
 
+  // Resolve returnTo from state before using it in error redirects
+  let errorReturnTo = '/'
+  if (state) {
+    const s = await db.oAuthState.findUnique({ where: { state }, select: { returnTo: true } }).catch(() => null)
+    if (s?.returnTo) errorReturnTo = s.returnTo
+  }
+
   // User denied access or provider returned an error
   if (oauthError) {
     console.error(`[${platform}/callback] provider error:`, oauthError)
-    const errorUrl = new URL(`${returnTo}?connect_error=${platform}`, req.url)
+    const errorUrl = new URL(`${errorReturnTo}?connect_error=${platform}`, req.url)
     // Always expose the raw OAuth error code so it's visible in the redirect URL for debugging
     errorUrl.searchParams.set('connect_error_reason', oauthError)
     return NextResponse.redirect(errorUrl.toString())
@@ -367,7 +375,7 @@ export async function GET(
 
   if (!code || !state) {
     return NextResponse.redirect(
-      new URL(`${returnTo}?connect_error=${platform}`, req.url),
+      new URL(`${errorReturnTo}?connect_error=${platform}`, req.url),
     )
   }
 

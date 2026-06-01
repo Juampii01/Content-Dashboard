@@ -90,15 +90,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const token = decryptToken(conn.accessToken)
 
   // ── Send via Instagram API ─────────────────────────────────────────────────
+  const igUserId = conn.accountId
+
   let igRes: Response
   try {
-    igRes = await fetch(`${GRAPH}/${GRAPH_VERSION}/me/messages`, {
+    igRes = await fetch(`${GRAPH}/${GRAPH_VERSION}/${igUserId}/messages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({
         recipient: { id: conversation.participantId },
         message: { text },
-        access_token: token,
       }),
       signal: AbortSignal.timeout(12_000),
     })

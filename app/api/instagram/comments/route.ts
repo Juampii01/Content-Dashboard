@@ -28,11 +28,13 @@ interface IGError {
   error: { message: string; type: string; code: number; error_subcode?: number }
 }
 
-async function igGet<T>(url: string): Promise<
+async function igGet<T>(url: string, token?: string): Promise<
   { ok: true; data: T } | { ok: false; code: number; subcode: number | null; message: string; status: number }
 > {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(12_000) })
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(12_000) })
     const json = await res.json().catch(() => null)
     if (!res.ok) {
       const e = (json as IGError | null)?.error
@@ -87,35 +89,63 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   const token = decryptToken(conn.accessToken)
-  const t = encodeURIComponent(token)
 
-  // Fetch comments (up to 100) with nested replies
-  const url = `${GRAPH}/${GRAPH_VERSION}/${mediaId}/comments?fields=id,text,username,timestamp,like_count,hidden,replies{id,text,username,timestamp,like_count}&limit=100&access_token=${t}`
-  const res = await igGet<IGCommentsResponse>(url)
+  // Fetch comments with pagination (cap 2000) using Authorization header
+  const allComments: IGComment[] = []
+  let nextUrl: string | undefined =
+    `${GRAPH}/${GRAPH_VERSION}/${mediaId}/comments?fields=id,text,username,timestamp,like_count,hidden,replies{id,text,username,timestamp,like_count}&limit=100`
+  let totalFetched = 0
 
-  if (!res.ok) {
-    const { code, subcode, status, message } = res
-    console.error('[instagram/comments] fetch failed', { code, subcode, status, message })
-    if (code === 190) {
-      await db.socialConnection.update({
-        where: { clientId_platform: { clientId, platform: 'instagram' } },
-        data: { expiresAt: new Date(0), updatedBy: userId },
-      })
-      return NextResponse.json({ error: 'TOKEN_EXPIRED', detail: message }, { status: 401 })
+  while (nextUrl && totalFetched < 2000) {
+    const res: Awaited<ReturnType<typeof igGet<IGCommentsResponse>>> = await igGet<IGCommentsResponse>(nextUrl, token)
+
+    if (!res.ok) {
+      const { code, subcode, status, message } = res
+      console.error('[instagram/comments] fetch failed', { code, subcode, status, message })
+      if (totalFetched === 0) {
+        // Only return error if we haven't fetched anything yet
+        if (code === 190) {
+          await db.socialConnection.update({
+            where: { clientId_platform: { clientId, platform: 'instagram' } },
+            data: { expiresAt: new Date(0), updatedBy: userId },
+          })
+          return NextResponse.json({ error: 'TOKEN_EXPIRED', detail: message }, { status: 401 })
+        }
+        if (status === 429 || code === 4 || code === 17 || code === 32 || subcode === 2446079) {
+          return NextResponse.json({ error: 'RATE_LIMITED', detail: message }, { status: 429 })
+        }
+        if (message.toLowerCase().includes('minimum') || message.toLowerCase().includes('100 follow')) {
+          return NextResponse.json({ error: 'INSUFFICIENT_FOLLOWERS', detail: message }, { status: 422 })
+        }
+        return NextResponse.json({ error: 'FETCH_FAILED', detail: message }, { status: 502 })
+      }
+      break // non-fatal if we already have some data
     }
-    if (status === 429 || code === 4 || code === 17 || code === 32 || subcode === 2446079) {
-      return NextResponse.json({ error: 'RATE_LIMITED', detail: message }, { status: 429 })
+
+    allComments.push(...res.data.data)
+    totalFetched += res.data.data.length
+    nextUrl = res.data.paging?.next
+  }
+
+  // For each comment with many replies, paginate sub-replies (cap 500 each)
+  type ReplyPage = { data: Array<{ id: string; text: string; username: string; timestamp: string; like_count?: number }>; paging?: { next?: string } }
+  for (const c of allComments) {
+    if (!c.replies?.data) continue
+    let replyCount = c.replies.data.length
+    let repliesNext: string | undefined = (c.replies as unknown as { paging?: { next?: string } }).paging?.next
+    while (repliesNext && replyCount < 500) {
+      const rRes = await igGet<ReplyPage>(repliesNext, token)
+      if (!rRes.ok) break
+      c.replies!.data.push(...rRes.data.data)
+      replyCount += rRes.data.data.length
+      repliesNext = rRes.data.paging?.next
     }
-    if (message.toLowerCase().includes('minimum') || message.toLowerCase().includes('100 follow')) {
-      return NextResponse.json({ error: 'INSUFFICIENT_FOLLOWERS', detail: message }, { status: 422 })
-    }
-    return NextResponse.json({ error: 'FETCH_FAILED', detail: message }, { status: 502 })
   }
 
   const now = new Date()
 
   // Upsert top-level comments + replies
-  for (const c of res.data.data) {
+  for (const c of allComments) {
     await db.instagramComment.upsert({
       where: { clientId_commentId: { clientId, commentId: c.id } },
       create: {

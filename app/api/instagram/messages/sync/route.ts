@@ -26,11 +26,13 @@ interface IGError {
   error: { message: string; type: string; code: number; error_subcode?: number }
 }
 
-async function igGet<T>(url: string): Promise<
+async function igGet<T>(url: string, token?: string): Promise<
   { ok: true; data: T } | { ok: false; code: number; message: string; status: number }
 > {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(12_000) })
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(12_000) })
     const json = await res.json().catch(() => null)
     if (!res.ok) {
       const e = (json as IGError | null)?.error
@@ -56,24 +58,33 @@ interface IGMessageRaw {
   message?: string
   created_time: string
   from?: { id: string; username?: string; name?: string }
+  attachments?: unknown
 }
-interface IGMessagesResponse { data: IGMessageRaw[]; paging?: unknown }
+interface IGMessagesResponse { data: IGMessageRaw[]; paging?: { next?: string } }
 
 async function syncClient(clientId: string, accountId: string, token: string): Promise<number> {
-  const t = encodeURIComponent(token)
-
-  // Fetch conversations (up to 20, most recent first)
-  const convsRes = await igGet<IGConversationsResponse>(
-    `${GRAPH}/${GRAPH_VERSION}/${accountId}/conversations?platform=instagram&fields=id,updated_time,unread_count,participants&limit=20&access_token=${t}`,
-  )
-  if (!convsRes.ok) {
-    console.warn(`[messages/sync] conversations fetch failed for ${clientId}:`, convsRes.message)
-    return 0
+  // Fetch conversations with pagination (up to 10 pages of 20)
+  const allConvs: IGConversationRaw[] = []
+  let convsUrl: string | undefined =
+    `${GRAPH}/${GRAPH_VERSION}/${accountId}/conversations?platform=instagram&fields=id,updated_time,unread_count,participants&limit=20`
+  let convsPage = 0
+  while (convsUrl && convsPage < 10) {
+    const convsRes: Awaited<ReturnType<typeof igGet<IGConversationsResponse>>> = await igGet<IGConversationsResponse>(convsUrl, token)
+    if (!convsRes.ok) {
+      console.warn(`[messages/sync] conversations fetch failed for ${clientId}:`, convsRes.message)
+      break
+    }
+    allConvs.push(...convsRes.data.data)
+    const nextPage: string | undefined = (convsRes.data.paging as { next?: string } | undefined)?.next
+    convsUrl = nextPage
+    convsPage++
   }
+
+  if (allConvs.length === 0) return 0
 
   let synced = 0
 
-  for (const conv of convsRes.data.data) {
+  for (const conv of allConvs) {
     // Find the non-business participant
     const participants = conv.participants?.data ?? []
     const other = participants.find(p => p.id !== accountId) ?? participants[0]
@@ -104,7 +115,8 @@ async function syncClient(clientId: string, accountId: string, token: string): P
 
     // Fetch last 20 messages for this conversation
     const msgsRes = await igGet<IGMessagesResponse>(
-      `${GRAPH}/${GRAPH_VERSION}/${conv.id}/messages?fields=id,message,created_time,from&limit=20&access_token=${t}`,
+      `${GRAPH}/${GRAPH_VERSION}/${conv.id}/messages?fields=id,message,created_time,from,attachments&limit=20`,
+      token,
     )
     if (!msgsRes.ok) {
       console.warn(`[messages/sync] messages fetch failed for conv ${conv.id}:`, msgsRes.message)

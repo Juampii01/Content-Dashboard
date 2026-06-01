@@ -110,21 +110,34 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'FETCH_FAILED', detail: msg }, { status: 502 })
   }
 
-  const newCommentId = (igJson as { id?: string })?.id
-  if (!newCommentId) {
+  const newReplyId = (igJson as { id?: string })?.id
+  if (!newReplyId) {
     return NextResponse.json({ error: 'FETCH_FAILED', detail: 'No reply ID returned' }, { status: 502 })
   }
 
+  // Fetch authoritative timestamp from Meta
+  let ts = new Date()
+  try {
+    const r = await fetch(
+      `${GRAPH}/${GRAPH_VERSION}/${newReplyId}?fields=id,timestamp`,
+      { headers: { Authorization: 'Bearer ' + token } },
+    )
+    if (r.ok) {
+      const d = await r.json() as { timestamp?: string }
+      if (d.timestamp) ts = new Date(d.timestamp)
+    }
+  } catch {}
+
   // Persist reply
   const comment = await db.instagramComment.upsert({
-    where: { clientId_commentId: { clientId, commentId: newCommentId } },
+    where: { clientId_commentId: { clientId, commentId: newReplyId } },
     create: {
       clientId,
       mediaId: parent.mediaId,
-      commentId: newCommentId,
+      commentId: newReplyId,
       username: conn.accountName ?? '',
       text: message,
-      timestamp: new Date(),
+      timestamp: ts,
       likeCount: 0,
       hidden: false,
       parentId: commentId,

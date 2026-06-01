@@ -19,8 +19,14 @@ interface Response {
     date: string
     followers: number
     posts: number
+    engagementRate?: number
+    totalViews?: number
+    reach?: number
+    profileVisits?: number
   } | null
   reelCount?: number
+  syncedReels?: number
+  reelsSyncCapped?: boolean
 }
 
 export async function GET(): Promise<NextResponse<Response>> {
@@ -53,6 +59,9 @@ export async function GET(): Promise<NextResponse<Response>> {
 
   const tokenExpired = conn.expiresAt ? conn.expiresAt.getTime() <= Date.now() : false
 
+  const storedReelCount = reelCount
+  const realCount = snapshot?.posts ?? storedReelCount
+
   return NextResponse.json({
     connected: true,
     accountName: conn.accountName,
@@ -64,8 +73,14 @@ export async function GET(): Promise<NextResponse<Response>> {
           date: snapshot.date.toISOString(),
           followers: snapshot.followers,
           posts: snapshot.posts,
+          engagementRate: snapshot.engagementRate,
+          totalViews: snapshot.totalViews,
+          reach: snapshot.reach,
+          profileVisits: snapshot.profileVisits,
         }
       : null,
-    reelCount,
+    reelCount: realCount,
+    syncedReels: storedReelCount,
+    reelsSyncCapped: storedReelCount >= 500 && realCount > storedReelCount,
   })
 }

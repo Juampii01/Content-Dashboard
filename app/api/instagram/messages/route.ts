@@ -40,6 +40,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         orderBy: { timestamp: 'asc' },
       }),
     ])
+    if (conversationId && !conversation) return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 })
     return NextResponse.json({ conversation, messages })
   }
 

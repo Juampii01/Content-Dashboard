@@ -108,20 +108,24 @@ export async function GET(): Promise<NextResponse> {
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
 
-  // Return cached snapshot if already fetched today
+  // Return cached snapshot if already fetched today (only if followerHistory is non-empty)
   const cached = await db.audienceSnapshot.findUnique({
     where: { clientId_platform_date: { clientId, platform: 'instagram', date: today } },
   })
   if (cached) {
-    return NextResponse.json({
-      cached: true,
-      date: cached.date.toISOString(),
-      genderAge: cached.genderAge,
-      country: cached.country,
-      city: cached.city,
-      followerHistory: cached.followerHistory,
-      reachHistory: cached.reachHistory,
-    })
+    const fh = cached.followerHistory
+    const hasHistory = Array.isArray(fh) ? fh.length > 0 : typeof fh === 'string' ? fh !== '[]' : false
+    if (hasHistory) {
+      return NextResponse.json({
+        cached: true,
+        date: cached.date.toISOString(),
+        genderAge: cached.genderAge,
+        country: cached.country,
+        city: cached.city,
+        followerHistory: cached.followerHistory,
+        reachHistory: cached.reachHistory,
+      })
+    }
   }
 
   const token = decryptToken(conn.accessToken)
@@ -181,6 +185,7 @@ export async function GET(): Promise<NextResponse> {
   // ── Parse trends ───────────────────────────────────────────────────────────
   const followerHistory: HistoryPoint[] = []
   const reachHistory: HistoryPoint[] = []
+  let trendFailed = false
 
   if (trendRes.ok) {
     for (const item of trendRes.data.data) {
@@ -194,10 +199,19 @@ export async function GET(): Promise<NextResponse> {
       }
     }
   } else {
+    trendFailed = true
     console.warn('[instagram/audience] trend metrics fetch failed (non-fatal)', trendRes.message)
   }
 
   // ── Persist to cache ───────────────────────────────────────────────────────
+  // If trend fetch failed, do not overwrite existing followerHistory/reachHistory
+  const trendUpdate = trendFailed
+    ? {}
+    : {
+        followerHistory: followerHistory as unknown as Prisma.InputJsonValue,
+        reachHistory: reachHistory as unknown as Prisma.InputJsonValue,
+      }
+
   await db.audienceSnapshot.upsert({
     where: { clientId_platform_date: { clientId, platform: 'instagram', date: today } },
     create: {
@@ -217,8 +231,7 @@ export async function GET(): Promise<NextResponse> {
       genderAge,
       country,
       city,
-      followerHistory: followerHistory as unknown as Prisma.InputJsonValue,
-      reachHistory: reachHistory as unknown as Prisma.InputJsonValue,
+      ...trendUpdate,
     },
   })
 

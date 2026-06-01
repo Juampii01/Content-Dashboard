@@ -97,7 +97,28 @@ export async function POST(): Promise<NextResponse> {
     return NextResponse.json({ error: 'TOKEN_EXPIRED' }, { status: 401 })
   }
 
-  const accessToken = decryptToken(conn.accessToken)
+  let accessToken: string
+  try {
+    accessToken = decryptToken(conn.accessToken)
+  } catch (err) {
+    console.error('[instagram/sync] token decrypt failed:', err)
+    return NextResponse.json({ error: 'TOKEN_DECRYPTION_FAILED', reconnect: true }, { status: 401 })
+  }
+
+  // Proactive token refresh when token expires within 7 days
+  const soon = new Date(); soon.setDate(soon.getDate() + 7);
+  if (conn.expiresAt && conn.expiresAt < soon) {
+    try {
+      const refreshRes = await fetch('https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=' + encodeURIComponent(accessToken))
+      if (refreshRes.ok) {
+        const d = await refreshRes.json() as { access_token: string; expires_in: number }
+        const exp = new Date(); exp.setSeconds(exp.getSeconds() + d.expires_in);
+        const { encryptToken: enc } = await import('@/lib/crypto')
+        await db.socialConnection.update({ where: { id: conn.id }, data: { accessToken: enc(d.access_token), expiresAt: exp } })
+        accessToken = d.access_token
+      }
+    } catch (e) { console.warn('[instagram/sync] proactive refresh failed (non-fatal):', e) }
+  }
 
   // 3. Fetch ALL media with cursor-based pagination (100 per page, max 5 pages = 500).
   // /v21.0/me/media is the correct endpoint for Instagram Login tokens.
@@ -261,12 +282,18 @@ export async function POST(): Promise<NextResponse> {
   )
   const reelsSynced = upsertResults.filter((r) => r.status === 'fulfilled').length
 
+  // Remove reels that are no longer returned by the API (deleted from Instagram)
+  const syncedIds = allMedia.map((m: InstagramMedia) => m.id)
+  if (syncedIds.length > 0) {
+    await db.userReel.deleteMany({ where: { clientId, instagramId: { notIn: syncedIds } } })
+  }
+
   // Aggregate views + engagement across ALL stored reels for this client so the
   // TopBar can show real numbers (AccountSnapshot.impressions / engagementRate).
   const allReels = await db.userReel.findMany({
     where: { clientId },
     orderBy: { publishedAt: 'desc' },
-    select: { viewsCount: true, likesCount: true, commentsCount: true },
+    select: { viewsCount: true, likesCount: true, commentsCount: true, publishedAt: true },
   })
   const totalViews = allReels.reduce((s, r) => s + r.viewsCount, 0)
 
@@ -282,12 +309,14 @@ export async function POST(): Promise<NextResponse> {
     const accountParsed = InstagramAccountSchema.safeParse(accountRes.data)
     if (accountParsed.success) {
       const snap = accountToSnapshot(accountParsed.data)
-      // Engagement rate: average per-reel engagement of last 30 reels.
+      // Engagement rate: average per-reel engagement of last 30 days.
       // Formula: avg((likes + comments) / followers * 100) per reel.
-      // Previous formula summed ALL historical interactions → produced values >100%.
-      const last30 = allReels.slice(0, 30)
-      const engagementRate = snap.followers > 0 && last30.length > 0
-        ? last30.reduce((s, r) => s + ((r.likesCount + r.commentsCount) / snap.followers) * 100, 0) / last30.length
+      // Previous formula used slice(0,30) → could include old reels; now filters by date.
+      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+      const recentReels = allReels.filter((r: { publishedAt: Date | null; viewsCount: number; likesCount: number; commentsCount: number }) => r.publishedAt && new Date(r.publishedAt) >= cutoff)
+      const reelsForEngagement = recentReels.length > 0 ? recentReels : allReels.slice(0, 30)
+      const engagementRate = snap.followers > 0 && reelsForEngagement.length > 0
+        ? reelsForEngagement.reduce((s: number, r: { likesCount: number; commentsCount: number }) => s + ((r.likesCount + r.commentsCount) / snap.followers) * 100, 0) / reelsForEngagement.length
         : 0
       // Normalise to midnight UTC so @@unique([clientId, platform, date]) collapses repeated syncs per day.
       // Scoped by platform='instagram' so YouTube sync can write its own row for the same day without collision.

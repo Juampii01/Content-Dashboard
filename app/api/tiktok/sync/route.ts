@@ -52,7 +52,13 @@ export async function POST(): Promise<NextResponse> {
     )
   }
 
-  let accessToken = decryptToken(connection.accessToken)
+  let accessToken: string
+  try {
+    accessToken = decryptToken(connection.accessToken)
+  } catch (err) {
+    console.error('[tiktok/sync] token decrypt failed:', err)
+    return NextResponse.json({ error: 'TOKEN_DECRYPTION_FAILED', reconnect: true }, { status: 401 })
+  }
 
   // ── Token refresh if expired ───────────────────────────────────────────────
   const now = new Date()
@@ -73,7 +79,7 @@ export async function POST(): Promise<NextResponse> {
         client_key: clientKey,
         client_secret: clientSecret,
         grant_type: 'refresh_token',
-        refresh_token: decryptToken(connection.refreshToken),
+        refresh_token: (() => { try { return decryptToken(connection.refreshToken!) } catch { return connection.refreshToken! } })(),
       }).toString(),
     })
 

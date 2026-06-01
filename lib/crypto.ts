@@ -29,10 +29,7 @@ const VERSION = 'v1'
 export function encryptToken(plaintext: string): string {
   const raw = process.env[KEY_ENV]
   if (!raw) {
-    // Encryption key not configured — storing token as plaintext (legacy mode).
-    // Set OAUTH_TOKEN_ENCRYPTION_KEY in production to enable encryption at rest.
-    console.warn('[crypto] OAUTH_TOKEN_ENCRYPTION_KEY not set — token will be stored as plaintext. Set the key in production to enable encryption at rest.')
-    return plaintext
+    throw new Error('OAUTH_TOKEN_ENCRYPTION_KEY is not set — refusing to store token as plaintext')
   }
   if (!/^[0-9a-f]{64}$/i.test(raw)) {
     console.error(`[crypto] ${KEY_ENV} must be exactly 64 hex characters — skipping encryption`)
