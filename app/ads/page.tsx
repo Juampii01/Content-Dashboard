@@ -1,17 +1,16 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { AdsContent } from './AdsContent'
-import Loading from './loading'
+import { AdsProPage } from './AdsProPage'
 
 export const metadata: Metadata = {
-  title: 'Ads Dashboard | Eternity Dashboard',
-  description: 'Rendimiento centralizado de Meta Ads y TikTok Ads',
+  title: 'Ads | Content Dashboard',
+  description: 'Gestión y analytics de campañas de Meta Ads.',
 }
 
 export default function AdsPage() {
   return (
-    <Suspense fallback={<Loading />}>
-      <AdsContent />
+    <Suspense>
+      <AdsProPage />
     </Suspense>
   )
 }
