@@ -14,8 +14,18 @@ export interface InstagramAccountSummary {
   accountPic?: string | null
   expiresAt?: string | null
   tokenExpired?: boolean
-  latestSnapshot?: { date: string; followers: number; posts: number } | null
+  latestSnapshot?: {
+    date: string
+    followers: number
+    posts: number
+    engagementRate?: number | null
+    totalViews?: number | null
+    reach?: number | null
+    profileVisits?: number | null
+  } | null
   reelCount?: number
+  syncedReels?: number
+  reelsSyncCapped?: boolean
 }
 
 export interface UserReelRow {

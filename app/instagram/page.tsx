@@ -1,16 +1,16 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import { IGProPage } from './IGProPage'
 
 export const metadata: Metadata = {
-  title: 'Instagram | Eternity Dashboard',
-  description: 'Estadísticas detalladas de tu cuenta de Instagram',
+  title: 'Instagram | Content Dashboard',
+  description: 'Analytics, contenido y gestión de Instagram desde un solo lugar.',
 }
-import { InstagramContent } from './InstagramContent'
 
 export default function InstagramPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-muted-foreground text-sm">Cargando...</div>}>
-      <InstagramContent />
+    <Suspense>
+      <IGProPage />
     </Suspense>
   )
 }
