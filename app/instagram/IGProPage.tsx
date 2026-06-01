@@ -16,6 +16,7 @@ import { IGContentGrid } from '@/components/instagram/pro/IGContentGrid'
 import { IGAudiencePanel } from '@/components/instagram/pro/IGAudiencePanel'
 import { IGInbox } from '@/components/instagram/pro/IGInbox'
 import { IGPublishPanel } from '@/components/instagram/pro/IGPublishPanel'
+import { IGTabErrorBoundary } from '@/components/instagram/pro/IGTabErrorBoundary'
 
 export function IGProPage() {
   const { summary, reels, loading, syncing, sync, refresh } = useInstagramData()
@@ -94,24 +95,40 @@ export function IGProPage() {
       {/* Tab panels */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         {tab === 'inicio' && summary && (
-          <div className="space-y-5">
-            <IGOverviewStats summary={summary} />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <IGTopContent reels={reels} />
-              <IGInsightsPanel reels={reels} />
+          <IGTabErrorBoundary tabName="Inicio">
+            <div className="space-y-5">
+              <IGOverviewStats summary={summary} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <IGTopContent reels={reels} />
+                <IGInsightsPanel reels={reels} />
+              </div>
             </div>
-          </div>
+          </IGTabErrorBoundary>
         )}
 
         {tab === 'contenido' && (
-          <IGContentGrid reels={reels} loading={loading} />
+          <IGTabErrorBoundary tabName="Contenido">
+            <IGContentGrid reels={reels} loading={loading} />
+          </IGTabErrorBoundary>
         )}
 
-        {tab === 'audiencia' && <IGAudiencePanel />}
+        {tab === 'audiencia' && (
+          <IGTabErrorBoundary tabName="Audiencia">
+            <IGAudiencePanel />
+          </IGTabErrorBoundary>
+        )}
 
-        {tab === 'mensajes' && <IGInbox />}
+        {tab === 'mensajes' && (
+          <IGTabErrorBoundary tabName="Mensajes">
+            <IGInbox />
+          </IGTabErrorBoundary>
+        )}
 
-        {tab === 'publicar' && <IGPublishPanel />}
+        {tab === 'publicar' && (
+          <IGTabErrorBoundary tabName="Publicar">
+            <IGPublishPanel />
+          </IGTabErrorBoundary>
+        )}
       </div>
     </div>
     </InstagramDataProvider>

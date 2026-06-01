@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Lock, Shield, User, Palette } from 'lucide-react'
+import { Lock, Shield, User, Palette, Link2 } from 'lucide-react'
 
 interface SettingsMenuViewProps {
   email: string | null
@@ -9,6 +9,7 @@ interface SettingsMenuViewProps {
   onSelectProfile: () => void
   onSelectPassword: () => void
   onSelectAppearance: () => void
+  onSelectAccounts: () => void
   onAdminLink: () => void
 }
 
@@ -18,6 +19,7 @@ export function SettingsMenuView({
   onSelectProfile,
   onSelectPassword,
   onSelectAppearance,
+  onSelectAccounts,
   onAdminLink,
 }: SettingsMenuViewProps) {
   return (
@@ -49,6 +51,13 @@ export function SettingsMenuView({
         title="Apariencia"
         desc="Tema de marca y modo oscuro / claro"
         onClick={onSelectAppearance}
+      />
+
+      <MenuItem
+        icon={<Link2 size={15} style={{ color: 'var(--accent)' }} />}
+        title="Cuentas conectadas"
+        desc="Instagram, YouTube, TikTok — conectar o desconectar"
+        onClick={onSelectAccounts}
       />
 
       <MenuItem

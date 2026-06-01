@@ -7,6 +7,7 @@ import { SettingsMenuView } from './settings/SettingsMenuView'
 import { ProfileView } from './settings/ProfileView'
 import { PasswordView } from './settings/PasswordView'
 import { AppearanceView } from './settings/AppearanceView'
+import { ConnectedAccountsView } from './settings/ConnectedAccountsView'
 
 interface SettingsModalProps {
   open: boolean
@@ -18,7 +19,7 @@ interface SettingsModalProps {
   onProfileChange?: (next: { displayName: string | null; avatarUrl: string | null }) => void
 }
 
-type View = 'menu' | 'password' | 'profile' | 'appearance'
+type View = 'menu' | 'password' | 'profile' | 'appearance' | 'accounts'
 
 export function SettingsModal({
   open,
@@ -73,7 +74,7 @@ export function SettingsModal({
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-bold" style={{ color: 'var(--foreground)' }}>
-            {view === 'menu' ? 'Ajustes' : view === 'password' ? 'Cambiar contraseña' : view === 'appearance' ? 'Apariencia' : 'Perfil'}
+            {view === 'menu' ? 'Ajustes' : view === 'password' ? 'Cambiar contraseña' : view === 'appearance' ? 'Apariencia' : view === 'accounts' ? 'Cuentas conectadas' : 'Perfil'}
           </h2>
           <button
             onClick={onClose}
@@ -92,6 +93,7 @@ export function SettingsModal({
             onSelectProfile={() => setView('profile')}
             onSelectPassword={() => setView('password')}
             onSelectAppearance={() => setView('appearance')}
+            onSelectAccounts={() => setView('accounts')}
             onAdminLink={onClose}
           />
         )}
@@ -116,6 +118,10 @@ export function SettingsModal({
 
         {view === 'appearance' && (
           <AppearanceView onBack={() => setView('menu')} />
+        )}
+
+        {view === 'accounts' && (
+          <ConnectedAccountsView onBack={() => setView('menu')} />
         )}
       </div>
     </div>,
