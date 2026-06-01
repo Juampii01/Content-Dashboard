@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { useInstagramData } from '@/hooks/useInstagramData'
 import { useSocialConnection } from '@/hooks/useSocialConnection'
 import { InstagramDataProvider } from '@/components/instagram/InstagramDataContext'
@@ -26,9 +27,16 @@ export function IGProPage() {
 
   async function handleDisconnect() {
     setDisconnecting(true)
-    await disconnect()
-    await refresh()
-    setDisconnecting(false)
+    try {
+      await disconnect()
+      await refresh()
+    } catch (err) {
+      console.error('[instagram] disconnect failed:', err)
+      toast.error('Error al desconectar. Intentá de nuevo.')
+      await refresh().catch(() => {})
+    } finally {
+      setDisconnecting(false)
+    }
   }
 
   // Not connected
