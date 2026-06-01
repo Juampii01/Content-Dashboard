@@ -26,6 +26,21 @@ export function IGProPage() {
 
   const connected = !!summary?.connected && !summary.tokenExpired
 
+  // NOTE: all hooks (incl. useMemo) MUST run before any conditional return,
+  // otherwise the hook count changes between loading→loaded renders and React
+  // throws "Rendered more hooks than during the previous render".
+  const ctxValue = useMemo(
+    () => ({
+      connected,
+      hasRealData: connected && reels.length > 0,
+      summary,
+      reels,
+      loading,
+      hasLoaded: !loading,
+    }),
+    [connected, reels, loading, summary],
+  )
+
   async function handleDisconnect() {
     setDisconnecting(true)
     try {
@@ -60,18 +75,6 @@ export function IGProPage() {
       </div>
     )
   }
-
-  const ctxValue = useMemo(
-    () => ({
-      connected,
-      hasRealData: connected && reels.length > 0,
-      summary,
-      reels,
-      loading,
-      hasLoaded: !loading,
-    }),
-    [connected, reels, loading, summary],
-  )
 
   return (
     <InstagramDataProvider value={ctxValue}>
