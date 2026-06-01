@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useInstagramData } from '@/hooks/useInstagramData'
 import { useSocialConnection } from '@/hooks/useSocialConnection'
+import { InstagramDataProvider } from '@/components/instagram/InstagramDataContext'
 import { IGProfileHeader } from '@/components/instagram/pro/IGProfileHeader'
 import { IGStoriesReel } from '@/components/instagram/pro/IGStoriesReel'
 import { IGTabNav, type IGTab } from '@/components/instagram/pro/IGTabNav'
@@ -51,7 +52,20 @@ export function IGProPage() {
     )
   }
 
+  const ctxValue = useMemo(
+    () => ({
+      connected,
+      hasRealData: connected && reels.length > 0,
+      summary,
+      reels,
+      loading,
+      hasLoaded: !loading,
+    }),
+    [connected, reels, loading, summary],
+  )
+
   return (
+    <InstagramDataProvider value={ctxValue}>
     <div className="min-h-screen bg-[var(--background)]">
       {/* Profile header — looks like visiting your own IG profile */}
       {summary && (
@@ -92,5 +106,6 @@ export function IGProPage() {
         {tab === 'publicar' && <IGPublishPanel />}
       </div>
     </div>
+    </InstagramDataProvider>
   )
 }

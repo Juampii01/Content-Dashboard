@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { ImageIcon, Film, Loader2, CheckCircle, XCircle, ExternalLink, PlusCircle, Send, Clock } from 'lucide-react'
 import { IG_GRADIENT_CSS, IG_GRADIENT } from './ig-theme'
-import { useInstagramDataContext } from '@/components/instagram/InstagramDataContext'
 import { toast } from 'sonner'
 
 type MediaType = 'IMAGE' | 'REEL'
@@ -36,21 +35,11 @@ function usePublishHistory() {
 }
 
 export function IGPublishPanel() {
-  const { connected } = useInstagramDataContext()
   const [mediaType, setMediaType] = useState<MediaType>('REEL')
   const [mediaUrl, setMediaUrl] = useState('')
   const [caption, setCaption] = useState('')
   const [publishing, setPublishing] = useState(false)
   const { posts, loading, reload } = usePublishHistory()
-
-  if (!connected) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3">
-        <Send size={32} className="text-[var(--muted-foreground)]" />
-        <p className="text-sm text-[var(--muted-foreground)]">Conectá tu cuenta de Instagram para publicar contenido.</p>
-      </div>
-    )
-  }
 
   const todayCount = posts.filter(p => {
     const d = new Date(p.createdAt)
