@@ -712,11 +712,13 @@ model PublishedPost {
   createdBy    String?
   containerId  String   @default("") // IG container ID (step 1)
   postId       String   @default("") // IG media ID (after publish)
-  mediaType    String   @default("IMAGE") // IMAGE | REEL
-  mediaUrl     String
+  mediaType    String   @default("IMAGE") // IMAGE | REEL | CAROUSEL
+  mediaUrl     String                      // first/primary url (back-compat)
+  mediaUrls    String[] @default([])       // all item urls (single item = [mediaUrl])
+  itemTypes    String[] @default([])       // IMAGE | VIDEO per carousel item
   caption      String   @default("")
   status       String   @default("PENDING") // PENDING | PUBLISHED | FAILED
-  errorMessage String   @default("")
+  errorMessage String   @default("") // raw Meta error (last_error)
   permalink    String?  // Instagram post permalink (fetched after publish)
   publishedAt  DateTime?
   createdAt    DateTime @default(now())
