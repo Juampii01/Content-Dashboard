@@ -50,6 +50,62 @@ async function igGet<T>(path: string): Promise<IGResult<T>> {
   }
 }
 
+// ─── Insights por media ─────────────────────────────────────────────────────
+
+export interface MediaInsights {
+  views?: number
+  reach?: number
+  total_interactions?: number
+  saved?: number
+  shares?: number
+}
+
+/**
+ * Insights por media (v22+): `views` reemplaza a impressions/plays/video_views.
+ * El campo `views` de /me/media vuelve null, así que las views reales salen de acá.
+ * Si el set combinado falla, reintenta métrica por métrica y loguea el error crudo.
+ */
+export async function getMediaInsights(mediaId: string, mediaType: string, token: string): Promise<MediaInsights> {
+  const isVideo = mediaType === 'REEL' || mediaType === 'REELS' || mediaType === 'VIDEO'
+  const metrics = isVideo ? ['views', 'reach', 'total_interactions', 'saved', 'shares'] : ['views', 'reach']
+
+  async function fetchMetrics(ms: string[]): Promise<Record<string, number> | null> {
+    const res = await igGet<{ data?: Array<{ name: string; values?: Array<{ value: number }>; total_value?: { value: number } }> }>(
+      `/${mediaId}/insights?metric=${ms.join(',')}&access_token=${encodeURIComponent(token)}`,
+    )
+    if (!res.ok) {
+      console.error(`[ig/client] getMediaInsights ${mediaId} [${ms.join(',')}] → ${res.status} (code ${res.code}): ${res.message}`)
+      return null
+    }
+    const out: Record<string, number> = {}
+    for (const item of res.data?.data ?? []) {
+      out[item.name] = item.total_value?.value ?? item.values?.[0]?.value ?? 0
+    }
+    return out
+  }
+
+  const result: MediaInsights = {}
+  const apply = (v: Record<string, number>) => {
+    if ('views' in v) result.views = v.views
+    if ('reach' in v) result.reach = v.reach
+    if ('total_interactions' in v) result.total_interactions = v.total_interactions
+    if ('saved' in v) result.saved = v.saved
+    if ('shares' in v) result.shares = v.shares
+  }
+
+  const combined = await fetchMetrics(metrics)
+  if (combined) {
+    apply(combined)
+    return result
+  }
+  // El set combinado falló → fallback métrica por métrica.
+  for (const m of metrics) {
+    const single = await fetchMetrics([m])
+    if (single) apply(single)
+  }
+  return result
+}
+
 // ─── Containers ────────────────────────────────────────────────────────────
 
 export function createImageContainer(token: string, imageUrl: string, caption: string) {

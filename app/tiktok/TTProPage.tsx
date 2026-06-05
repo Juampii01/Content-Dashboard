@@ -15,6 +15,7 @@ import { TTTabNav, type TTTab } from '@/components/tiktok/pro/TTTabNav'
 import { TTOverviewStats } from '@/components/tiktok/pro/TTOverviewStats'
 import { TTTopVideos } from '@/components/tiktok/pro/TTTopVideos'
 import { TTInsightsPanel } from '@/components/tiktok/pro/TTInsightsPanel'
+import { TTMetricsGrid } from '@/components/tiktok/pro/TTMetricsGrid'
 import { TTVideoGrid } from '@/components/tiktok/pro/TTVideoGrid'
 import { TT_TEAL, TT_PINK } from '@/components/tiktok/pro/tt-theme'
 
@@ -126,6 +127,7 @@ export function TTProPage() {
       {tab === 'inicio' && (
         <div className="space-y-6">
           {summary && <TTOverviewStats summary={summary} />}
+          {!videosLoading && videos.length > 0 && <TTMetricsGrid videos={videos} />}
           {!videosLoading && videos.length > 0 && <TTTopVideos videos={videos} />}
           {videosLoading && (
             <div className="h-64 rounded-xl bg-muted animate-pulse" />

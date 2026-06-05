@@ -28,6 +28,7 @@ import {
   type InstagramMedia,
 } from '@/lib/schemas/instagram'
 import { accountToSnapshot, mediaToUserReel } from '@/lib/instagram/transform'
+import { getMediaInsights } from '@/lib/instagram/client'
 import { decryptToken } from '@/lib/crypto'
 import { checkRateLimit } from '@/lib/utils/ratelimit'
 
@@ -237,8 +238,11 @@ export async function POST(): Promise<NextResponse> {
   // 4. Upsert each reel in parallel (MH-04). Failures are logged per-reel so
   // one bad row doesn't abort the rest — preserves prior try/catch semantics.
   const upsertResults = await Promise.allSettled(
-    mediaParsed.data.data.map((m) => {
+    mediaParsed.data.data.map(async (m) => {
       const u = mediaToUserReel(m)
+      // Views reales desde /{media}/insights — el campo `views` de /me/media vuelve null.
+      const insights = await getMediaInsights(m.id, m.media_type ?? '', accessToken)
+      const viewsCount = insights.views ?? u.viewsCount
       return db.userReel
         .upsert({
           where: { instagramId: u.instagramId },
@@ -254,7 +258,7 @@ export async function POST(): Promise<NextResponse> {
             caption: u.caption,
             likesCount: u.likesCount,
             commentsCount: u.commentsCount,
-            viewsCount: u.viewsCount,
+            viewsCount,
             publishedAt: u.publishedAt,
             syncedAt: new Date(),
           },
@@ -268,7 +272,7 @@ export async function POST(): Promise<NextResponse> {
             caption: u.caption,
             likesCount: u.likesCount,
             commentsCount: u.commentsCount,
-            viewsCount: u.viewsCount,
+            viewsCount,
             publishedAt: u.publishedAt,
             syncedAt: new Date(),
           },

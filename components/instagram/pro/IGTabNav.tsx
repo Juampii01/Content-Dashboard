@@ -1,14 +1,15 @@
 'use client'
-import { Grid3X3, MessageCircle, PlusSquare, Home, TrendingUp } from 'lucide-react'
+import { Grid3X3, PlusSquare, Home, TrendingUp } from 'lucide-react'
 import { IG_GRADIENT } from './ig-theme'
 
-export type IGTab = 'inicio' | 'contenido' | 'audiencia' | 'mensajes' | 'publicar'
+// La pestaña "mensajes" (DMs) se quitó del producto. IGInbox y las rutas
+// /api/instagram/messages/* quedan dormidas (no se borran).
+export type IGTab = 'inicio' | 'contenido' | 'audiencia' | 'publicar'
 
 const TABS: { id: IGTab; icon: React.ElementType; label: string }[] = [
   { id: 'inicio',    icon: Home,          label: 'Inicio' },
   { id: 'contenido', icon: Grid3X3,       label: 'Contenido' },
   { id: 'audiencia', icon: TrendingUp,    label: 'Audiencia' },
-  { id: 'mensajes',  icon: MessageCircle, label: 'Mensajes' },
   { id: 'publicar',  icon: PlusSquare,    label: 'Publicar' },
 ]
 

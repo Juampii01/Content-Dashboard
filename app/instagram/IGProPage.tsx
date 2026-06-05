@@ -10,11 +10,11 @@ import { IGStoriesReel } from '@/components/instagram/pro/IGStoriesReel'
 import { IGTabNav, type IGTab } from '@/components/instagram/pro/IGTabNav'
 import { IGNotConnected } from '@/components/instagram/pro/IGNotConnected'
 import { IGOverviewStats } from '@/components/instagram/pro/IGOverviewStats'
+import { IGMetricsGrid } from '@/components/instagram/pro/IGMetricsGrid'
 import { IGTopContent } from '@/components/instagram/pro/IGTopContent'
 import { IGInsightsPanel } from '@/components/instagram/pro/IGInsightsPanel'
 import { IGContentGrid } from '@/components/instagram/pro/IGContentGrid'
 import { IGAudiencePanel } from '@/components/instagram/pro/IGAudiencePanel'
-import { IGInbox } from '@/components/instagram/pro/IGInbox'
 import { IGPublishPanel } from '@/components/instagram/pro/IGPublishPanel'
 import { IGTabErrorBoundary } from '@/components/instagram/pro/IGTabErrorBoundary'
 
@@ -101,6 +101,7 @@ export function IGProPage() {
           <IGTabErrorBoundary tabName="Inicio">
             <div className="space-y-5">
               <IGOverviewStats summary={summary} />
+              <IGMetricsGrid reels={reels} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <IGTopContent reels={reels} />
                 <IGInsightsPanel reels={reels} />
@@ -117,13 +118,10 @@ export function IGProPage() {
 
         {tab === 'audiencia' && (
           <IGTabErrorBoundary tabName="Audiencia">
-            <IGAudiencePanel />
-          </IGTabErrorBoundary>
-        )}
-
-        {tab === 'mensajes' && (
-          <IGTabErrorBoundary tabName="Mensajes">
-            <IGInbox />
+            <div className="space-y-5">
+              <IGAudiencePanel />
+              <IGMetricsGrid reels={reels} />
+            </div>
           </IGTabErrorBoundary>
         )}
 

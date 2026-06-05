@@ -32,6 +32,10 @@ const AdsInsightsPanel = dynamic(
   () => import('@/components/ads/pro/AdsInsightsPanel').then((m) => m.AdsInsightsPanel),
   { ssr: false },
 )
+const AdsMetricsGrid = dynamic(
+  () => import('@/components/ads/pro/AdsMetricsGrid').then((m) => m.AdsMetricsGrid),
+  { ssr: false },
+)
 
 function LoadingSkeleton() {
   return (
@@ -119,6 +123,7 @@ export function AdsProPage() {
         {tab === 'resumen' && (
           <div className="space-y-5">
             <AdsOverviewStats stats={summary?.stats ?? null} />
+            <AdsMetricsGrid campaigns={campaigns} />
             <AdsPerformanceChart />
             <AdsInsightsPanel campaigns={campaigns} />
           </div>

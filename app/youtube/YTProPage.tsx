@@ -18,6 +18,7 @@ import { YTTopVideos } from '@/components/youtube/pro/YTTopVideos'
 import { YTInsightsPanel } from '@/components/youtube/pro/YTInsightsPanel'
 import { YTVideoGrid } from '@/components/youtube/pro/YTVideoGrid'
 import { YTGrowthChart } from '@/components/youtube/pro/YTGrowthChart'
+import { YTMetricsGrid } from '@/components/youtube/pro/YTMetricsGrid'
 
 function PageSkeleton() {
   return (
@@ -110,6 +111,7 @@ export function YTProPage() {
           <IGTabErrorBoundary tabName="Inicio">
             <div className="space-y-6">
               {summary && <YTOverviewStats summary={summary} videos={videos} />}
+              <YTMetricsGrid videos={videos} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <YTTopVideos videos={videos} />
                 <YTInsightsPanel videos={videos} />
