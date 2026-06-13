@@ -30,8 +30,8 @@ const cspHeader = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  // frame-ancestors replaces X-Frame-Options for modern browsers.
-  "frame-ancestors 'none'",
+  // Permite embeber desde el GovBidder Sales Dashboard.
+  "frame-ancestors 'self' https://sales-dashboard-zeta-rose.vercel.app http://localhost:3000",
   "upgrade-insecure-requests",
 ].join('; ')
 
@@ -61,10 +61,6 @@ const nextConfig: NextConfig = {
           {
             key: 'Content-Security-Policy',
             value: cspHeader,
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
           },
           {
             key: 'Referrer-Policy',
