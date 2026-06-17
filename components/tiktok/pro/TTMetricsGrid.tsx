@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Eye, Heart, MessageCircle, Share2, TrendingUp, Zap, Calendar, Target, BarChart3, Flame, Activity } from 'lucide-react'
 import type { TikTokVideoRow } from '@/hooks/useTikTokData'
 
@@ -27,6 +28,8 @@ function Card({ icon: Icon, label, value, sub, accent }: { icon: React.ElementTy
 }
 
 export function TTMetricsGrid({ videos }: { videos: TikTokVideoRow[] }) {
+  // Read the clock once, stably, before any early return (rules-of-hooks + purity safe)
+  const [now] = useState(() => Date.now())
   if (!videos.length) return null
   const n = videos.length
 
@@ -47,7 +50,6 @@ export function TTMetricsGrid({ videos }: { videos: TikTokVideoRow[] }) {
   const viral = videos.filter((v) => v.viewCount > avgViews * 1.5).length
   const viralPct = Math.round((viral / n) * 100)
 
-  const now = Date.now()
   const last30 = videos.filter((v) => v.publishedAt && now - new Date(v.publishedAt).getTime() < 30 * 86_400_000).length
 
   const wd = Array.from({ length: 7 }, () => ({ eng: 0, count: 0 }))

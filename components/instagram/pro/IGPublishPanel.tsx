@@ -56,9 +56,12 @@ export function IGPublishPanel() {
   const { state, run, reset } = useInstagramPublish(reload)
   const busy = state.phase === 'validating' || state.phase === 'uploading' || state.phase === 'publishing'
 
-  // Build object-URL previews; revoke on change/unmount
+  // Build object-URL previews; revoke on change/unmount.
+  // setState-in-effect is required here: object URLs are a side effect that must
+  // be created after render and revoked on cleanup; they can't be derived purely.
   useEffect(() => {
     const urls = files.map(f => URL.createObjectURL(f))
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- object-URL lifecycle (create after render, revoke on cleanup)
     setPreviews(urls)
     return () => urls.forEach(u => URL.revokeObjectURL(u))
   }, [files])

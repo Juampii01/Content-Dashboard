@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Eye, ThumbsUp, MessageCircle, TrendingUp, Clock, Gauge, MousePointerClick, Timer, Calendar, Target, BarChart3, Flame } from 'lucide-react'
 import type { YouTubeVideoRow } from '@/hooks/useYouTubeData'
 
@@ -31,6 +32,8 @@ function Card({ icon: Icon, label, value, sub, accent }: { icon: React.ElementTy
 }
 
 export function YTMetricsGrid({ videos }: { videos: YouTubeVideoRow[] }) {
+  // Read the clock once, stably, before any early return (rules-of-hooks + purity safe)
+  const [now] = useState(() => Date.now())
   if (!videos.length) return null
   const n = videos.length
 
@@ -53,7 +56,6 @@ export function YTMetricsGrid({ videos }: { videos: YouTubeVideoRow[] }) {
   const watchVals = videos.map((v) => v.watchTimeMinutes).filter((x): x is number => x != null)
   const totalWatch = watchVals.reduce((s, w) => s + w, 0)
 
-  const now = Date.now()
   const last30 = videos.filter((v) => v.publishedAt && now - new Date(v.publishedAt).getTime() < 30 * 86_400_000).length
 
   const wd = Array.from({ length: 7 }, () => ({ eng: 0, count: 0 }))

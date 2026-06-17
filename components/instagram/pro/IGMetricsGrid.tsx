@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Eye, Heart, MessageCircle, TrendingUp, Zap, Calendar, BarChart3, Activity, Target, Flame } from 'lucide-react'
 import type { UserReelRow } from '@/hooks/useInstagramData'
 
@@ -45,6 +46,8 @@ function Card({
  * No depende de permisos de insights de cuenta ni de demografía.
  */
 export function IGMetricsGrid({ reels }: { reels: UserReelRow[] }) {
+  // Read the clock once, stably, before any early return (rules-of-hooks + purity safe)
+  const [now] = useState(() => Date.now())
   if (!reels.length) return null
 
   const n = reels.length
@@ -68,7 +71,6 @@ export function IGMetricsGrid({ reels }: { reels: UserReelRow[] }) {
   const viral = reels.filter((r) => r.viewsCount > avgViews * 1.5).length
   const viralPct = Math.round((viral / n) * 100)
 
-  const now = Date.now()
   const last30 = reels.filter((r) => r.publishedAt && now - new Date(r.publishedAt).getTime() < 30 * 86_400_000).length
 
   const wd = Array.from({ length: 7 }, () => ({ likes: 0, comments: 0, count: 0 }))

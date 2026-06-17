@@ -53,6 +53,7 @@ export function HomeContent() {
 
   useEffect(() => {
     let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clear stale error banner at the start of a fresh load cycle
     setFetchError(false)
 
     fetch('/api/bases/icp')
@@ -105,6 +106,7 @@ export function HomeContent() {
   // Fetch snapshot history whenever period changes
   useEffect(() => {
     let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clear stale error banner when period changes
     setFetchError(false)
     const loadSnapshotHistory = async () => {
       try {
