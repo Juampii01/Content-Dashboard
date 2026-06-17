@@ -283,32 +283,40 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
 
   if (loading) {
     return (
-      <div className="flex h-full" style={{ minHeight: '70vh' }}>
+      <div
+        className="flex flex-col md:flex-row overflow-hidden rounded-2xl"
+        style={{
+          minHeight: '70vh',
+          backgroundColor: 'var(--card)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-card)',
+        }}
+      >
         {/* Sidebar skeleton */}
-        <div className="w-64 flex-shrink-0 flex flex-col" style={{ borderRight: '1px solid var(--border)' }}>
-          <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
-            <div className="h-2.5 w-16 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
-            <div className="h-5 w-5 rounded-lg animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+        <div className="w-full md:w-72 flex-shrink-0 flex flex-col" style={{ borderRight: '1px solid var(--border)' }}>
+          <div className="flex items-center justify-between px-4 py-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+            <div className="h-3 w-20 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+            <div className="h-7 w-7 rounded-lg animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
           </div>
-          <div className="flex-1 py-2 px-2 space-y-1">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-2 px-2 py-2 rounded-xl">
-                <div className="w-5 h-5 rounded-lg animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
-                <div className="h-2.5 flex-1 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
-                <div className="h-4 w-4 rounded-full animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+          <div className="flex-1 py-3 px-2.5 space-y-1.5">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl">
+                <div className="w-7 h-7 rounded-lg animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+                <div className="h-3 flex-1 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+                <div className="h-4 w-5 rounded-full animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
               </div>
             ))}
           </div>
         </div>
         {/* Editor skeleton */}
         <div className="flex-1 flex flex-col">
-          <div className="px-8 pt-6 pb-4 flex-shrink-0 space-y-3" style={{ borderBottom: '1px solid var(--border)' }}>
-            <div className="h-2.5 w-12 rounded-full animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
-            <div className="h-7 w-64 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+          <div className="px-8 pt-7 pb-5 flex-shrink-0 space-y-4" style={{ borderBottom: '1px solid var(--border)' }}>
+            <div className="h-3 w-14 rounded-full animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
+            <div className="h-8 w-72 rounded-lg animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
           </div>
-          <div className="flex-1 px-8 py-6 space-y-3">
-            {[80, 100, 60, 90, 70].map((w, i) => (
-              <div key={i} className="h-3 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)', width: `${w}%` }} />
+          <div className="flex-1 px-8 py-8 space-y-3.5">
+            {[80, 100, 60, 90, 70, 85].map((w, i) => (
+              <div key={i} className="h-3.5 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)', width: `${w}%` }} />
             ))}
           </div>
         </div>
@@ -317,7 +325,15 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
   }
 
   return (
-    <div className="flex h-full" style={{ minHeight: '70vh' }}>
+    <div
+      className="flex flex-col md:flex-row overflow-hidden rounded-2xl"
+      style={{
+        minHeight: '70vh',
+        backgroundColor: 'var(--card)',
+        border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-card)',
+      }}
+    >
       <GuionesGrid
         tabs={tabs}
         items={items}

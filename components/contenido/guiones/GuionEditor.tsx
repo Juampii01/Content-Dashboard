@@ -223,49 +223,44 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
 
   if (!activeItem) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-8 px-10">
+      <div className="flex-1 flex flex-col items-center justify-center gap-7 px-10 py-16 text-center">
         {/* Icon */}
-        <div className="relative">
-          <div
-            className="w-20 h-20 rounded-3xl flex items-center justify-center"
-            style={{
-              background: 'color-mix(in srgb, var(--accent) 8%, transparent)',
-              border: '2px dashed color-mix(in srgb, var(--accent) 20%, transparent)',
-            }}
-          >
-            {hasTabs
-              ? <FileText size={32} style={{ color: 'var(--accent)', opacity: 0.4 }} />
-              : <FolderOpen size={32} style={{ color: 'var(--accent)', opacity: 0.4 }} />
-            }
-          </div>
+        <div
+          className="w-20 h-20 rounded-3xl flex items-center justify-center"
+          style={{
+            background: 'linear-gradient(145deg, color-mix(in srgb, var(--accent) 16%, transparent), color-mix(in srgb, var(--accent) 6%, transparent))',
+            boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent), var(--shadow-card-sm)',
+          }}
+        >
+          {hasTabs
+            ? <FileText size={34} style={{ color: 'var(--accent)' }} />
+            : <FolderOpen size={34} style={{ color: 'var(--accent)' }} />
+          }
         </div>
 
         {/* Text */}
-        <div className="text-center space-y-2 max-w-xs">
-          <p className="text-lg font-semibold" style={{ color: 'var(--foreground)', opacity: 0.6 }}>
+        <div className="space-y-2.5 max-w-sm">
+          <p className="text-xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
             {hasTabs ? 'Seleccioná un guión' : 'Tu espacio de escritura'}
           </p>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
             {hasTabs
-              ? 'Elegí un guión del panel izquierdo o creá uno nuevo con el botón +'
-              : 'Creá tu primera carpeta en el panel izquierdo para empezar a escribir guiones'}
+              ? 'Elegí un guión del panel de la izquierda, o creá uno nuevo dentro de cualquier carpeta para empezar a escribir.'
+              : 'Un lugar tranquilo para dar forma a tus reels e historias. Creá tu primera carpeta para empezar.'}
           </p>
         </div>
 
-        {/* CTA */}
-        {!hasTabs && (
-          <div
-            className="flex items-center gap-2.5 px-5 py-2.5 rounded-2xl text-sm font-medium"
-            style={{
-              backgroundColor: 'color-mix(in srgb, var(--accent) 10%, transparent)',
-              color: 'var(--accent)',
-              border: '1px solid color-mix(in srgb, var(--accent) 22%, transparent)',
-            }}
-          >
-            <FolderOpen size={15} />
-            Panel izquierdo → botón +
-          </div>
-        )}
+        {/* Hint */}
+        <div
+          className="flex items-center gap-2.5 px-4 py-2 rounded-full text-[13px] font-medium"
+          style={{
+            backgroundColor: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+            color: 'var(--accent)',
+          }}
+        >
+          {hasTabs ? <FileText size={14} /> : <FolderOpen size={14} />}
+          {hasTabs ? 'Abrí un guión del panel izquierdo' : 'Empezá con el botón + de la izquierda'}
+        </div>
       </div>
     )
   }
@@ -299,9 +294,10 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
 
       {/* ── Title area ── */}
       <div
-        className="px-8 pt-6 pb-4 flex-shrink-0"
+        className="px-6 sm:px-10 pt-7 pb-5 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
+       <div className="mx-auto w-full max-w-2xl">
         {/* Type badge + save indicator */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -388,20 +384,22 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
           value={localTitle}
           onChange={(e) => handleTitleChange(e.target.value)}
           placeholder="Sin título"
-          className="w-full text-2xl font-bold bg-transparent outline-none placeholder:opacity-20"
-          style={{ color: 'var(--foreground)', lineHeight: '1.3' }}
+          className="w-full text-[1.75rem] font-bold tracking-tight bg-transparent outline-none placeholder:opacity-25"
+          style={{ color: 'var(--foreground)', lineHeight: '1.25' }}
         />
+       </div>
       </div>
 
       {/* ── AI Panel ── */}
       {showAIPanel && (
         <div
-          className="px-8 py-4 flex-shrink-0"
+          className="px-6 sm:px-10 py-4 flex-shrink-0"
           style={{
             borderBottom: '1px solid var(--border)',
-            background: 'color-mix(in srgb, var(--accent) 4%, var(--background))',
+            background: 'color-mix(in srgb, var(--accent) 5%, var(--card))',
           }}
         >
+         <div className="mx-auto w-full max-w-2xl">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2.5">
               <div
@@ -478,14 +476,18 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
               {aiError}
             </p>
           )}
+         </div>
         </div>
       )}
 
       {/* ── Formatting toolbar ── */}
       {editor && (
         <div
-          className="flex items-center gap-0.5 px-4 py-1.5 flex-shrink-0"
-          style={{ borderBottom: '1px solid var(--border)' }}
+          className="flex items-center gap-0.5 px-6 sm:px-10 py-2 flex-shrink-0"
+          style={{
+            borderBottom: '1px solid var(--border)',
+            background: 'color-mix(in srgb, var(--foreground) 1.5%, var(--card))',
+          }}
         >
           {toolbarButtons.map((btn, i) =>
             btn === null ? (
@@ -542,17 +544,19 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
 
       {/* ── Editor area ── */}
       {isEmpty && !showAIPanel ? (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           {/* Clickable editor area */}
           <div
-            className="flex-1 overflow-y-auto px-8 pt-6 cursor-text"
+            className="px-6 sm:px-10 pt-8 cursor-text"
             onClick={() => editor?.commands.focus()}
           >
-            <EditorContent editor={editor} />
+            <div className="mx-auto w-full max-w-2xl">
+              <EditorContent editor={editor} />
+            </div>
           </div>
 
           {/* Start CTA cards */}
-          <div className="px-8 pb-8 pt-4 grid grid-cols-2 gap-3">
+          <div className="mx-auto w-full max-w-2xl px-6 sm:px-10 pb-10 pt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               onClick={insertTemplate}
               className="flex items-start gap-3 p-4 rounded-2xl text-left transition-all cursor-pointer group"
@@ -616,20 +620,25 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
         </div>
       ) : (
         <div
-          className="flex-1 overflow-y-auto px-8 py-6 cursor-text"
+          className="flex-1 overflow-y-auto px-6 sm:px-10 py-8 cursor-text"
           onClick={() => editor?.commands.focus()}
         >
-          <EditorContent editor={editor} />
+          <div className="mx-auto w-full max-w-2xl">
+            <EditorContent editor={editor} />
+          </div>
         </div>
       )}
 
       {/* ── Footer ── */}
       <div
-        className="px-6 py-2.5 flex-shrink-0 flex items-center gap-4"
-        style={{ borderTop: '1px solid var(--border)' }}
+        className="px-6 sm:px-10 py-3 flex-shrink-0 flex items-center gap-4"
+        style={{
+          borderTop: '1px solid var(--border)',
+          background: 'color-mix(in srgb, var(--foreground) 1.5%, var(--card))',
+        }}
       >
         {/* Word count + duration */}
-        <div className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}>
+        <div className="flex items-center gap-2 text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>
           <span className="tabular-nums">{wordCount} {wordCount === 1 ? 'palabra' : 'palabras'}</span>
           {duration && (
             <>
@@ -670,24 +679,25 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
       {/* ── Styles ── */}
       <style>{`
         .tiptap-guion {
-          min-height: 280px;
-          font-size: 0.925rem;
-          line-height: 1.9;
-          color: var(--foreground);
+          min-height: 320px;
+          font-size: 1.0625rem;
+          line-height: 1.85;
+          letter-spacing: -0.003em;
+          color: color-mix(in srgb, var(--foreground) 92%, transparent);
         }
-        .tiptap-guion p { margin: 0 0 0.85em; }
+        .tiptap-guion p { margin: 0 0 0.9em; }
         .tiptap-guion p:last-child { margin-bottom: 0; }
         .tiptap-guion h2 {
-          font-size: 0.7rem;
+          font-size: 0.72rem;
           font-weight: 800;
-          margin: 2em 0 0.6em;
+          margin: 2.1em 0 0.65em;
           color: var(--accent);
           text-transform: uppercase;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.12em;
           display: flex;
           align-items: center;
           gap: 0.5em;
-          opacity: 0.85;
+          opacity: 0.9;
         }
         .tiptap-guion h2:first-child { margin-top: 0; }
         .tiptap-guion ul,
