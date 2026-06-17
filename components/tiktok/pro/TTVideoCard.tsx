@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Play, Heart, MessageCircle, Share2, TrendingUp, TrendingDown } from 'lucide-react'
 import type { TikTokVideoRow } from '@/hooks/useTikTokData'
 import { fmtTT, TT_TEAL, TT_PINK } from './tt-theme'
@@ -16,6 +17,9 @@ function formatDuration(secs: number): string {
 }
 
 export function TTVideoCard({ video, avgViews }: TTVideoCardProps) {
+  // TikTok cover URLs (tiktokcdn) are signed + hotlink-protected: they 403/expire.
+  // Track load failure so we degrade to a clean placeholder instead of a broken image.
+  const [coverFailed, setCoverFailed] = useState(false)
   const aboveAvg = avgViews > 0 && video.viewCount > avgViews * 1.2
 
   return (
@@ -23,16 +27,19 @@ export function TTVideoCard({ video, avgViews }: TTVideoCardProps) {
       {/* Thumbnail — 9:16 aspect ratio */}
       <div className="relative" style={{ paddingTop: '177.78%' /* 16/9 * 100 */ }}>
         <div className="absolute inset-0 bg-muted">
-          {video.coverUrl ? (
+          {video.coverUrl && !coverFailed ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={video.coverUrl}
               alt={video.title || 'TikTok video'}
               className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+              loading="lazy"
+              onError={() => setCoverFailed(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Play className="w-8 h-8 text-muted-foreground/40" />
+            <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--muted)_80%,#69C9D0)_0%,var(--muted)_60%,color-mix(in_srgb,var(--muted)_80%,#EE1D52)_100%)]">
+              <Play className="w-8 h-8 text-muted-foreground/50" fill="currentColor" />
             </div>
           )}
         </div>
