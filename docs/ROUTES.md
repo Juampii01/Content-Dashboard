@@ -7,7 +7,7 @@
 | Route          | Component file                                  | Purpose                                                          |
 | -------------- | ----------------------------------------------- | ---------------------------------------------------------------- |
 | `/`            | `app/page.tsx` → `components/home/HomeContent`  | Home / overview dashboard                                        |
-| `/ads`         | `app/ads/page.tsx` → `AdsContent`               | Ads dashboard — Meta Ads: 2 tabs (Overview, Campañas) + ConnectButton + sync |
+| `/ads`         | `app/ads/page.tsx` → `AdsProPage`               | Ads dashboard — Meta Ads: 3 tabs (Resumen, Campañas, Rendimiento) + ConnectButton + sync |
 | `/ai`          | `app/ai/page.tsx` → `EternityAIContent`         | Eternity AI — streaming chat grounded on workspace data          |
 | `/analizador`  | `app/analizador/page.tsx` → `AnalizadorContent` | Content analyzer (uses `app/api/analizador`)                     |
 | `/bases`       | `app/bases/page.tsx` → `BasesContent`           | Knowledge bases / source library                                 |
@@ -15,14 +15,14 @@
 | `/competidores` | `app/competidores/page.tsx`                    | **Redirects → `/investigacion`** (kept for backward compat)      |
 | `/competidores/[username]` | `app/competidores/[username]/page.tsx` | Competitor detail — reels, transcribe, analysis, chat            |
 | `/contenido`   | `app/contenido/page.tsx` → `ContenidoContent`   | Content workspace (editor + lists)                               |
-| `/instagram`   | `app/instagram/page.tsx` → `InstagramContent`   | Instagram analytics view                                         |
+| `/instagram`   | `app/instagram/page.tsx` → `IGProPage`          | Instagram — 4 tabs (Inicio, Contenido, Audiencia, Publicar). Publicar soporta Imagen/Reel/Carrusel; Stories es stub deshabilitado ("próximamente") |
 | `/login`       | `app/login/page.tsx`                            | Supabase Auth — email/password. Redirects to `/` on success      |
 | `/tareas`      | `app/tareas/page.tsx` → `KanbanBoard`           | Task kanban board                                                |
 | `/transcript`  | `app/transcript/page.tsx`                       | **Redirects → `/investigacion`** (kept for backward compat)      |
 | `/content-research` | `app/content-research/page.tsx`            | **Redirects → `/investigacion`** (kept for backward compat)      |
 | `/video-feed`  | `app/video-feed/page.tsx` → `VideoFeedView`     | Connect own Instagram → last 30 days ranked by engagement, AI analysis per post. Singleton per (client, platform). |
-| `/tiktok`      | `app/tiktok/page.tsx` → `TikTokContent`         | TikTok analytics — 2 tabs (Dashboard, Videos) + ConnectButton + sync |
-| `/youtube`     | `app/youtube/page.tsx` → `YouTubeContent`       | YouTube analytics — 3 tabs (Dashboard, Videos, Audiencia) + ConnectButton |
+| `/tiktok`      | `app/tiktok/page.tsx` → `TTProPage`             | TikTok — 3 tabs (Inicio, Videos, Publicar). Publicar es stub ("próximamente") + ConnectButton + sync |
+| `/youtube`     | `app/youtube/page.tsx` → `YTProPage`            | YouTube — 3 tabs (Inicio, Videos, Audiencia). Audiencia es stub ("demografía próximamente" pendiente de scopes de API) + ConnectButton |
 | `/pending-approval` | `app/pending-approval/page.tsx`            | Landing for PENDING users — shown until a SUPER_ADMIN approves them |
 | `/admin`       | `app/admin/page.tsx`                            | Admin overview — counters (usuarios, admins, pendientes). SUPER_ADMIN only |
 | `/admin/users` | `app/admin/users/page.tsx` → `UsersAdminClient` | User management — approve, role changes. SUPER_ADMIN only |
@@ -92,7 +92,7 @@ API routes live under `app/api/` (`analizador`, `copy`, `social/[platform]`, `yo
 ```
 Visual verification — all routes
 - [ ] /            home renders, no console errors
-- [ ] /ads         loads, tabs (Overview, Campañas) renderizan; ConnectButton Meta Ads visible; sync funciona tras conectar
+- [ ] /ads         loads, tabs (Resumen, Campañas, Rendimiento) renderizan; ConnectButton Meta Ads visible; sync funciona tras conectar
 - [ ] /ai          Eternity chat renders; nueva conversación, streaming, historial funcionan
 - [ ] /analizador  loads, brand accents correct
 - [ ] /bases       loads, brand accents correct
@@ -100,14 +100,14 @@ Visual verification — all routes
 - [ ] /competidores  redirects to /investigacion
 - [ ] /competidores/[username]  detail renders (reels, transcribe, analysis, chat)
 - [ ] /contenido   loads, brand accents correct
-- [ ] /instagram   loads, filters render (incl. ReelFilters, TimeFilter), ConnectButton visible
+- [ ] /instagram   loads, tabs (Inicio, Contenido, Audiencia, Publicar) renderizan; Publicar soporta Imagen/Reel/Carrusel (Stories deshabilitado); ConnectButton visible
 - [ ] /login       form renders; successful login redirects to /
 - [ ] /tareas      kanban renders, drag works
 - [ ] /transcript  redirects to /investigacion
 - [ ] /content-research  redirects to /investigacion
 - [ ] /video-feed  empty state shows connect form; after connect, posts grid renders ranked with AI summaries
-- [ ] /tiktok      loads, tabs (Dashboard, Videos) renderizan; ConnectButton visible; sync funciona tras conectar
-- [ ] /youtube     loads, tabs (Dashboard, Videos, Audiencia) renderizan
+- [ ] /tiktok      loads, tabs (Inicio, Videos, Publicar) renderizan (Publicar es stub "próximamente"); ConnectButton visible; sync funciona tras conectar
+- [ ] /youtube     loads, tabs (Inicio, Videos, Audiencia) renderizan (Audiencia es stub "demografía próximamente")
 - [ ] /pending-approval  PENDING user lands here, sign-out works
 - [ ] /admin       (SUPER_ADMIN) overview cards render; non-admin sees 404
 - [ ] /admin/users (SUPER_ADMIN) table + filter + approve flow works

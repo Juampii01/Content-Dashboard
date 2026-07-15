@@ -46,9 +46,9 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 
 ---
 
-## Modelos Prisma (31 en `schema.prisma`)
+## Modelos Prisma (36 en `schema.prisma`)
 
-`Profile` · `Client` · `SocialConnection` · `OAuthState` · `Competitor` · `Reel` · `Transcription` · `Analysis` · `ChatMessage` · `ScrapeJob` · `Conversation` · `AIMessage` · `Task` · `ContentPiece` · `ContentTemplate` · `ICPProfile` · `BusinessBase` · `Idea` · `GuionTab` · `GuionItem` · `UserReel` · `Story` · `YouTubeVideo` · `TikTokVideo` · `AccountSnapshot` · `ContentResearchHistory` · `VideoFeedAccount` · `TranscriptHistory` · `AdAccount` · `AdCampaign` · `IncomeRecord`.
+`Profile` · `Client` · `SocialConnection` · `OAuthState` · `Competitor` · `Reel` · `Transcription` · `Analysis` · `ChatMessage` · `ScrapeJob` · `Conversation` · `AIMessage` · `Task` · `ContentPiece` · `ContentTemplate` · `ICPProfile` · `BusinessBase` · `Idea` · `GuionTab` · `GuionItem` · `UserReel` · `Story` · `YouTubeVideo` · `TikTokVideo` · `AccountSnapshot` · `AudienceSnapshot` · `ContentResearchHistory` · `VideoFeedAccount` · `TranscriptHistory` · `AdAccount` · `AdCampaign` · `IncomeRecord` · `InstagramComment` · `PublishedPost` · `IGConversation` · `IGMessage`.
 
 **Antes de usar un modelo**: `grep -n "^model " prisma/schema.prisma` para confirmar.
 
@@ -66,14 +66,14 @@ Path alias `@/*` → raíz del repo. Importar como `@/lib/db`.
 - `/api/competitors/[id]` y `/api/reels/[id]/{analyze,transcribe,chat,refresh-video-url}`
 - `/api/ai/{chat, conversations, conversations/[id]}` (Eternity AI — Anthropic SDK streaming, rate-limited 20/min)
 
-**UI que lee mocks** (`grep "lib/mock-data"`):
-- `/instagram` — los 5 tabs
-- `/youtube` UI — demografía + dashboards (aunque `/api/youtube/*` sí es real)
-- `components/home/HomeContent` (lee `lib/mock-data/dashboard.ts`)
+**UIs de plataforma — todas reales** (`*ProPage`, sin mocks; `lib/mock-data/` fue eliminado):
+- `/instagram` → `IGProPage` (Inicio, Contenido, Audiencia, Publicar). Stub: publicar Stories (deshabilitado, "próximamente").
+- `/youtube` → `YTProPage` (Inicio, Videos, Audiencia). Stub: Audiencia = "demografía próximamente" (pendiente de scopes de API).
+- `/tiktok` → `TTProPage` (Inicio, Videos, Publicar). Stub: Publicar = "próximamente".
+- `/ads` → `AdsProPage` (Resumen, Campañas, Rendimiento) — Meta Ads real.
+- `components/home/HomeContent` — lee APIs reales.
 
-**TopBar** ya NO usa mocks: lee `/api/me/global-stats` (real, suma de `AccountSnapshot` por plataforma). Sin data → muestra `—`.
-
-**Placeholders (`ComingSoonBanner`)**: `/ads`, `/tiktok` (antes leían `lib/mock-data/{ads,tiktok}.ts`; ambos archivos + sus 13 componentes tab fueron eliminados).
+**TopBar** lee `/api/me/global-stats` (real, suma de `AccountSnapshot` por plataforma). Sin data → muestra `—`.
 
 **`/competidores` NO usa mocks** — lee de DB real (corrección de versiones anteriores de este archivo).
 
@@ -95,8 +95,9 @@ app/
     me/{route,active-client,clients}/
     social/[platform]/{connect,callback}/     # instagram | tiktok | youtube
     youtube/{sync,videos,channel-summary}/
-  {instagram,contenido,bases,analizador,competidores,tareas,ads,tiktok,youtube}/page.tsx
-  ai/page.tsx                                  # ComingSoonBanner
+  {instagram,ads,tiktok,youtube}/page.tsx      # renderizan {IG,Ads,TT,YT}ProPage
+  {contenido,bases,analizador,competidores,tareas}/page.tsx
+  ai/page.tsx                                  # EternityAIContent (chat real)
   admin/{page,users,clients}/page.tsx
   pending-approval/  ·  login/
 
@@ -105,7 +106,6 @@ hooks/{usePeriod,useTab,useSocialConnection,useInstagramData,useYouTubeData}.ts
 lib/
   supabase/{client,server,admin}.ts  ·  auth-user.ts  ·  auth-bootstrap.ts  ·  db.ts
   utils/ratelimit.ts  ·  useLocalStorage.ts  ·  schemas/{analizador,copy,competidores}/
-  mock-data/                                  # Instagram/Ads/TikTok/YouTube UI (a eliminar)
   competidores/{active-jobs,resolve-competitor}.ts
 proxy.ts  ·  next.config.ts  ·  prisma/{schema.prisma,migrations/}
 scripts/{check-brand-consistency.mjs,seed-initial-clients.ts}
