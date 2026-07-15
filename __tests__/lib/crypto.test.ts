@@ -87,24 +87,28 @@ describe('lib/crypto', () => {
     })
   })
 
-  describe('key configuration errors (graceful mode)', () => {
-    it('returns plaintext if the env var is missing (graceful fallback)', () => {
+  describe('key configuration errors', () => {
+    it('throws (does NOT store plaintext) when the env var is missing', () => {
+      // Security hardening: encryptToken must never silently persist a token in
+      // cleartext. With no key configured it throws instead of falling back.
       delete process.env.OAUTH_TOKEN_ENCRYPTION_KEY
-      expect(encryptToken('x')).toBe('x')
+      expect(() => encryptToken('x')).toThrow(/not set/)
     })
 
-    it('returns plaintext if the env var is not 64 hex characters (graceful fallback)', () => {
+    it('returns plaintext if the env var is not 64 hex characters (graceful skip)', () => {
+      // A malformed key is treated as "encryption unavailable" and skips, rather
+      // than crashing — the key can be fixed without data loss on next write.
       process.env.OAUTH_TOKEN_ENCRYPTION_KEY = 'short'
       expect(encryptToken('x')).toBe('x')
     })
 
-    it('returns payload as-is if key missing and token is encrypted', () => {
-      // Encrypt with valid key first
+    it('throws DECRYPTION_KEY_MISSING when key is absent for an encrypted token', () => {
+      // Encrypt with a valid key first
       const cipher = encryptToken('sensitive')
-      // Remove key
+      // Remove key — decrypt must fail loudly instead of returning ciphertext
+      // (which would silently be used as a bogus Bearer token).
       delete process.env.OAUTH_TOKEN_ENCRYPTION_KEY
-      // decryptToken should return payload unchanged (logs error, does not throw)
-      expect(decryptToken(cipher)).toBe(cipher)
+      expect(() => decryptToken(cipher)).toThrow(/DECRYPTION_KEY_MISSING/)
     })
   })
 
