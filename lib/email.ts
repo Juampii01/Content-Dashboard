@@ -31,34 +31,43 @@ interface NewSignupEmailParams {
   signupAt: Date
 }
 
-function buildSignupEmailHtml(params: NewSignupEmailParams): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://content-dashboard.vercel.app'
-  const adminUsersUrl = `${appUrl.replace(/\/$/, '')}/admin/users`
-  const signupAtStr = params.signupAt.toISOString()
-  // Inline styles only — email clients strip <style>/classes.
+/**
+ * Shared branded email shell. Brand palette (from app/globals.css):
+ *   --accent            #8E1F2F  (brand red)
+ *   --accent-foreground #F5EDE3  (cream)
+ * Email clients strip <style>/CSS-vars, so literal hex + inline styles are
+ * required here (this file lives in lib/, outside the check:brand scan scope).
+ */
+const BRAND = {
+  accent: '#8E1F2F',
+  accentFg: '#F5EDE3',
+  pageBg: '#F5EDE3',
+  card: '#FFFFFF',
+  border: '#E7DCCF',
+  text: '#1A1516',
+  muted: '#6B615C',
+} as const
+
+function emailShell(bodyHtml: string, title: string): string {
   return `<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>Nuevo registro — Content Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escapeHtml(title)}</title>
   </head>
-  <body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#fafafa;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:32px 16px;">
+  <body style="margin:0;padding:0;background-color:${BRAND.pageBg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${BRAND.text};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BRAND.pageBg};padding:40px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#111111;border:1px solid #222222;border-radius:16px;overflow:hidden;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:${BRAND.card};border:1px solid ${BRAND.border};border-radius:18px;overflow:hidden;">
             <tr>
-              <td style="padding:32px;">
-                <div style="display:inline-block;width:40px;height:40px;line-height:40px;text-align:center;border-radius:10px;background-color:#d4ff00;color:#0a0a0a;font-weight:700;font-size:18px;margin-bottom:16px;">E</div>
-                <h1 style="margin:0 0 4px 0;font-size:20px;font-weight:700;color:#fafafa;">Content Dashboard</h1>
-                <p style="margin:0 0 24px 0;font-size:12px;color:#a1a1aa;">by eternity</p>
-                <h2 style="margin:0 0 12px 0;font-size:16px;font-weight:600;color:#fafafa;">Nuevo registro pendiente</h2>
-                <p style="margin:0 0 8px 0;font-size:14px;line-height:1.6;color:#d4d4d8;">
-                  Un nuevo usuario se ha registrado: <strong style="color:#fafafa;">${escapeHtml(params.email)}</strong>. Está pendiente de aprobación en <code style="color:#d4ff00;">/admin/users</code>.
-                </p>
-                <p style="margin:0 0 24px 0;font-size:12px;color:#71717a;">Registrado el ${escapeHtml(signupAtStr)}</p>
-                <a href="${escapeHtml(adminUsersUrl)}" style="display:inline-block;padding:12px 20px;background-color:#d4ff00;color:#0a0a0a;text-decoration:none;font-weight:600;font-size:14px;border-radius:12px;">Revisar en /admin/users</a>
-                <p style="margin:32px 0 0 0;font-size:11px;color:#52525b;">Este correo se envió automáticamente desde Content Dashboard.</p>
+              <td style="padding:36px 36px 32px 36px;">
+                <div style="display:inline-block;width:44px;height:44px;line-height:44px;text-align:center;border-radius:12px;background-color:${BRAND.accent};color:${BRAND.accentFg};font-weight:700;font-size:20px;margin-bottom:20px;">E</div>
+                <h1 style="margin:0 0 2px 0;font-size:19px;font-weight:700;color:${BRAND.text};">Content Dashboard</h1>
+                <p style="margin:0 0 24px 0;font-size:12px;color:${BRAND.muted};letter-spacing:0.02em;">by eternity</p>
+                ${bodyHtml}
+                <p style="margin:36px 0 0 0;font-size:11px;color:${BRAND.muted};border-top:1px solid ${BRAND.border};padding-top:16px;">Este correo se envió automáticamente desde Content Dashboard. Si no esperabas este mensaje, podés ignorarlo.</p>
               </td>
             </tr>
           </table>
@@ -67,6 +76,24 @@ function buildSignupEmailHtml(params: NewSignupEmailParams): string {
     </table>
   </body>
 </html>`
+}
+
+function brandButton(href: string, label: string): string {
+  return `<a href="${escapeHtml(href)}" style="display:inline-block;padding:13px 22px;background-color:${BRAND.accent};color:${BRAND.accentFg};text-decoration:none;font-weight:600;font-size:14px;border-radius:12px;">${escapeHtml(label)}</a>`
+}
+
+function buildSignupEmailHtml(params: NewSignupEmailParams): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://content-dashboard-coral.vercel.app'
+  const adminUsersUrl = `${appUrl.replace(/\/$/, '')}/admin/users`
+  const signupAtStr = params.signupAt.toISOString()
+  const body = `
+                <h2 style="margin:0 0 12px 0;font-size:16px;font-weight:600;color:${BRAND.text};">Nuevo registro</h2>
+                <p style="margin:0 0 8px 0;font-size:14px;line-height:1.6;color:${BRAND.text};">
+                  Un nuevo usuario se registró: <strong style="color:${BRAND.accent};">${escapeHtml(params.email)}</strong>. Revisá y gestionalo en <code style="color:${BRAND.accent};">/admin/users</code>.
+                </p>
+                <p style="margin:0 0 24px 0;font-size:12px;color:${BRAND.muted};">Registrado el ${escapeHtml(signupAtStr)}</p>
+                ${brandButton(adminUsersUrl, 'Ir a /admin/users')}`
+  return emailShell(body, 'Nuevo registro — Content Dashboard')
 }
 
 function escapeHtml(s: string): string {

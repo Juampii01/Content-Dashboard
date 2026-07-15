@@ -1,0 +1,40 @@
+<!--
+  Supabase → Authentication → Email Templates → "Confirm signup"
+  Pega este HTML en el campo "Message body". Subject sugerido:
+    Confirmá tu correo — Content Dashboard
+  Variable de Supabase usada: {{ .ConfirmationURL }} (link de confirmación).
+  Paleta de marca: rojo #8E1F2F sobre crema #F5EDE3 (inline hex — los clientes de email no soportan CSS vars).
+-->
+<body style="margin:0;padding:0;background-color:#F5EDE3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1A1516;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F5EDE3;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#FFFFFF;border:1px solid #E7DCCF;border-radius:18px;overflow:hidden;">
+          <tr>
+            <td style="padding:36px 36px 32px 36px;">
+              <div style="display:inline-block;width:44px;height:44px;line-height:44px;text-align:center;border-radius:12px;background-color:#8E1F2F;color:#F5EDE3;font-weight:700;font-size:20px;margin-bottom:20px;">E</div>
+              <h1 style="margin:0 0 2px 0;font-size:19px;font-weight:700;color:#1A1516;">Content Dashboard</h1>
+              <p style="margin:0 0 24px 0;font-size:12px;color:#6B615C;letter-spacing:0.02em;">by eternity</p>
+
+              <h2 style="margin:0 0 12px 0;font-size:16px;font-weight:600;color:#1A1516;">Confirmá tu correo</h2>
+              <p style="margin:0 0 20px 0;font-size:14px;line-height:1.6;color:#1A1516;">
+                ¡Bienvenido! Para activar tu cuenta en Content Dashboard, confirmá tu dirección de correo con el botón de abajo.
+              </p>
+
+              <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:13px 22px;background-color:#8E1F2F;color:#F5EDE3;text-decoration:none;font-weight:600;font-size:14px;border-radius:12px;">Confirmar mi correo</a>
+
+              <p style="margin:24px 0 0 0;font-size:12px;line-height:1.6;color:#6B615C;">
+                Si el botón no funciona, copiá y pegá esta dirección en tu navegador:<br />
+                <a href="{{ .ConfirmationURL }}" style="color:#8E1F2F;word-break:break-all;">{{ .ConfirmationURL }}</a>
+              </p>
+
+              <p style="margin:36px 0 0 0;font-size:11px;color:#6B615C;border-top:1px solid #E7DCCF;padding-top:16px;">
+                Si no creaste esta cuenta, podés ignorar este correo.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
