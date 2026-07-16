@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
-import { X, Calendar, Tag, Layers, Palette, Maximize2, Minimize2, Columns2, Smile } from 'lucide-react'
+import { X, Calendar, Tag, Layers, Palette, Maximize2, Minimize2, Columns2, Smile, Image as ImageIcon } from 'lucide-react'
 import { ContentItem, UnifiedStatus, ContentCategory, ContentTemplate, ReelCategory, HistoriaCategory } from '@/lib/types'
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/components/pipeline/CategoryChip'
 import { DatePicker } from './DatePicker'
@@ -73,6 +73,7 @@ export function ContentItemModal({ item, defaultDate, prefill, type, onSave, onD
   const [color, setColor]             = useState(item?.color ?? prefill?.color ?? 'var(--accent)')
   const [category, setCategory]       = useState<ContentCategory | undefined>(item?.category ?? prefill?.category)
   const [emoji, setEmoji]             = useState(item?.emoji ?? '')
+  const [coverUrl, setCoverUrl]       = useState(item?.coverUrl ?? item?.thumbnailUrl ?? '')
   const [isExpanded, setIsExpanded]   = useState(false)
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false)
   const [emojiPickerPos, setEmojiPickerPos] = useState<{ top: number; left: number } | null>(null)
@@ -103,6 +104,8 @@ export function ContentItemModal({ item, defaultDate, prefill, type, onSave, onD
     return () => document.removeEventListener('mousedown', handler)
   }, [emojiPickerOpen])
 
+  const trimmedCover = coverUrl.trim()
+
   const handleSave = () => {
     if (!title.trim() || !date) return
     const normalizedEnd = endDate && endDate !== date ? endDate : undefined
@@ -112,6 +115,12 @@ export function ContentItemModal({ item, defaultDate, prefill, type, onSave, onD
       description: description.trim(),
       date, endDate: normalizedEnd,
       status, color, type, category, emoji: emoji || undefined,
+      // Reuse the cover as the card thumbnail (no separate upload flow).
+      coverUrl: trimmedCover || undefined,
+      thumbnailUrl: trimmedCover || undefined,
+      // Preserve existing lifecycle links (linking UI comes later).
+      ideaId: item?.ideaId,
+      guionItemId: item?.guionItemId,
     })
     onClose()
   }
@@ -355,6 +364,49 @@ export function ContentItemModal({ item, defaultDate, prefill, type, onSave, onD
                 ))}
               </div>
             </PropertyRow>
+
+            {/* Portada (cover image URL) */}
+            <PropertyRow icon={<ImageIcon size={14} />} label="Portada">
+              <div className="flex items-center gap-2 w-full">
+                <div
+                  className="w-9 h-9 rounded-md flex-shrink-0 overflow-hidden flex items-center justify-center"
+                  style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}
+                >
+                  {trimmedCover ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- external cover URL, no upload/optimization
+                    <img src={trimmedCover} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon size={13} style={{ color: 'var(--muted-foreground)' }} />
+                  )}
+                </div>
+                <input
+                  value={coverUrl}
+                  onChange={(e) => setCoverUrl(e.target.value)}
+                  placeholder="https://…/portada.jpg (URL de imagen)"
+                  inputMode="url"
+                  className="flex-1 bg-transparent text-sm outline-none placeholder:opacity-40"
+                  style={{ color: 'var(--foreground)' }}
+                />
+              </div>
+            </PropertyRow>
+
+            {/* Lifecycle links (read-only badges) */}
+            {(item?.guionItemId || item?.ideaId) && (
+              <PropertyRow icon={<Layers size={14} />} label="Vínculos">
+                <div className="flex gap-1.5 flex-wrap">
+                  {item?.guionItemId && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', border: '1px solid var(--border)' }}>
+                      📝 guión
+                    </span>
+                  )}
+                  {item?.ideaId && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', border: '1px solid var(--border)' }}>
+                      💡 idea
+                    </span>
+                  )}
+                </div>
+              </PropertyRow>
+            )}
           </div>
 
           {/* Divider */}

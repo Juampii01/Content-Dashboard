@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'motion/react'
-import { X } from 'lucide-react'
+import { X, Image as ImageIcon } from 'lucide-react'
 import { ContentPiece, UnifiedStatus, ContentCategory, ContentFormat, ContentPlatform } from '@/lib/types'
 import { CATEGORY_LABELS, CATEGORY_COLORS, FORMAT_ICONS, PLATFORM_ICONS } from './CategoryChip'
 import { DatePicker } from '@/components/calendario/DatePicker'
@@ -57,6 +57,7 @@ export function PipelineModal({ item, defaultStatus = 'drafts', onSave, onDelete
   const [status, setStatus]           = useState<UnifiedStatus>(item?.status ?? defaultStatus)
   const [date, setDate]               = useState(item?.date ?? '')
   const [color, setColor]             = useState(item?.color ?? 'var(--accent)')
+  const [coverUrl, setCoverUrl]       = useState(item?.coverUrl ?? item?.thumbnailUrl ?? '')
 
   // Portal mount: ensures createPortal only runs on client (SSR-safe).
   const [mounted, setMounted] = useState(false)
@@ -77,6 +78,8 @@ export function PipelineModal({ item, defaultStatus = 'drafts', onSave, onDelete
 
   const typeCategories = type === 'reel' ? REEL_CATEGORIES : HISTORIA_CATEGORIES
 
+  const trimmedCover = coverUrl.trim()
+
   const handleSubmit = () => {
     if (!title.trim()) return
     onSave({
@@ -90,6 +93,12 @@ export function PipelineModal({ item, defaultStatus = 'drafts', onSave, onDelete
       format,
       platform,
       date: date || undefined,
+      // Reuse the cover as the card thumbnail (no separate upload flow).
+      coverUrl: trimmedCover || undefined,
+      thumbnailUrl: trimmedCover || undefined,
+      // Preserve existing lifecycle links (linking UI comes later).
+      ideaId: item?.ideaId,
+      guionItemId: item?.guionItemId,
     })
     onClose()
   }
@@ -282,6 +291,48 @@ export function PipelineModal({ item, defaultStatus = 'drafts', onSave, onDelete
               />
             </div>
           </div>
+
+          {/* Portada (cover image URL) */}
+          <div>
+            <label className="text-[11px] font-medium mb-1.5 block" style={{ color: 'var(--muted-foreground)' }}>Portada (URL de imagen)</label>
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-11 h-11 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center"
+                style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}
+              >
+                {trimmedCover ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- external cover URL, no upload/optimization
+                  <img src={trimmedCover} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <ImageIcon size={16} style={{ color: 'var(--muted-foreground)' }} />
+                )}
+              </div>
+              <input
+                value={coverUrl}
+                onChange={(e) => setCoverUrl(e.target.value)}
+                placeholder="https://…/portada.jpg"
+                inputMode="url"
+                className="flex-1 text-xs rounded-lg px-3 py-2 outline-none"
+                style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
+              />
+            </div>
+          </div>
+
+          {/* Lifecycle links (read-only badges) */}
+          {(item?.guionItemId || item?.ideaId) && (
+            <div className="flex flex-wrap gap-1.5">
+              {item?.guionItemId && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', border: '1px solid var(--border)' }}>
+                  📝 guión
+                </span>
+              )}
+              {item?.ideaId && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', border: '1px solid var(--border)' }}>
+                  💡 idea
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Color */}
           <div>

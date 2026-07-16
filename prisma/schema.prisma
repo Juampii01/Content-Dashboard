@@ -282,10 +282,18 @@ model ContentPiece {
   platform    String    @default("")
   emoji       String    @default("")
   order       Int       @default(0)
+  // Content lifecycle links + media (Tier 1 rebuild)
+  thumbnailUrl String?  // small preview for cards
+  coverUrl     String?  // full cover shown in calendar/editor/phone-frame
+  ideaId       String?  // origin idea (N pieces : 1 idea)
+  idea         Idea?      @relation(fields: [ideaId], references: [id], onDelete: SetNull)
+  guionItemId  String?    @unique // the script this piece was written from (1:1)
+  guionItem    GuionItem? @relation(fields: [guionItemId], references: [id], onDelete: SetNull)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([clientId])
+  @@index([ideaId])
 }
 
 model ContentTemplate {
@@ -350,6 +358,7 @@ model Idea {
   referenceUrl String   @default("")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  contentPieces ContentPiece[] // pieces spawned from this idea
 
   @@index([clientId])
 }
@@ -383,6 +392,7 @@ model GuionItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   tab       GuionTab @relation(fields: [tabId], references: [id], onDelete: Cascade)
+  contentPiece ContentPiece? // the pipeline/calendar piece written from this script
 
   @@index([clientId])
   @@index([tabId])

@@ -46,6 +46,7 @@ export function EventBar({
   onCycleStatus, onDuplicate, onDelete,
 }: EventBarProps) {
   const barColor = STATUS_OVERRIDE_COLORS[item.status]
+  const cover = item.coverUrl || item.thumbnailUrl || null
   const leftPct = (startIdx / 7) * 100
   const widthPct = ((endIdx - startIdx + 1) / 7) * 100
   // 1px inset so the bar visually floats over the cell borders (Apple Calendar style)
@@ -143,9 +144,14 @@ export function EventBar({
           el.style.backgroundColor = `color-mix(in srgb, ${barColor} 18%, var(--card))`
         }}
       >
-        {item.emoji
-          ? <span className="flex-shrink-0 text-[13px] leading-none">{item.emoji}</span>
-          : <StatusIcon status={item.status} color={barColor} />
+        {cover
+          ? (
+            // eslint-disable-next-line @next/next/no-img-element -- external cover URL, no upload/optimization
+            <img src={cover} alt="" className="flex-shrink-0 w-3.5 h-3.5 rounded-sm object-cover" draggable={false} />
+          )
+          : item.emoji
+            ? <span className="flex-shrink-0 text-[13px] leading-none">{item.emoji}</span>
+            : <StatusIcon status={item.status} color={barColor} />
         }
         <span className="truncate">{item.title}</span>
       </div>

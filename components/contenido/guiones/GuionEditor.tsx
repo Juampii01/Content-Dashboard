@@ -9,8 +9,10 @@ import {
   Bold, Italic, List, ListOrdered, Heading2,
   Copy, Check, LayoutTemplate, Strikethrough,
   Minus, Clock, Wand2, FolderOpen,
+  Smartphone, Zap, Layers, Megaphone, Scissors,
 } from 'lucide-react'
 import type { GuionItem } from '@/lib/types'
+import { GuionPhonePreview } from './GuionPhonePreview'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -79,6 +81,15 @@ function targetWords(type?: string): number {
 
 type SaveState = 'idle' | 'saving' | 'saved'
 
+type AIAction = 'rewrite_hook' | 'hook_variants' | 'punch_cta' | 'tighten'
+
+const AI_ACTIONS: { key: AIAction; label: string; icon: typeof Zap; title: string }[] = [
+  { key: 'rewrite_hook', label: 'Reescribir hook', icon: Zap,       title: 'Reescribir el gancho de apertura' },
+  { key: 'hook_variants', label: '3 hooks',        icon: Layers,    title: 'Generar 3 hooks alternativos' },
+  { key: 'punch_cta',    label: 'Afilar CTA',      icon: Megaphone, title: 'Reescribir el llamado a la acción' },
+  { key: 'tighten',      label: 'Achicar a 30s',   icon: Scissors,  title: 'Recortar el guión a ~30 segundos' },
+]
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface GuionEditorProps {
@@ -101,6 +112,9 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
   const [saveState, setSaveState]         = useState<SaveState>('idle')
   const [copied, setCopied]               = useState(false)
   const [localTitle, setLocalTitle]       = useState(activeItem?.title ?? '')
+  const [showPreview, setShowPreview]     = useState(true)
+  const [aiActionLoading, setAiActionLoading] = useState<AIAction | null>(null)
+  const [hookVariants, setHookVariants]   = useState<string[] | null>(null)
 
   const prevItemIdRef   = useRef<string | null>(null)
   const titleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -219,6 +233,61 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
     })
   }
 
+  function flashSaved() {
+    setSaveState('saved')
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    savedTimerRef.current = setTimeout(() => setSaveState('idle'), 3000)
+  }
+
+  // Insert plain text (may be multi-line) at the current cursor position.
+  // The editor's own onUpdate handler schedules the autosave afterwards.
+  function insertAtCursor(text: string) {
+    if (!editor) return
+    editor.chain().focus().insertContent(toHTML(text)).run()
+  }
+
+  async function runAIAction(action: AIAction) {
+    if (!activeItem || !editor || aiActionLoading) return
+    const script = editor.getText().trim()
+    if (!script) return
+    setAiActionLoading(action)
+    setAiError(null)
+    if (action !== 'hook_variants') setHookVariants(null)
+    try {
+      const res = await fetch('/api/guiones/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          script,
+          type: (type === 'reel' || type === 'historia') ? type : 'reel',
+          tone: aiTone,
+        }),
+      })
+      const data = (await res.json()) as { content?: string; variants?: string[]; error?: string }
+      if (!res.ok) {
+        setAiError(data.error ?? 'Error al procesar la acción')
+        return
+      }
+      if (action === 'hook_variants') {
+        setHookVariants(data.variants ?? [])
+      } else if (action === 'tighten' && data.content) {
+        const html = toHTML(data.content)
+        isLoadingRef.current = true
+        editor.commands.setContent(html)
+        Promise.resolve().then(() => { isLoadingRef.current = false })
+        onUpdate({ content: html })
+        flashSaved()
+      } else if (data.content) {
+        insertAtCursor(data.content)
+      }
+    } catch {
+      setAiError('Error de conexión. Intentá de nuevo.')
+    } finally {
+      setAiActionLoading(null)
+    }
+  }
+
   // ─── Empty / no-item state ──────────────────────────────────────────────────
 
   if (!activeItem) {
@@ -332,6 +401,21 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
                 <><span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />Guardado</>
               )}
             </span>
+
+            {/* Phone preview toggle (wide screens) */}
+            <button
+              onClick={() => setShowPreview((p) => !p)}
+              title={showPreview ? 'Ocultar vista previa' : 'Mostrar vista previa'}
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer"
+              style={{
+                background: showPreview ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--muted)',
+                color: showPreview ? 'var(--accent)' : 'var(--muted-foreground)',
+                border: showPreview ? '1px solid color-mix(in srgb, var(--accent) 25%, transparent)' : '1px solid transparent',
+              }}
+            >
+              <Smartphone size={12} />
+              <span className="hidden xl:inline">Preview</span>
+            </button>
 
             {/* Copy */}
             <button
@@ -542,8 +626,119 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
         </div>
       )}
 
-      {/* ── Editor area ── */}
-      {isEmpty && !showAIPanel ? (
+      {/* ── AI section actions bar ── */}
+      {!isEmpty && (
+        <div
+          className="flex items-center gap-1.5 px-6 sm:px-10 py-2 flex-shrink-0 overflow-x-auto"
+          style={{
+            borderBottom: '1px solid var(--border)',
+            background: 'color-mix(in srgb, var(--accent) 3.5%, var(--card))',
+            scrollbarWidth: 'none',
+          }}
+        >
+          <span
+            className="text-[10px] font-bold uppercase tracking-[0.14em] flex items-center gap-1.5 flex-shrink-0 mr-1"
+            style={{ color: 'var(--accent)' }}
+          >
+            <Sparkles size={11} />
+            Afinar IA
+          </span>
+          {AI_ACTIONS.map(({ key, label, icon: Icon, title: btnTitle }) => {
+            const loading = aiActionLoading === key
+            return (
+              <button
+                key={key}
+                onClick={() => void runAIAction(key)}
+                disabled={aiActionLoading !== null}
+                title={btnTitle}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer flex-shrink-0 disabled:opacity-50"
+                style={{
+                  color: 'var(--muted-foreground)',
+                  border: '1px solid var(--border)',
+                }}
+                onMouseEnter={(e) => {
+                  if (aiActionLoading !== null) return
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--accent) 40%, transparent)'
+                  e.currentTarget.style.color = 'var(--accent)'
+                  e.currentTarget.style.background = 'color-mix(in srgb, var(--accent) 8%, transparent)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border)'
+                  e.currentTarget.style.color = 'var(--muted-foreground)'
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                {loading ? <Loader2 size={11} className="animate-spin" /> : <Icon size={11} />}
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ── Hook variants panel ── */}
+      {hookVariants && (
+        <div
+          className="px-6 sm:px-10 py-3 flex-shrink-0"
+          style={{
+            borderBottom: '1px solid var(--border)',
+            background: 'color-mix(in srgb, var(--accent) 5%, var(--card))',
+          }}
+        >
+          <div className="mx-auto w-full max-w-2xl">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[11px] font-semibold flex items-center gap-1.5" style={{ color: 'var(--foreground)' }}>
+                <Layers size={12} style={{ color: 'var(--accent)' }} />
+                Elegí un hook — se inserta donde está el cursor
+              </p>
+              <button
+                onClick={() => setHookVariants(null)}
+                className="p-1 rounded-lg opacity-40 hover:opacity-80 transition-opacity cursor-pointer"
+                style={{ color: 'var(--muted-foreground)' }}
+              >
+                <X size={13} />
+              </button>
+            </div>
+            {hookVariants.length === 0 ? (
+              <p className="text-xs italic" style={{ color: 'var(--muted-foreground)' }}>
+                No se generaron variantes. Probá de nuevo.
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                {hookVariants.map((variant, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { insertAtCursor(variant); setHookVariants(null) }}
+                    className="flex items-start gap-2.5 w-full text-left p-2.5 rounded-xl text-[13px] leading-snug transition-all cursor-pointer"
+                    style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--accent) 40%, transparent)'
+                      e.currentTarget.style.background = 'color-mix(in srgb, var(--accent) 6%, var(--card))'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border)'
+                      e.currentTarget.style.background = 'var(--card)'
+                    }}
+                  >
+                    <span
+                      className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mt-px"
+                      style={{ background: 'color-mix(in srgb, var(--accent) 14%, transparent)', color: 'var(--accent)' }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span>{variant}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Editor area (+ live phone preview) ── */}
+      <div className="flex-1 flex min-h-0">
+       <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        {isEmpty && !showAIPanel ? (
         <div className="flex-1 flex flex-col overflow-y-auto">
           {/* Clickable editor area */}
           <div
@@ -627,7 +822,29 @@ export function GuionEditor({ activeItem, hasTabs, label, type, onUpdate, onDele
             <EditorContent editor={editor} />
           </div>
         </div>
-      )}
+        )}
+       </div>
+
+       {/* Live phone preview (wide screens) */}
+       {showPreview && (
+         <aside
+           className="hidden lg:flex flex-shrink-0 w-[340px] overflow-y-auto flex-col items-center px-5 py-6"
+           style={{
+             borderLeft: '1px solid var(--border)',
+             background: 'color-mix(in srgb, var(--foreground) 2%, var(--card))',
+             scrollbarWidth: 'none',
+           }}
+         >
+           <GuionPhonePreview
+             title={localTitle}
+             html={editor?.getHTML() ?? ''}
+             typeLabel={typeLabel}
+             wordCount={wordCount}
+             duration={duration}
+           />
+         </aside>
+       )}
+      </div>
 
       {/* ── Footer ── */}
       <div

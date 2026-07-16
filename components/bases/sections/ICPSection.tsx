@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChipEditor } from '../ChipEditor'
+import { useAISuggest, AISuggestButton, GhostChips } from '../AISuggest'
 import { ICPData } from '@/lib/types'
 import { tryParseArray } from '@/lib/utils/parseArray'
 
@@ -70,6 +71,16 @@ export function ICPSection() {
   // Cleanup debounce on unmount
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
 
+  const creenciasAI = useAISuggest('icp_creencias')
+
+  const pickCreencia = useCallback((value: string) => {
+    const val = value.trim()
+    if (val && !data.creencias.includes(val)) {
+      persist({ ...data, creencias: [...data.creencias, val] })
+    }
+    creenciasAI.dropSuggestion(value)
+  }, [data, persist, creenciasAI])
+
   const field = (key: keyof Pick<ICPData, 'nombre' | 'edad' | 'ingresos' | 'nicho' | 'rol'>) => (
     <div>
       <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block"
@@ -94,22 +105,28 @@ export function ICPSection() {
     label: string,
     key: 'dolores' | 'deseos' | 'creencias',
     color: string,
-    placeholder: string
+    placeholder: string,
+    withAI = false
   ) => (
     <div
       className="rounded-xl p-4"
       style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
     >
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between gap-2 mb-3">
         <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
           {label}
         </p>
-        {data[key].length > 0 && (
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-            style={{ backgroundColor: color + '22', color }}>
-            {data[key].length}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {data[key].length > 0 && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+              style={{ backgroundColor: color + '22', color }}>
+              {data[key].length}
+            </span>
+          )}
+          {withAI && (
+            <AISuggestButton onClick={creenciasAI.suggest} loading={creenciasAI.loading} label="Sugerir" color={color} />
+          )}
+        </div>
       </div>
       <ChipEditor
         items={data[key]}
@@ -117,6 +134,15 @@ export function ICPSection() {
         placeholder={placeholder}
         chipColor={color}
       />
+      {withAI && (
+        <GhostChips
+          suggestions={creenciasAI.suggestions}
+          error={creenciasAI.error}
+          color={color}
+          onPick={pickCreencia}
+          onDismissAll={creenciasAI.clear}
+        />
+      )}
     </div>
   )
 
@@ -197,7 +223,7 @@ export function ICPSection() {
         <div className="space-y-4">
           {chipGroup('Dolores', 'dolores', 'var(--accent)', 'Ej: No sabe de dónde vienen clientes')}
           {chipGroup('Deseos', 'deseos', 'var(--warning)', 'Ej: Clientes predecibles')}
-          {chipGroup('Creencias / Objeciones', 'creencias', '#7A6060', 'Ej: Los ads no funcionan en mi nicho')}
+          {chipGroup('Creencias / Objeciones', 'creencias', '#7A6060', 'Ej: Los ads no funcionan en mi nicho', true)}
         </div>
       </div>
     </div>

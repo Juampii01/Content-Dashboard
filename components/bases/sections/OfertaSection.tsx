@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChipEditor } from '../ChipEditor'
+import { useAISuggest, AISuggestButton, GhostSuggestionLine } from '../AISuggest'
 import { OfertaData } from '@/lib/types'
 import { tryParseArray } from '@/lib/utils/parseArray'
 
@@ -67,6 +68,13 @@ export function OfertaSection() {
     persist({ ...data, ...patch, updatedAt: new Date().toISOString() })
   }, [data, persist])
 
+  const ai = useAISuggest('oferta_promesa')
+
+  const pickPromesa = useCallback((value: string) => {
+    save({ promesa: value })
+    ai.clear()
+  }, [save, ai])
+
   const field = (
     key: keyof Pick<OfertaData, 'nombre' | 'precio' | 'promesa' | 'paraQuien'>,
     label: string,
@@ -127,7 +135,35 @@ export function OfertaSection() {
     >
       {field('nombre', 'Nombre de la oferta', 'Ej: Mentoría 1:1 para creadores')}
       {field('precio', 'Precio', 'Ej: $497/mes · $997 pago único')}
-      {field('promesa', 'Promesa principal', 'Ej: De 0 a 10k seguidores en 90 días con contenido estratégico', true)}
+
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <label className="text-[10px] font-semibold uppercase tracking-wider block"
+            style={{ color: 'var(--muted-foreground)' }}>
+            Promesa principal
+          </label>
+          <AISuggestButton onClick={ai.suggest} loading={ai.loading} label="Sugerir promesa" />
+        </div>
+        <textarea
+          value={data.promesa}
+          onChange={(e) => save({ promesa: e.target.value })}
+          placeholder="Ej: De 0 a 10k seguidores en 90 días con contenido estratégico"
+          rows={2}
+          className="w-full text-sm px-3 py-1.5 rounded-lg outline-none resize-none"
+          style={{
+            backgroundColor: 'var(--muted)',
+            color: 'var(--foreground)',
+            border: '1px solid var(--border)',
+          }}
+        />
+        <GhostSuggestionLine
+          suggestions={ai.suggestions}
+          error={ai.error}
+          onPick={pickPromesa}
+          onDismissAll={ai.clear}
+        />
+      </div>
+
       {field('paraQuien', '¿Para quién es?', 'Ej: Coaches y consultores que quieren monetizar su contenido', true)}
 
       <div>

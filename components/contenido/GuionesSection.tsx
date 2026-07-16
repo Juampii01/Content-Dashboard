@@ -277,6 +277,61 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
     }
   }
 
+  // ─── Reorder (drag & drop) ────────────────────────────────────────────────
+
+  const reorderTabs = async (orderedIds: string[]) => {
+    const prev = tabs
+    const prevIndex = new Map(prev.map((t, i) => [t.id, i]))
+    const byId = new Map(prev.map(t => [t.id, t]))
+    const next = orderedIds
+      .map(id => byId.get(id))
+      .filter((t): t is GuionTab => Boolean(t))
+    if (next.length !== prev.length) return
+    setTabs(next)
+
+    const changed = orderedIds.filter((id, i) => prevIndex.get(id) !== i)
+    if (changed.length === 0) return
+    try {
+      await Promise.all(changed.map(id =>
+        fetch(`/api/guiones/tabs/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: orderedIds.indexOf(id) }),
+        }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`) })
+      ))
+    } catch {
+      setTabs(prev)
+      toast.error('Error al reordenar carpetas')
+    }
+  }
+
+  const reorderItems = async (tabId: string, orderedIds: string[]) => {
+    const prev = items
+    const tabItems = prev.filter(i => i.tabId === tabId)
+    const prevIndex = new Map(tabItems.map((i, idx) => [i.id, idx]))
+    const byId = new Map(tabItems.map(i => [i.id, i]))
+    const reordered = orderedIds
+      .map(id => byId.get(id))
+      .filter((i): i is GuionItem => Boolean(i))
+    if (reordered.length !== tabItems.length) return
+    setItems([...prev.filter(i => i.tabId !== tabId), ...reordered])
+
+    const changed = orderedIds.filter((id, idx) => prevIndex.get(id) !== idx)
+    if (changed.length === 0) return
+    try {
+      await Promise.all(changed.map(id =>
+        fetch(`/api/guiones/items/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: orderedIds.indexOf(id) }),
+        }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`) })
+      ))
+    } catch {
+      setItems(prev)
+      toast.error('Error al reordenar guiones')
+    }
+  }
+
   const activeItem = items.find(i => i.id === activeItemId) ?? null
 
   // ─── Loading skeleton ─────────────────────────────────────────────────────
@@ -369,6 +424,8 @@ export function GuionesSection({ type, label }: GuionesSectionProps) {
         onCancelRenameItem={() => setRenamingItemId(null)}
         onDeleteItem={deleteItem}
         onAddItem={addItem}
+        onReorderTabs={reorderTabs}
+        onReorderItems={reorderItems}
       />
 
       {emojiTabId && emojiAnchor && (

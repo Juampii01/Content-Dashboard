@@ -226,6 +226,10 @@ export function PipelineBoard() {
                 format: deleted.format,
                 platform: deleted.platform,
                 emoji: deleted.emoji,
+                thumbnailUrl: deleted.thumbnailUrl,
+                coverUrl: deleted.coverUrl,
+                ideaId: deleted.ideaId,
+                guionItemId: deleted.guionItemId,
                 order: deleted.order,
               })
               setItems((prev) => [...prev, restored])

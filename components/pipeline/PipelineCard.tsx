@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Calendar } from 'lucide-react'
@@ -40,6 +41,22 @@ export function PipelineCard({ item, onClick }: PipelineCardProps) {
     ? formatDate(item.date + 'T00:00:00')
     : null
 
+  // Cover image (falls back to thumbnail). Reused for the card header.
+  const cover = item.coverUrl || item.thumbnailUrl || null
+
+  // "publica en N días" — hoist today into a state initializer so render stays
+  // pure (no Date.now() during render). Recomputed only on remount.
+  const [todayMs] = useState(() => {
+    const d = new Date()
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  })
+  const daysUntil = item.date
+    ? Math.round((new Date(item.date + 'T00:00:00').getTime() - todayMs) / 86_400_000)
+    : null
+  const publishHint = daysUntil !== null && daysUntil > 0
+    ? `Publica en ${daysUntil} ${daysUntil === 1 ? 'día' : 'días'}`
+    : null
+
   // Whole card is the drag source. dnd-kit's PointerSensor with `activationConstraint:
   // { distance: 8 }` distinguishes click (opens modal) from drag (>= 8px movement).
   return (
@@ -51,6 +68,17 @@ export function PipelineCard({ item, onClick }: PipelineCardProps) {
       className="rounded-xl p-3 cursor-grab active:cursor-grabbing group interactive-card"
       onClick={() => onClick(item)}
     >
+      {/* Cover (16:9) — bleeds to card edges when present */}
+      {cover && (
+        <div
+          className="-mx-3 -mt-3 mb-2.5 overflow-hidden rounded-t-xl"
+          style={{ aspectRatio: '16 / 9', backgroundColor: 'var(--muted)' }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- external cover URL, no upload/optimization */}
+          <img src={cover} alt="" className="w-full h-full object-cover" draggable={false} />
+        </div>
+      )}
+
       {/* Category chip */}
       {item.category && (
         <div className="mb-1.5">
@@ -67,6 +95,29 @@ export function PipelineCard({ item, onClick }: PipelineCardProps) {
       {item.description && (
         <p className="text-xs mt-1 line-clamp-2 leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
           {stripHtml(item.description)}
+        </p>
+      )}
+
+      {/* Lifecycle link badges (read-only) */}
+      {(item.guionItemId || item.ideaId) && (
+        <div className="flex flex-wrap gap-1 mt-1.5">
+          {item.guionItemId && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)' }} title="Vinculado a un guión">
+              📝 guión
+            </span>
+          )}
+          {item.ideaId && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)' }} title="Vinculado a una idea">
+              💡 idea
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Publish countdown */}
+      {publishHint && (
+        <p className="text-[10px] mt-1.5" style={{ color: 'var(--accent)' }}>
+          {publishHint}
         </p>
       )}
 

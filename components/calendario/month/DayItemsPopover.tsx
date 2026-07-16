@@ -122,16 +122,27 @@ export function DayItemsPopover({ date, items, anchor, onItemClick, onClose }: D
               onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 2px var(--accent)` }}
               onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
             >
-              <span
-                aria-hidden
-                style={{
-                  width: 4,
-                  height: 28,
-                  borderRadius: 2,
-                  backgroundColor: item.color,
-                  flexShrink: 0,
-                }}
-              />
+              {(item.coverUrl || item.thumbnailUrl) ? (
+                // eslint-disable-next-line @next/next/no-img-element -- external cover URL, no upload/optimization
+                <img
+                  src={item.coverUrl || item.thumbnailUrl}
+                  alt=""
+                  className="object-cover"
+                  style={{ width: 28, height: 28, borderRadius: 4, flexShrink: 0 }}
+                  draggable={false}
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  style={{
+                    width: 4,
+                    height: 28,
+                    borderRadius: 2,
+                    backgroundColor: item.color,
+                    flexShrink: 0,
+                  }}
+                />
+              )}
               <div className="flex-1 min-w-0 flex flex-col">
                 <span
                   className="truncate text-[13px] font-semibold"

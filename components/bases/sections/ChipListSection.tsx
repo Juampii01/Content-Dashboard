@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChipEditor } from '../ChipEditor'
+import { useAISuggest, AISuggestButton, GhostChips } from '../AISuggest'
+import { BASES_GENERATE_FIELDS, type BasesGenerateField } from '@/lib/schemas/bases/generate'
 
 interface ChipListSectionProps {
   sectionId: string
@@ -26,6 +28,11 @@ export function ChipListSection({
   const [items, setItems] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const debounceRef  = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Only these section ids map to a valid AI-generate field.
+  const aiField = BASES_GENERATE_FIELDS.includes(sectionId as BasesGenerateField)
+    ? (sectionId as BasesGenerateField)
+    : null
 
   // Load from API on mount / sectionId change
   useEffect(() => {
@@ -61,20 +68,33 @@ export function ChipListSection({
   // Cleanup debounce on unmount
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
 
+  const ai = useAISuggest(aiField ?? 'dolores')
+
+  const pickSuggestion = useCallback((value: string) => {
+    const val = value.trim()
+    if (val && !items.includes(val)) save([...items, val])
+    ai.dropSuggestion(value)
+  }, [items, save, ai])
+
   return (
     <div className="space-y-5">
       <div
         className="rounded-xl px-5 py-4"
         style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
       >
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between gap-2 mb-1">
           <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{title}</p>
-          {items.length > 0 && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-              style={{ backgroundColor: color + '22', color }}>
-              {items.length} {items.length === 1 ? 'ítem' : 'ítems'}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {items.length > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                style={{ backgroundColor: color + '22', color }}>
+                {items.length} {items.length === 1 ? 'ítem' : 'ítems'}
+              </span>
+            )}
+            {aiField && (
+              <AISuggestButton onClick={ai.suggest} loading={ai.loading} color={color} />
+            )}
+          </div>
         </div>
         <p className="text-xs mb-4" style={{ color: 'var(--muted-foreground)' }}>{description}</p>
 
@@ -96,6 +116,16 @@ export function ChipListSection({
             onChange={save}
             placeholder={placeholder}
             chipColor={color}
+          />
+        )}
+
+        {aiField && (
+          <GhostChips
+            suggestions={ai.suggestions}
+            error={ai.error}
+            color={color}
+            onPick={pickSuggestion}
+            onDismissAll={ai.clear}
           />
         )}
       </div>

@@ -2,8 +2,17 @@
 
 import {
   Plus, Trash2, MoreHorizontal, X, FileText,
-  ChevronRight, Smile, XCircle, FolderOpen, Folder,
+  ChevronRight, Smile, XCircle, FolderOpen, Folder, GripVertical,
 } from 'lucide-react'
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext, verticalListSortingStrategy, useSortable,
+  arrayMove, sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { GuionTab, GuionItem } from '@/lib/types'
 
 const TAB_COLORS = [
@@ -19,6 +28,66 @@ const TAB_COLORS = [
 
 function getTabColor(idx: number) {
   return TAB_COLORS[idx % TAB_COLORS.length]
+}
+
+// ─── Sortable render-prop helper ──────────────────────────────────────────────
+// Keeps the row markup inline (closure over map vars) while satisfying the
+// rules-of-hooks: the useSortable hook lives in this stable, module-level
+// component. `attributes`/`listeners` must be spread onto the drag handle only.
+
+// Types derived straight from the hook so we never restate dnd-kit internals.
+type SortableState = ReturnType<typeof useSortable>
+
+interface SortableRenderProps {
+  setNodeRef: SortableState['setNodeRef']
+  style: React.CSSProperties
+  attributes: SortableState['attributes']
+  listeners: SortableState['listeners']
+  isDragging: boolean
+}
+
+function Sortable({
+  id,
+  children,
+}: {
+  id: string
+  children: (p: SortableRenderProps) => React.ReactNode
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.55 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 50 : undefined,
+  }
+  return <>{children({ setNodeRef, style, attributes, listeners, isDragging })}</>
+}
+
+// Small grip handle shared by folders and scripts.
+function DragGrip({
+  attributes,
+  listeners,
+  className,
+  color,
+}: {
+  attributes: SortableState['attributes']
+  listeners: SortableState['listeners']
+  className: string
+  color: string
+}) {
+  return (
+    <button
+      {...attributes}
+      {...listeners}
+      onClick={(e) => e.stopPropagation()}
+      title="Arrastrar para reordenar"
+      className={`opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity flex items-center justify-center cursor-grab active:cursor-grabbing ${className}`}
+      style={{ color, touchAction: 'none' }}
+    >
+      <GripVertical size={12} />
+    </button>
+  )
 }
 
 interface GuionesGridProps {
@@ -49,6 +118,8 @@ interface GuionesGridProps {
   onCancelRenameItem: () => void
   onDeleteItem: (itemId: string) => void
   onAddItem: (tabId: string) => void
+  onReorderTabs: (orderedIds: string[]) => void
+  onReorderItems: (tabId: string, orderedIds: string[]) => void
 }
 
 export function GuionesGrid({
@@ -61,8 +132,46 @@ export function GuionesGrid({
   onStartRenameTab, onRenameValChange, onFinishRenameTab, onCancelRenameTab,
   onSelectItem, onStartRenameItem, onRenameItemValChange,
   onFinishRenameItem, onCancelRenameItem, onDeleteItem, onAddItem,
+  onReorderTabs, onReorderItems,
 }: GuionesGridProps) {
   const totalItems = items.length
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over) return
+    const activeId = String(active.id)
+    const overId = String(over.id)
+    if (activeId === overId) return
+
+    // ── Reorder folders (tabs) ──
+    if (activeId.startsWith('tab:') && overId.startsWith('tab:')) {
+      const ids = tabs.map((t) => t.id)
+      const from = ids.indexOf(activeId.slice(4))
+      const to = ids.indexOf(overId.slice(4))
+      if (from < 0 || to < 0) return
+      onReorderTabs(arrayMove(ids, from, to))
+      return
+    }
+
+    // ── Reorder scripts (items) within the same folder ──
+    if (activeId.startsWith('item:') && overId.startsWith('item:')) {
+      const aId = activeId.slice(5)
+      const oId = overId.slice(5)
+      const aItem = items.find((i) => i.id === aId)
+      const oItem = items.find((i) => i.id === oId)
+      if (!aItem || !oItem || aItem.tabId !== oItem.tabId) return
+      const ids = items.filter((i) => i.tabId === aItem.tabId).map((i) => i.id)
+      const from = ids.indexOf(aId)
+      const to = ids.indexOf(oId)
+      if (from < 0 || to < 0) return
+      onReorderItems(aItem.tabId, arrayMove(ids, from, to))
+    }
+  }
 
   return (
     <div
@@ -155,13 +264,17 @@ export function GuionesGrid({
             </button>
           </div>
         ) : (
-          tabs.map((tab, tabIdx) => {
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={tabs.map((t) => `tab:${t.id}`)} strategy={verticalListSortingStrategy}>
+          {tabs.map((tab, tabIdx) => {
             const tabItems   = items.filter((i) => i.tabId === tab.id)
             const isExpanded = expandedTabId === tab.id
             const tabColor   = getTabColor(tabIdx)
 
             return (
-              <div key={tab.id} className="relative">
+              <Sortable key={tab.id} id={`tab:${tab.id}`}>
+              {({ setNodeRef, style, attributes, listeners }) => (
+              <div ref={setNodeRef} style={style} className="relative">
 
                 {/* ─ Folder row ─ */}
                 <div
@@ -181,6 +294,16 @@ export function GuionesGrid({
                       e.currentTarget.style.backgroundColor = 'transparent'
                   }}
                 >
+                  {/* Drag handle (in the left gutter) */}
+                  {renamingTabId !== tab.id && (
+                    <DragGrip
+                      attributes={attributes}
+                      listeners={listeners}
+                      color={tabColor}
+                      className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-4 h-6 rounded"
+                    />
+                  )}
+
                   {/* Left accent stripe when expanded */}
                   {isExpanded && (
                     <div
@@ -356,12 +479,27 @@ export function GuionesGrid({
                         </p>
                       )}
 
+                      <SortableContext items={tabItems.map((i) => `item:${i.id}`)} strategy={verticalListSortingStrategy}>
                       {tabItems.map((item) => {
                         const isActive      = item.id === activeItemId
                         const isRenamingItem = renamingItemId === item.id
 
                         return (
-                          <div key={item.id} className="group/item relative flex items-center mb-0.5">
+                          <Sortable key={item.id} id={`item:${item.id}`}>
+                          {({ setNodeRef: setItemRef, style: itemStyle, attributes: itemAttrs, listeners: itemListeners }) => (
+                          <div
+                            ref={setItemRef}
+                            style={itemStyle}
+                            className="group/item relative flex items-center mb-0.5"
+                          >
+                            {!isRenamingItem && (
+                              <DragGrip
+                                attributes={itemAttrs}
+                                listeners={itemListeners}
+                                color={tabColor}
+                                className="absolute -left-[13px] top-1/2 -translate-y-1/2 w-3.5 h-5"
+                              />
+                            )}
                             {isRenamingItem ? (
                               <input
                                 autoFocus
@@ -434,8 +572,11 @@ export function GuionesGrid({
                               </button>
                             )}
                           </div>
+                          )}
+                          </Sortable>
                         )
                       })}
+                      </SortableContext>
 
                       {/* Add item button */}
                       <button
@@ -456,8 +597,12 @@ export function GuionesGrid({
                   </div>
                 )}
               </div>
+              )}
+              </Sortable>
             )
-          })
+          })}
+          </SortableContext>
+          </DndContext>
         )}
 
         {/* ── Bottom: new folder shortcut ── */}

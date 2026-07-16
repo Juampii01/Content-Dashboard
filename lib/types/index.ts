@@ -223,6 +223,16 @@ export interface ContentPiece {
    *  delivered as a 'carrusel'). */
   format?: ContentFormat
   platform?: ContentPlatform
+  // Media (cover/thumbnail) — plain HTTPS URLs, no upload
+  /** Small preview shown on cards / calendar chips. */
+  thumbnailUrl?: string
+  /** Full cover image (reel/story) shown on cards + editor. */
+  coverUrl?: string
+  // Content-lifecycle links (read-only badges this pass)
+  /** Origin idea this piece was spun from (N pieces : 1 idea). */
+  ideaId?: string
+  /** The script (GuionItem) this piece was written from (1:1). */
+  guionItemId?: string
   createdAt: string
   order: number
 }

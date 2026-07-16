@@ -31,6 +31,10 @@ const CreateContentPieceSchema = z.object({
   format:      z.string().optional(),
   platform:    z.string().optional(),
   emoji:       z.string().optional(),
+  thumbnailUrl: z.string().optional().nullable(),
+  coverUrl:     z.string().optional().nullable(),
+  ideaId:       z.string().optional().nullable(),
+  guionItemId:  z.string().optional().nullable(),
   order:       z.number().int().optional(),
 })
 
@@ -49,6 +53,10 @@ function toContentPiece(record: {
   format: string
   platform: string
   emoji: string
+  thumbnailUrl: string | null
+  coverUrl: string | null
+  ideaId: string | null
+  guionItemId: string | null
   order: number
   createdAt: Date
   updatedAt: Date
@@ -66,6 +74,10 @@ function toContentPiece(record: {
     format:      record.format || undefined,
     platform:    record.platform || undefined,
     emoji:       record.emoji || undefined,
+    thumbnailUrl: record.thumbnailUrl || undefined,
+    coverUrl:    record.coverUrl || undefined,
+    ideaId:      record.ideaId || undefined,
+    guionItemId: record.guionItemId || undefined,
     order:       record.order,
     createdAt:   record.createdAt.toISOString(),
     updatedAt:   record.updatedAt.toISOString(),
@@ -118,7 +130,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     )
   }
 
-  const { title, description, type, status, color, category, date, endDate, format, platform, emoji, order } = parsed.data
+  const { title, description, type, status, color, category, date, endDate, format, platform, emoji, thumbnailUrl, coverUrl, ideaId, guionItemId, order } = parsed.data
 
   try {
     let itemOrder = order ?? 0
@@ -143,6 +155,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         format: format ?? '',
         platform: platform ?? '',
         emoji: emoji ?? '',
+        thumbnailUrl: thumbnailUrl || null,
+        coverUrl: coverUrl || null,
+        ideaId: ideaId || null,
+        guionItemId: guionItemId || null,
         order: itemOrder,
       },
     })
